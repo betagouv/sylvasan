@@ -5,6 +5,7 @@ import type {
   RouteLocationNormalizedLoaded,
   RouteLocationNormalizedGeneric,
 } from "vue-router"
+
 import type { StoreGeneric } from "pinia"
 
 import { ref } from "vue"
@@ -13,38 +14,7 @@ import { useStorage } from "@vueuse/core"
 
 import { useRootStore } from "../stores/root.ts"
 
-import HomeView from "../components/HomeView.vue"
-import LoginView from "../components/LoginView.vue"
-import DashboardView from "../components/DashboardView.vue"
-
-const routes = [
-  {
-    path: "/",
-    name: "HomeView",
-    component: HomeView,
-    meta: {
-      home: true,
-    },
-  },
-  {
-    path: "/s-identifier",
-    name: "LoginView",
-    component: LoginView,
-    meta: {
-      title: "S'identifier",
-      omitIfLoggedIn: true,
-      sitemap: true,
-    },
-  },
-  {
-    path: "/dashboard",
-    name: "DashboardView",
-    component: DashboardView,
-    meta: {
-      authenticationRequired: true,
-    },
-  },
-]
+import { routes, handleHotUpdate } from "vue-router/auto-routes"
 
 const previousRoute = ref<RouteLocationNormalizedGeneric | null>(null)
 type SylvaSanRouter = Router & {
@@ -82,7 +52,7 @@ const chooseAuthorisedRoute = async (
   //   return
   // }
   if (to.meta.omitIfLoggedIn && store.loggedUser) {
-    next(to.query.next?.toString() || { name: "HelloWorld" })
+    next(to.query.next?.toString() || { name: "/" })
     return
   }
   const authenticationCheck =
@@ -95,14 +65,14 @@ const chooseAuthorisedRoute = async (
     (to.meta.requiredRoles as []).some((x) => roles.indexOf(x) > -1)
 
   if (!authenticationCheck)
-    next({ name: "LoginView", query: { next: to.path } })
-  else if (!roleCheck) next({ name: "DashboardView" })
+    next({ name: "/LoginPage", query: { next: to.path } })
+  else if (!roleCheck) next({ name: "/DashboardPage" })
   else next()
 }
 
 const objectIsEmpty = (obj: object) => {
   // https://stackoverflow.com/a/59787784/3845770
-  for (let i in obj) return false
+  for (let _ in obj) return false
   return true
 }
 
@@ -142,5 +112,9 @@ router.beforeEach((to, from, next) => {
   if (ensureDefaultQueryParams(to, next))
     chooseAuthorisedRoute(to, from, next, store)
 })
+
+if (import.meta.hot) {
+  handleHotUpdate(router)
+}
 
 export default router

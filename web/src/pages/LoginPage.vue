@@ -1,3 +1,14 @@
+<route lang="json">
+{
+  "path": "/s-identifier",
+  "meta": {
+    "title": "S'identifier",
+    "omitIfLoggedIn": true,
+    "sitemap": true
+  }
+}
+</route>
+
 <script setup lang="ts">
 import * as z from "zod"
 import { ref } from "vue"

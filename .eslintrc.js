@@ -40,4 +40,11 @@ module.exports = {
       },
     },
   ],
-};
+
+  settings: {
+    "import/core-modules": ["vue-router/auto-routes"],
+  },
+  globals: {
+    definePage: "readonly",
+  },
+}
