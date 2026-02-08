@@ -1,0 +1,99 @@
+exclude: ^(.*\/migrations|.*package.json|.*package-lock.json|Pipfile*|.vscode|.*.spec.js)
+
+repos:
+  # GENERAL
+  - hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: forbid-new-submodules
+    repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+  - hooks:
+      - id: fix-byte-order-marker
+      - id: check-case-conflict
+      - id: check-executables-have-shebangs
+      - id: check-symlinks
+      - id: check-vcs-permalinks
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: ".csv$"
+      - id: trailing-whitespace
+    repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+  - hooks:
+      - id: forbid-crlf
+      - id: remove-crlf
+      - id: forbid-tabs
+      - id: remove-tabs
+    repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.5.4
+  - hooks:
+      - id: check-json
+        exclude: tsconfig.*.json
+      - args:
+          - --autofix
+          - --no-ensure-ascii
+        id: pretty-format-json
+        exclude: tsconfig.*.json
+    repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+
+  # PYTHON
+  - hooks:
+      - id: check-ast
+      - id: check-builtin-literals
+      - id: check-docstring-first
+      - id: debug-statements
+    repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+  - hooks:
+      - id: pyupgrade
+    repo: https://github.com/asottile/pyupgrade
+    rev: v3.21.2
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.14
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # BASH
+  - hooks:
+      - id: beautysh
+    repo: https://github.com/bemeurer/beautysh.git
+    rev: v6.4.2
+
+  # XML / YAML
+  - hooks:
+      - id: check-xml
+    repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+  - hooks:
+      - args:
+          - "-d {rules: {line-length: {max: 999}}}"
+        id: yamllint
+    repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.38.0
+  - hooks:
+      - id: check-yaml
+      - id: sort-simple-yaml
+    repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+
+  # FRONTEND
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.39.1
+    hooks:
+      - id: eslint
+        files: \.(ts|vue|js)$
+        additional_dependencies:
+          - eslint
+          - eslint-plugin-vue
+          - prettier
+          - eslint-config-prettier
+          - eslint-plugin-prettier
+        args:
+          - -c=./.eslintrc.js
+          - --fix
+        types:
+          - vue

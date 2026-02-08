@@ -1,0 +1,51 @@
+{
+  "files.insertFinalNewline": true,
+  "files.eol": "\n",
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.ruff_cache": true,
+    "**/node_modules": true
+  },
+  "editor.formatOnSave": true,
+  "editor.unicodeHighlight.allowedLocales": {
+    "fr": true
+  },
+  "workbench.editor.labelFormat": "short",
+  "spellright.language": ["fr_FR (modern)"],
+  "spellright.documentTypes": ["latex", "plaintext", "markdown"],
+  "[html]": {
+    "editor.formatOnSave": false
+  },
+  "[markdown]": {
+    "editor.formatOnSave": false
+  },
+  "css.lint.unknownAtRules": "ignore",
+  // python
+  "python.analysis.ignore": [
+    "*" // disable linting as it would be redundant with Ruff
+  ],
+  "python.envFile": "${workspaceFolder}/backend/.env",
+  "python.analysis.autoImportCompletions": false,
+  "python.analysis.indexing": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.packageIndexDepths": [
+    {
+      "name": "django",
+      "depth": 10,
+      "includeAllSymbols": true
+    },
+    {
+      "name": "rest_framework",
+      "depth": 10,
+      "includeAllSymbols": true
+    }
+  ],
+  "python.analysis.extraPaths": [],
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "prettier.semi": false
+}
