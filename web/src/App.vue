@@ -2,6 +2,10 @@
 import { useRoute } from "vue-router"
 import { useTitle } from "@vueuse/core"
 import { computed } from "vue"
+import { fr } from "zod/locales"
+import * as z from "zod"
+
+z.config(fr())
 
 const environment = window.ENVIRONMENT
 const logoText = [

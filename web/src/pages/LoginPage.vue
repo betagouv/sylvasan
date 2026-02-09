@@ -13,55 +13,62 @@
 import * as z from "zod"
 import { ref } from "vue"
 import { DsfrInput } from "@gouvminint/vue-dsfr"
-import { useFetch } from "@vueuse/core"
+import { useFetch } from "../utils/data-fetching"
+import { ZodError } from "zod"
+import { useRootStore } from "../stores/root"
+import { useRouter } from "vue-router"
 
-const data = ref({
+const store = useRootStore()
+const router = useRouter()
+
+const payload = ref({
   username: "",
   password: "",
 })
 
 const validator = z.object({
-  username: z.string().min(1),
-  password: z.string().min(1),
+  username: z.string().min(1, "Ce champ ne peut pas être vide"),
+  password: z.string().min(1, "Ce champ ne peut pas être vide"),
 })
 
-const loginUrl = `${import.meta.env.VITE_API_ROOT}/login/`
-const { execute, isFetching, response } = useFetch(
-  loginUrl,
-  { headers: {} },
-  { immediate: false }
-)
-  .post(data)
+const formErrors = ref<any>()
+
+const { execute, isFetching, data } = useFetch("/auth/login/")
+  .post(payload)
   .json()
 
 const submit = async () => {
   try {
-    const payload = validator.parse(data.value)
+    validator.parse(payload.value)
     await execute()
-    console.log(response)
+    store.setLoggedUser(data.value.user)
+    router.push({ name: "/DashboardPage" })
   } catch (error) {
-    console.log(error)
+    if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
 }
 </script>
 
 <template>
-  <div class="fr-container">
+  <div class="fr-container my-10 max-w-md">
     <h1>Se connecter</h1>
 
     <div>
-      <DsfrInputGroup :error-message="''">
+      <DsfrInputGroup :error-message="formErrors?.fieldErrors?.username">
         <DsfrInput
-          v-model="data.username"
+          v-model="payload.username"
           label="Identifiant ou adresse email"
           labelVisible
           @keyup.enter="submit"
         />
       </DsfrInputGroup>
 
-      <DsfrInputGroup :error-message="''" type="password">
+      <DsfrInputGroup
+        :error-message="formErrors?.fieldErrors?.password"
+        type="password"
+      >
         <DsfrInput
-          v-model="data.password"
+          v-model="payload.password"
           label="Mot de passe"
           labelVisible
           type="password"
@@ -69,7 +76,12 @@ const submit = async () => {
         />
       </DsfrInputGroup>
 
-      <DsfrButton class="block! w-full!" label="Se connecter" @click="submit" />
+      <DsfrButton
+        :disabled="isFetching"
+        class="block! w-full!"
+        label="Se connecter"
+        @click="submit"
+      />
     </div>
   </div>
 </template>

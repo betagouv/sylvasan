@@ -33,6 +33,7 @@ ENVIRONMENT = env("ENVIRONMENT")
 # Application definition
 
 INSTALLED_APPS = [
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -56,7 +58,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "sylvasan.urls"
-CSRF_COOKIE_NAME = "csrftoken"
 
 TEMPLATES = [
     {
@@ -152,10 +153,6 @@ if default_file_storage == "storages.backends.s3.S3Storage":
 MEDIA_ROOT = env("MEDIA_ROOT", default=os.path.join(BACKEND_DIR, "media"))
 MEDIA_URL = "/media/"
 
-SESSION_COOKIE_AGE = 31536000
-SESSION_COOKIE_SECURE = env("SECURE", cast=bool)
-SESSION_COOKIE_HTTPONLY = True
-
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/s-identifier"
@@ -240,31 +237,44 @@ if SENTRY_DSN:
         send_client_reports=False,
     )
 
+SESSION_COOKIE_AGE = 31536000
+SESSION_COOKIE_SECURE = env("SECURE", cast=bool)
+SESSION_COOKIE_HTTPONLY = True
+
+CSRF_COOKIE_NAME = "csrftoken"
+CSRF_COOKIE_SECURE = env("SECURE", cast=bool)
+
+# Pour le développement on autorise Vue à accéder au backend
+DEV_FRONTEND_ORIGIN = env("DEV_FRONTEND_ORIGIN", default=None)
+
+if DEBUG and DEV_FRONTEND_ORIGIN:
+    CORS_ALLOWED_ORIGINS = [f"http://{DEV_FRONTEND_ORIGIN}"]
+    CSRF_TRUSTED_ORIGINS = [f"http://{DEV_FRONTEND_ORIGIN}"]
+    CORS_ALLOW_CREDENTIALS = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+
+
 # Configuration CSP avec nonces
 SECURE_CSP = {
     "default-src": [
         CSP.SELF,
         "*.gouv.fr",
         "*.services.clever-cloud.com",
-    ]
-    + (["http://127.0.0.1:8080", "http://localhost:8080"] if DEBUG else []),
+    ],
     "script-src": [
         CSP.SELF,
         CSP.NONCE,
         "*.gouv.fr",
-    ]
-    + (["http://127.0.0.1:8080", "http://localhost:8080"] if DEBUG else []),
+    ],
     "style-src": [
         CSP.SELF,
         CSP.NONCE,
-    ]
-    + (["http://127.0.0.1:8080", "http://localhost:8080"] if DEBUG else []),
+    ],
     "img-src": [
         CSP.SELF,
         "*.services.clever-cloud.com",
         "data:",
-    ]
-    + (["http://127.0.0.1:8080", "http://localhost:8080"] if DEBUG else []),
+    ],
     "connect-src": [
         CSP.SELF,
         "*.gouv.fr",
@@ -272,5 +282,5 @@ SECURE_CSP = {
         "https://api.unisvg.com",
         "https://api.simplesvg.com",
     ]
-    + (["ws:", "http://127.0.0.1:8080", "http://localhost:8080"] if DEBUG else []),
+    + (["ws:"] if DEBUG else []),
 }

@@ -1,1 +1,1 @@
-from .authentication import CsrfView, LoginView, LogoutView
+from .authentication import CsrfView, LoggedUserView, LoginView, LogoutView

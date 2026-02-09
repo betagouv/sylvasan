@@ -8,15 +8,28 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from users.serializers import SimpleUserSerializer
+
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class CsrfView(APIView):
     permission_classes = []
 
-    def get(self, request):
+    def get(self, request, format=None):
         return Response({"ok": True})
 
 
+class LoggedUserView(APIView):
+    def get(self, request, *args, **kwargs):
+        """Retourne les données d'un utilisateur connecté"""
+
+        user = request.user
+        if user.is_active:
+            return Response(SimpleUserSerializer(user).data)
+        return Response(None, status=status.HTTP_204_NO_CONTENT)
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
 class LoginView(APIView):
     def post(self, request, *args, **kwargs):
         username_or_email = request.data.get("username")
@@ -41,10 +54,7 @@ class LoginView(APIView):
         return Response(
             {
                 "csrf_token": get_token(request),
-                "user": {
-                    "id": user.id,
-                    "username": user.username,
-                },
+                "user": SimpleUserSerializer(user).data,
             }
         )
 

@@ -1,14 +1,35 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
+import type { LoggedUser } from "../types/api"
+import { useFetch } from "../utils/data-fetching"
 
 export const useRootStore = defineStore("root", () => {
-  const loggedUser = ref<object | null>(null)
+  const loggedUser = ref<LoggedUser | null>(null)
   const initialDataLoaded = ref<boolean>(false)
 
+  const fetchCsrfToken = async () => {
+    await useFetch("/auth/csrf/").json()
+  }
+
+  const setLoggedUser = (userData: LoggedUser | null) => {
+    loggedUser.value = userData
+  }
+
+  const fetchLoggedUser = async () => {
+    const { data } = await useFetch("/auth/me").json()
+    setLoggedUser(data.value)
+  }
+
   const fetchInitialData: () => Promise<undefined> = async () => {
-    console.log("Fetch initial data")
+    await fetchCsrfToken()
+    await fetchLoggedUser()
     initialDataLoaded.value = true
   }
 
-  return { loggedUser, initialDataLoaded, fetchInitialData }
+  return {
+    setLoggedUser,
+    loggedUser,
+    initialDataLoaded,
+    fetchInitialData,
+  }
 })

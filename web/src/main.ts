@@ -8,4 +8,4 @@ import { createPinia } from "pinia"
 
 const pinia = createPinia()
 
-createApp(App).use(router).use(pinia).use(VueDsfr).mount("#app")
+createApp(App).use(pinia).use(router).use(VueDsfr).mount("#app")

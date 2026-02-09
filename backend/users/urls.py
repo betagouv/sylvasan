@@ -1,9 +1,10 @@
 from django.urls import path
 
-from users.views import CsrfView, LoginView, LogoutView
+from users.views import CsrfView, LoggedUserView, LoginView, LogoutView
 
 urlpatterns = [
-    path("api/csrf/", CsrfView.as_view()),
-    path("api/login/", LoginView.as_view()),
-    path("api/logout/", LogoutView.as_view()),
+    path("api/auth/csrf/", CsrfView.as_view()),
+    path("api/auth/me/", LoggedUserView.as_view()),
+    path("api/auth/login/", LoginView.as_view()),
+    path("api/auth/logout/", LogoutView.as_view()),
 ]
