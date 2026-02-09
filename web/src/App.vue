@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { useRoute } from "vue-router"
+import { useTitle } from "@vueuse/core"
+import { computed } from "vue"
+
 const environment = window.ENVIRONMENT
 const logoText = [
   "Ministère",
@@ -7,6 +11,9 @@ const logoText = [
   "et de la Souveraineté",
   "Alimentaire",
 ]
+
+const currentRoute = useRoute()
+useTitle(computed(() => `${currentRoute.meta.title || ""} - SylvaSan`))
 </script>
 
 <template>

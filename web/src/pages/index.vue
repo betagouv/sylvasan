@@ -1,7 +1,8 @@
 <route lang="json">
 {
   "meta": {
-    "home": true
+    "home": true,
+    "title": "Accueil"
   }
 }
 </route>

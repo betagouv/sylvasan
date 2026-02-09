@@ -31,7 +31,7 @@ router.getPreviousRoute = () => previousRoute
 
 const chooseAuthorisedRoute = async (
   to: RouteLocationNormalizedGeneric,
-  from: RouteLocationNormalizedGeneric,
+  _from: RouteLocationNormalizedGeneric,
   next: NavigationGuardNext,
   store: StoreGeneric
 ) => {

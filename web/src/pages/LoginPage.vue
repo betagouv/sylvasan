@@ -13,6 +13,7 @@
 import * as z from "zod"
 import { ref } from "vue"
 import { DsfrInput } from "@gouvminint/vue-dsfr"
+import { useFetch } from "@vueuse/core"
 
 const data = ref({
   username: "",
@@ -24,10 +25,20 @@ const validator = z.object({
   password: z.string().min(1),
 })
 
-const submit = () => {
+const loginUrl = `${import.meta.env.VITE_API_ROOT}/login/`
+const { execute, isFetching, response } = useFetch(
+  loginUrl,
+  { headers: {} },
+  { immediate: false }
+)
+  .post(data)
+  .json()
+
+const submit = async () => {
   try {
     const payload = validator.parse(data.value)
-    console.log(payload)
+    await execute()
+    console.log(response)
   } catch (error) {
     console.log(error)
   }
@@ -38,7 +49,7 @@ const submit = () => {
   <div class="fr-container">
     <h1>Se connecter</h1>
 
-    <form @submit="submit">
+    <div>
       <DsfrInputGroup :error-message="''">
         <DsfrInput
           v-model="data.username"
@@ -53,11 +64,12 @@ const submit = () => {
           v-model="data.password"
           label="Mot de passe"
           labelVisible
+          type="password"
           @keyup.enter="submit"
         />
       </DsfrInputGroup>
 
       <DsfrButton class="block! w-full!" label="Se connecter" @click="submit" />
-    </form>
+    </div>
   </div>
 </template>

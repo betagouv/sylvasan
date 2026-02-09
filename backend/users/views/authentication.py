@@ -1,10 +1,20 @@
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.db.models import Q
 from django.middleware.csrf import get_token
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class CsrfView(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        return Response({"ok": True})
 
 
 class LoginView(APIView):
@@ -27,8 +37,16 @@ class LoginView(APIView):
         if not authenticated_user:
             return Response({"error": unauthorized_msg}, status=status.HTTP_401_UNAUTHORIZED)
 
-        login(request, authenticated_user)  # will create the user session
-        return Response({"csrf_token": get_token(request)})
+        login(request, authenticated_user)
+        return Response(
+            {
+                "csrf_token": get_token(request),
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                },
+            }
+        )
 
 
 class LogoutView(APIView):
