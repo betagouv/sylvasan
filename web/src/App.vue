@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppHeader from "./components/AppHeader.vue"
+import ToastContainer from "./components/ToastContainer.vue"
 import { useRoute } from "vue-router"
 import { useTitle } from "@vueuse/core"
 import { computed } from "vue"
@@ -30,6 +31,7 @@ useTitle(computed(() => `${currentRoute.meta.title || ""} - SylvaSan`))
     ]"
   />
 
+  <ToastContainer />
   <p
     v-if="environment && environment !== 'prod'"
     id="env-banner"

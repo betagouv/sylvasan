@@ -16,9 +16,11 @@ import { DsfrInput } from "@gouvminint/vue-dsfr"
 import { useFetch } from "../utils/data-fetching"
 import { ZodError } from "zod"
 import { useRootStore } from "../stores/root"
+import { useToastStore } from "../stores/toast"
 import { useRouter } from "vue-router"
 
 const store = useRootStore()
+const toast = useToastStore()
 const router = useRouter()
 
 const payload = ref({
@@ -44,6 +46,7 @@ const submit = async () => {
     validator.parse(payload.value)
     await execute()
     store.setLoggedUser(data.value.user)
+    toast.show(`Bienvenue ${data.value.user.firstName}`, "success")
     router.push({ name: "/DashboardPage" })
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)

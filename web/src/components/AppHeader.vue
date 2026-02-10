@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { useRootStore } from "../stores/root"
+import { useToastStore } from "../stores/toast"
 import imgUrl from "../../public/logo.png"
 import { useFetch } from "../utils/data-fetching"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
 const store = useRootStore()
+
+const toast = useToastStore()
 
 // const environment = window.ENVIRONMENT
 defineProps({ logoText: Array })
@@ -48,6 +51,7 @@ const quickLinks = computed(() => {
 const logout = async () => {
   await useFetch("/auth/logout/").post()
   store.setLoggedUser(null)
+  toast.show("Déconnexion réussite", "success")
   router.push({ name: "/HomePage" })
 }
 </script>
