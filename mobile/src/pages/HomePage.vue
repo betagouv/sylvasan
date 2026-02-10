@@ -8,7 +8,9 @@
           </ion-toolbar>
         </ion-header>
         <ion-content>
-          <div class="example-content">Cherchez des formulaires</div>
+          <div class="m-2">
+            <DsfrAlert title="Alerte DSFR" />
+          </div>
         </ion-content>
       </ion-page>
     </ion-tab>
@@ -69,15 +71,12 @@ import {
 } from "@ionic/vue"
 import {
   documentTextOutline,
-  library,
   createOutline,
   settingsOutline,
 } from "ionicons/icons"
 </script>
 
 <style scoped>
-/* This style is for demonstration purposes only. */
-/* It's not required for the tabs to function. */
 .example-content {
   display: flex;
   align-items: center;
