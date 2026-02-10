@@ -3,18 +3,14 @@ from django.db.models import Q
 from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
-
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from users.serializers import SimpleUserSerializer
 
 
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class CsrfView(APIView):
-    permission_classes = []
-
     def get(self, request, format=None):
         return Response({"ok": True})
 

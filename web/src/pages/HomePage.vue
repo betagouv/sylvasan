@@ -8,8 +8,8 @@
 </route>
 
 <script setup lang="ts">
-import imgUrl from "../../public/forest.jpg"
-import backgroundUrl from "../../public/leaves.png"
+import imgUrl from "../assets/forest.jpg"
+import backgroundUrl from "../assets/leaves.png"
 import ImageAttribution from "../components/ImageAttribution.vue"
 import { useRootStore } from "../stores/root"
 import { storeToRefs } from "pinia"

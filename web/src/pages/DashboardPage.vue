@@ -9,9 +9,12 @@
 </route>
 
 <script setup lang="ts">
+import { useFetch } from "../utils/data-fetching"
 import { useRootStore } from "../stores/root"
 import { storeToRefs } from "pinia"
 const { loggedUser } = storeToRefs(useRootStore())
+
+useFetch("/auth/test/").get().json()
 
 const actions = [
   {

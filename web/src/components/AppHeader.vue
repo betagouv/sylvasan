@@ -2,7 +2,7 @@
 import { computed } from "vue"
 import { useRootStore } from "../stores/root"
 import { useToastStore } from "../stores/toast"
-import imgUrl from "../../public/logo.png"
+import imgUrl from "../assets/logo.png"
 import { useFetch } from "../utils/data-fetching"
 import { useRouter } from "vue-router"
 

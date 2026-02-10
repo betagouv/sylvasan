@@ -16,7 +16,7 @@ export const useRootStore = defineStore("root", () => {
   }
 
   const fetchLoggedUser = async () => {
-    const { data } = await useFetch("/auth/me").json()
+    const { data } = await useFetch("/auth/me/").json()
     setLoggedUser(data.value)
   }
 
