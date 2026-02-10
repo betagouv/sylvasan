@@ -33,7 +33,9 @@ const validator = z.object({
 
 const formErrors = ref<any>()
 
-const { execute, isFetching, data } = useFetch("/auth/login/")
+const { execute, isFetching, data } = useFetch("/auth/login/", {
+  immediate: false,
+})
   .post(payload)
   .json()
 
@@ -50,10 +52,10 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="fr-container my-10 max-w-md">
+  <div class="fr-container my-10">
     <h1>Se connecter</h1>
 
-    <div>
+    <div class="max-w-md">
       <DsfrInputGroup :error-message="formErrors?.fieldErrors?.username">
         <DsfrInput
           v-model="payload.username"

@@ -17,7 +17,7 @@ type SylvaSanRouter = Router & {
 }
 
 const router: SylvaSanRouter = createRouter({
-  history: createWebHistory("/app"),
+  history: createWebHistory("/"),
   routes,
 })
 

@@ -1,5 +1,50 @@
 @import "tailwindcss";
 
-.test {
-  color: red;
+@theme {
+  --color-blue-france-main-525: #6a6af4;
+  --color-blue-france-sun-113: #000091;
+  --color-blue-france-975: #f5f5fe;
+  --color-blue-france-950: #ececfe;
+  --color-blue-france-925: #e3e3fd;
+  --color-blue-france-850: #cacafb;
+  --color-blue-france-625: #8585f6;
+  --color-blue-france-200: #313178;
+  --color-blue-france-125: #272747;
+  --color-blue-france-100: #21213f;
+  --color-blue-france-75: #1b1b35;
+  --color-red-marianne-main-472: #e1000f;
+  --color-red-marianne-425: #c9191e;
+  --color-red-marianne-975: #fef4f4;
+  --color-red-marianne-950: #fee9e9;
+  --color-red-marianne-925: #fddede;
+  --color-red-marianne-850: #fcbfbf;
+  --color-red-marianne-625: #f95c5e;
+  --color-red-marianne-200: #5e2a2b;
+  --color-red-marianne-125: #3b2424;
+  --color-red-marianne-100: #331f1f;
+  --color-red-marianne-75: #2b1919;
+  --color-grey-975: #f6f6f6;
+  --color-success-main-525: #1f8d49;
+  --color-success-425: #18753c;
+  --color-success-975: #dffee6;
+  --color-success-950: #b8fec9;
+  --color-success-925: #88fdaa;
+  --color-success-850: #3bea7e;
+  --color-success-625: #27a658;
+  --color-success-200: #204129;
+  --color-success-125: #1e2e22;
+  --color-success-100: #19271d;
+  --color-success-75: #142117;
+  --color-warning-main-525: #d64d00;
+  --color-warning-425: #b34000;
+  --color-warning-975: #fff4f3;
+  --color-warning-950: #ffe9e6;
+  --color-warning-925: #ffded9;
+  --color-warning-850: #ffbeb4;
+
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1440px;
+  --breakpoint-2xl: initial;
 }

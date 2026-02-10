@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppHeader from "./components/AppHeader.vue"
 import { useRoute } from "vue-router"
 import { useTitle } from "@vueuse/core"
 import { computed } from "vue"
@@ -37,7 +38,7 @@ useTitle(computed(() => `${currentRoute.meta.title || ""} - SylvaSan`))
     Environnement de {{ environment }}
   </p>
 
-  <DsfrHeader :logo-text="logoText" id="navigation" />
+  <AppHeader :logo-text="logoText" id="navigation" />
   <main id="main-content">
     <router-view></router-view>
   </main>

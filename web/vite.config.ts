@@ -9,5 +9,5 @@ export default defineConfig(({ mode }) => ({
     noExternal: mode === "development" ? ["vue-router"] : [],
   },
   plugins: [VueRouter(), vue(), tailwindcss()],
-  base: "/app",
+  base: "/",
 }))
