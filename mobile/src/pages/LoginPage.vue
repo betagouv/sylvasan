@@ -8,11 +8,9 @@ import { DsfrInput } from "@gouvminint/vue-dsfr"
 import { ZodError } from "zod"
 import { useRouter } from "vue-router"
 import { useFetch } from "../utils/data-fetching"
-import type { UseSchemeResult } from "@gouvminint/vue-dsfr"
-import { useScheme } from "@gouvminint/vue-dsfr"
+import { useDarkTheme } from "../utils/ui"
 
-const { setScheme } = useScheme() as UseSchemeResult
-setScheme("dark")
+useDarkTheme()
 
 const router = useRouter()
 

@@ -21,11 +21,18 @@ import {
   IonItem,
   IonList,
 } from "@ionic/vue"
-import type { UseSchemeResult } from "@gouvminint/vue-dsfr"
-import { useScheme } from "@gouvminint/vue-dsfr"
 
-const { setScheme } = useScheme() as UseSchemeResult
-setScheme("light")
+import { useRouter } from "vue-router"
+import { useLightTheme } from "../utils/ui"
+import { Preferences } from "@capacitor/preferences"
+
+useLightTheme()
+
+const router = useRouter()
+const logOut = async () => {
+  await Preferences.remove({ key: "auth_token" })
+  router.push({ name: "LoginPage" })
+}
 </script>
 
 <template>
@@ -73,10 +80,10 @@ setScheme("light")
             <p class="pb-2">Gerez votre profil</p>
           </ion-label>
         </ion-item>
-        <ion-item
+        <ion-item @click="logOut"
           ><ion-icon
             aria-hidden="true"
-            :icon="navigateCircleOutline"
+            :icon="logOutOutline"
             slot="start"
             class="mr-2"
           ></ion-icon>
@@ -95,7 +102,7 @@ setScheme("light")
         </ion-buttons>
         <ion-buttons slot="end">
           <ion-button>
-            <ion-icon slot="start" :icon="logOutOutline"></ion-icon>
+            <ion-icon slot="start" :icon="addOutline"></ion-icon>
             Ajouter un projet
           </ion-button>
         </ion-buttons>
