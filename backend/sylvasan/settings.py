@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 from django.utils.csp import CSP
@@ -189,7 +190,10 @@ REST_FRAMEWORK = {
     "JSON_UNDERSCOREIZE": {
         "no_underscore_before_number": True,
     },
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
@@ -237,6 +241,14 @@ if SENTRY_DSN:
         send_client_reports=False,
     )
 
+# Cookies and auth
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
+    "ROTATE_REFRESH_TOKENS": True,
+}
+
 SESSION_COOKIE_AGE = 31536000
 SESSION_COOKIE_SECURE = env("SECURE", cast=bool)
 SESSION_COOKIE_HTTPONLY = True
@@ -245,11 +257,11 @@ CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_SECURE = env("SECURE", cast=bool)
 
 # Pour le développement on autorise Vue à accéder au backend
-DEV_FRONTEND_ORIGIN = env("DEV_FRONTEND_ORIGIN", default=None)
+DEV_FRONTEND_ORIGINS = env("DEV_FRONTEND_ORIGINS").split(",") if env("DEV_FRONTEND_ORIGINS", default=None) else None
 
-if DEBUG and DEV_FRONTEND_ORIGIN:
-    CORS_ALLOWED_ORIGINS = [f"http://{DEV_FRONTEND_ORIGIN}"]
-    CSRF_TRUSTED_ORIGINS = [f"http://{DEV_FRONTEND_ORIGIN}"]
+if DEBUG and DEV_FRONTEND_ORIGINS:
+    CORS_ALLOWED_ORIGINS = [f"http://{x}" for x in DEV_FRONTEND_ORIGINS]
+    CSRF_TRUSTED_ORIGINS = [f"http://{x}" for x in DEV_FRONTEND_ORIGINS]
     CORS_ALLOW_CREDENTIALS = True
     SESSION_COOKIE_SAMESITE = "Lax"
 

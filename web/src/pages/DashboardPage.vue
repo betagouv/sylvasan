@@ -14,8 +14,6 @@ import { useRootStore } from "../stores/root"
 import { storeToRefs } from "pinia"
 const { loggedUser } = storeToRefs(useRootStore())
 
-useFetch("/auth/test/").get().json()
-
 const actions = [
   {
     title: "Mes formulaires",

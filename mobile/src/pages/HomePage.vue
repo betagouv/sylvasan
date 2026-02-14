@@ -1,3 +1,33 @@
+<script setup lang="ts">
+import {
+  addOutline,
+  documentTextOutline,
+  navigateCircleOutline,
+  personOutline,
+  logOutOutline,
+} from "ionicons/icons"
+import {
+  IonIcon,
+  IonButtons,
+  IonContent,
+  IonHeader,
+  IonMenu,
+  IonMenuButton,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  IonButton,
+  IonLabel,
+  IonItem,
+  IonList,
+} from "@ionic/vue"
+import type { UseSchemeResult } from "@gouvminint/vue-dsfr"
+import { useScheme } from "@gouvminint/vue-dsfr"
+
+const { setScheme } = useScheme() as UseSchemeResult
+setScheme("light")
+</script>
+
 <template>
   <ion-menu content-id="main-content">
     <ion-header>
@@ -91,28 +121,3 @@
     </ion-content>
   </ion-page>
 </template>
-
-<script setup lang="ts">
-import {
-  addOutline,
-  documentTextOutline,
-  navigateCircleOutline,
-  personOutline,
-  logOutOutline,
-} from "ionicons/icons"
-import {
-  IonIcon,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonMenu,
-  IonMenuButton,
-  IonPage,
-  IonTitle,
-  IonToolbar,
-  IonButton,
-  IonLabel,
-  IonItem,
-  IonList,
-} from "@ionic/vue"
-</script>
