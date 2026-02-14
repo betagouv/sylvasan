@@ -3,9 +3,11 @@ from django.db.models import Q
 from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import ensure_csrf_cookie
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from users.serializers import SimpleUserSerializer
 
 
@@ -49,7 +51,7 @@ class LoginView(APIView):
         login(request, authenticated_user)
         return Response(
             {
-                "csrf_token": get_token(request),
+                "csrf_token": get_token(request),  # todo: remove
                 "user": SimpleUserSerializer(user).data,
             }
         )

@@ -1,86 +1,118 @@
 <template>
-  <ion-tabs>
-    <ion-tab tab="home">
-      <ion-page id="home-page">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>Formulaires</ion-title>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content>
-          <div class="m-2">
-            <DsfrAlert title="Alerte DSFR" />
-          </div>
-        </ion-content>
-      </ion-page>
-    </ion-tab>
-    <ion-tab tab="radio">
-      <ion-page id="radio-page">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>Mes réponses</ion-title>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content>
-          <div class="example-content">Mes réponses</div>
-        </ion-content>
-      </ion-page>
-    </ion-tab>
-    <ion-tab tab="library">
-      <ion-page id="library-page">
-        <ion-header>
-          <ion-toolbar>
-            <ion-title>Paramètres</ion-title>
-          </ion-toolbar>
-        </ion-header>
-        <ion-content>
-          <div class="example-content">Paramètres</div>
-        </ion-content>
-      </ion-page>
-    </ion-tab>
-
-    <ion-tab-bar slot="bottom">
-      <ion-tab-button tab="home">
-        <ion-icon :icon="createOutline" />
-        Formulaires
-      </ion-tab-button>
-      <ion-tab-button tab="radio">
-        <ion-icon :icon="documentTextOutline" />
-        Mes réponses
-      </ion-tab-button>
-      <ion-tab-button tab="library">
-        <ion-icon :icon="settingsOutline" />
-        Paramètres
-      </ion-tab-button>
-    </ion-tab-bar>
-  </ion-tabs>
+  <ion-menu content-id="main-content">
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>SylvaSan</ion-title>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-list>
+        <ion-item>
+          <ion-icon
+            aria-hidden="true"
+            :icon="documentTextOutline"
+            slot="start"
+            class="mr-2"
+          ></ion-icon>
+          <ion-label>
+            <h2>Projets</h2>
+            <p class="pb-2">Mes formulaires et réponses</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon
+            aria-hidden="true"
+            :icon="navigateCircleOutline"
+            slot="start"
+            class="mr-2"
+          ></ion-icon>
+          <ion-label>
+            <h2>Cartes hors ligne</h2>
+            <p class="pb-2">Gerez le stockage de la cartographie</p>
+          </ion-label>
+        </ion-item>
+        <ion-item>
+          <ion-icon
+            aria-hidden="true"
+            :icon="personOutline"
+            slot="start"
+            class="mr-2"
+          ></ion-icon>
+          <ion-label>
+            <h2>Mes informations</h2>
+            <p class="pb-2">Gerez votre profil</p>
+          </ion-label>
+        </ion-item>
+        <ion-item
+          ><ion-icon
+            aria-hidden="true"
+            :icon="navigateCircleOutline"
+            slot="start"
+            class="mr-2"
+          ></ion-icon>
+          <ion-label>
+            <h2>Déconnexion</h2>
+          </ion-label></ion-item
+        >
+      </ion-list>
+    </ion-content>
+  </ion-menu>
+  <ion-page id="main-content">
+    <ion-header>
+      <ion-toolbar>
+        <ion-buttons slot="start">
+          <ion-menu-button></ion-menu-button>
+        </ion-buttons>
+        <ion-buttons slot="end">
+          <ion-button>
+            <ion-icon slot="start" :icon="logOutOutline"></ion-icon>
+            Ajouter un projet
+          </ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <div class="grid grid-cols-1 p-3 gap-3! text-left">
+        <DsfrCard
+          title="Projet Ruche"
+          description="Projet test pour le layout de l'application"
+          link="/"
+        >
+          <template #end-details>
+            <DsfrTags :tags="[{ label: '3 réponses' }]" />
+          </template>
+        </DsfrCard>
+        <DsfrCard
+          title="Projet Clermont-Ferrand"
+          description="Le kickoff SylvaSan c'est bientôt !"
+          link="/"
+        />
+      </div>
+    </ion-content>
+  </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
+  addOutline,
+  documentTextOutline,
+  navigateCircleOutline,
+  personOutline,
+  logOutOutline,
+} from "ionicons/icons"
+import {
+  IonIcon,
+  IonButtons,
   IonContent,
   IonHeader,
-  IonIcon,
+  IonMenu,
+  IonMenuButton,
   IonPage,
-  IonTab,
-  IonTabs,
-  IonTabBar,
-  IonTabButton,
   IonTitle,
   IonToolbar,
+  IonButton,
+  IonLabel,
+  IonItem,
+  IonList,
 } from "@ionic/vue"
-import {
-  documentTextOutline,
-  createOutline,
-  settingsOutline,
-} from "ionicons/icons"
 </script>
-
-<style scoped>
-.example-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-}
-</style>
