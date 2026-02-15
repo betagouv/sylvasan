@@ -24,15 +24,23 @@ import {
 
 import { useRouter } from "vue-router"
 import { useLightTheme } from "../utils/ui"
-import { Preferences } from "@capacitor/preferences"
+import { useAuthStore } from "../stores/auth"
+
+import { useApiFetch } from "../utils/data-fetching"
 
 useLightTheme()
 
+const authStore = useAuthStore()
 const router = useRouter()
 const logOut = async () => {
-  await Preferences.remove({ key: "auth_token" })
+  await authStore.logout()
   router.push({ name: "LoginPage" })
 }
+
+const testPost = async () => useApiFetch("/auth/test/").post().json()
+
+useApiFetch("/auth/test/").post().json()
+useApiFetch("/auth/test/").get().json()
 </script>
 
 <template>
@@ -80,6 +88,17 @@ const logOut = async () => {
             <p class="pb-2">Gerez votre profil</p>
           </ion-label>
         </ion-item>
+        <ion-item @click="testPost"
+          ><ion-icon
+            aria-hidden="true"
+            :icon="logOutOutline"
+            slot="start"
+            class="mr-2"
+          ></ion-icon>
+          <ion-label>
+            <h2>Test POST</h2>
+          </ion-label></ion-item
+        >
         <ion-item @click="logOut"
           ><ion-icon
             aria-hidden="true"

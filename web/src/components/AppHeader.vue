@@ -3,7 +3,7 @@ import { computed } from "vue"
 import { useRootStore } from "../stores/root"
 import { useToastStore } from "../stores/toast"
 import imgUrl from "../assets/logo.png"
-import { useFetch } from "../utils/data-fetching"
+import { useApiFetch } from "../utils/data-fetching"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
@@ -49,7 +49,7 @@ const quickLinks = computed(() => {
 })
 
 const logout = async () => {
-  await useFetch("/auth/logout/").post()
+  await useApiFetch("/auth/logout/").post()
   store.setLoggedUser(null)
   toast.show("Déconnexion réussite", "success")
   router.push({ name: "/HomePage" })

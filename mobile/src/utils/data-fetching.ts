@@ -1,12 +1,12 @@
 import { createFetch } from "@vueuse/core"
-import { Preferences } from "@capacitor/preferences"
+import { useAuthStore } from "../stores/auth"
+import { storeToRefs } from "pinia"
 
-export const useFetch = createFetch({
+export const useApiFetch = createFetch({
   baseUrl: import.meta.env.VITE_API_ROOT,
   options: {
     async beforeFetch({ options }) {
-      const token = await Preferences.get({ key: "auth_token" })
-
+      const { access } = storeToRefs(useAuthStore())
       const unsafe = ["POST", "PUT", "PATCH", "DELETE"]
       const isUnsafeMethod = unsafe.includes(
         (options.method || "GET").toUpperCase()
@@ -15,8 +15,7 @@ export const useFetch = createFetch({
       const headers = new Headers(options.headers || {})
 
       // Ajout de l'entête d'authorisation si le token est disponible
-      if (isUnsafeMethod && token)
-        headers.set("Authorization", `Bearer ${token}`)
+      if (access.value) headers.set("Authorization", `Bearer ${access.value}`)
 
       // JSON par défaut si non spécifié
       if (!headers.has("Content-Type") && isUnsafeMethod)
@@ -28,6 +27,16 @@ export const useFetch = createFetch({
         "same-origin") as RequestCredentials
 
       return { options }
+    },
+    async onFetchError({ data, response, context, execute }) {
+      const authStore = useAuthStore()
+      const { refresh } = storeToRefs(useAuthStore())
+      if (response?.status === 403 && refresh.value) {
+        const refreshSuccessful = await authStore.refreshToken()
+
+        if (refreshSuccessful) return await execute()
+      }
+      return { data, response, context }
     },
   },
 })

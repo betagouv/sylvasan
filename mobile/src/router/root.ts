@@ -2,8 +2,8 @@ import { createRouter, createWebHistory } from "@ionic/vue-router"
 import HomePage from "../pages/HomePage.vue"
 import LoginPage from "../pages/LoginPage.vue"
 import type { RouteRecordRaw } from "vue-router"
-import { Preferences } from "@capacitor/preferences"
-
+import { useAuthStore } from "../stores/auth"
+import { storeToRefs } from "pinia"
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
@@ -27,10 +27,11 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
-  const token = await Preferences.get({ key: "auth_token" })
-
-  if (!token.value && to.name !== "LoginPage") return { name: "LoginPage" }
-  if (token.value && to.name === "LoginPage") return { name: "HomePage" }
+  const authStore = useAuthStore()
+  if (!authStore.isLoggedIn && to.name !== "LoginPage")
+    return { name: "LoginPage" }
+  if (authStore.isLoggedIn && to.name === "LoginPage")
+    return { name: "HomePage" }
 })
 
 export default router

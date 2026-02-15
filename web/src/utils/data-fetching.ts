@@ -3,7 +3,7 @@ import { useCookies } from "@vueuse/integrations/useCookies"
 
 const cookies = useCookies()
 
-export const useFetch = createFetch({
+export const useApiFetch = createFetch({
   baseUrl: import.meta.env.VITE_API_ROOT,
   options: {
     async beforeFetch({ options }) {

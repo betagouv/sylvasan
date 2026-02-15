@@ -13,7 +13,7 @@
 import * as z from "zod"
 import { ref } from "vue"
 import { DsfrInput } from "@gouvminint/vue-dsfr"
-import { useFetch } from "../utils/data-fetching"
+import { useApiFetch } from "../utils/data-fetching"
 import { ZodError } from "zod"
 import { useRootStore } from "../stores/root"
 import { useToastStore } from "../stores/toast"
@@ -35,7 +35,7 @@ const validator = z.object({
 
 const formErrors = ref<any>()
 
-const { execute, isFetching, data } = useFetch("/auth/login/", {
+const { execute, isFetching, data } = useApiFetch("/auth/login/", {
   immediate: false,
 })
   .post(payload)

@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { IonContent } from "@ionic/vue"
-import { Preferences } from "@capacitor/preferences"
 
 import * as z from "zod"
 import { ref } from "vue"
 import { DsfrInput } from "@gouvminint/vue-dsfr"
 import { ZodError } from "zod"
 import { useRouter } from "vue-router"
-import { useFetch } from "../utils/data-fetching"
+import { useApiFetch } from "../utils/data-fetching"
 import { useDarkTheme } from "../utils/ui"
+import { useAuthStore } from "../stores/auth"
 
+const authStore = useAuthStore()
 useDarkTheme()
 
 const router = useRouter()
@@ -26,21 +27,13 @@ const validator = z.object({
 
 const formErrors = ref<any>()
 
-const { execute, isFetching, data } = useFetch("mobile/token/", {
-  immediate: false,
-})
-  .post(payload)
-  .json()
+useApiFetch("/auth/test/").post().json()
+useApiFetch("/auth/test/").get().json()
 
 const submit = async () => {
   try {
-    validator.parse(payload.value)
-    await execute()
-    await Preferences.set({
-      key: "auth_token",
-      value: data.value.access,
-    })
-
+    const validatedData = validator.parse(payload.value)
+    await authStore.login(validatedData.username, validatedData.password)
     router.push({ name: "HomePage" })
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
@@ -78,7 +71,7 @@ const submit = async () => {
           />
         </DsfrInputGroup>
       </div>
-      <DsfrButton :disabled="isFetching" label="Se connecter" @click="submit" />
+      <DsfrButton label="Se connecter" @click="submit" />
     </div>
   </ion-content>
 </template>
