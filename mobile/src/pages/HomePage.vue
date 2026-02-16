@@ -5,6 +5,7 @@ import {
   navigateCircleOutline,
   personOutline,
   logOutOutline,
+  helpCircleOutline,
 } from "ionicons/icons"
 import {
   IonIcon,
@@ -37,7 +38,10 @@ const logOut = async () => {
   router.push({ name: "LoginPage" })
 }
 
-const testPost = async () => useApiFetch("/auth/test/").post().json()
+const displayUserInfo = async () => {
+  const { data } = await useApiFetch("/auth/me/").get().json()
+  alert(`Je suis ${data.value.firstName} ${data.value.lastName}`)
+}
 
 useApiFetch("/auth/test/").post().json()
 useApiFetch("/auth/test/").get().json()
@@ -88,15 +92,15 @@ useApiFetch("/auth/test/").get().json()
             <p class="pb-2">Gerez votre profil</p>
           </ion-label>
         </ion-item>
-        <ion-item @click="testPost"
+        <ion-item @click="displayUserInfo"
           ><ion-icon
             aria-hidden="true"
-            :icon="logOutOutline"
+            :icon="helpCircleOutline"
             slot="start"
             class="mr-2"
           ></ion-icon>
           <ion-label>
-            <h2>Test POST</h2>
+            <h2>Qui suis-je ?</h2>
           </ion-label></ion-item
         >
         <ion-item @click="logOut"
