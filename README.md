@@ -48,7 +48,7 @@ npm ci
 
 #### Créer la base de données
 
-Par exemple, pour utiliser une base de données nommée _complalim_db_ :
+Par exemple, pour utiliser une base de données nommée _sylvasan_ :
 
 ```
 createdb sylvasan
