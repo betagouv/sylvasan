@@ -9,7 +9,6 @@
 </route>
 
 <script setup lang="ts">
-import { useApiFetch } from "../utils/data-fetching"
 import { useRootStore } from "../stores/root"
 import { storeToRefs } from "pinia"
 const { loggedUser } = storeToRefs(useRootStore())

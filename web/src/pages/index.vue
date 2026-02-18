@@ -5,3 +5,5 @@
   }
 }
 </route>
+
+<template></template>
