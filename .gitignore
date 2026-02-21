@@ -10,7 +10,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+dist/**/*
 downloads/
 eggs/
 .eggs/
@@ -110,32 +110,33 @@ venv.bak/
 *.pem
 
 .DS_Store
-frontend/node_modules
-frontend/dist
+web/node_modules
+web/dist/**/*
+!web/dist/.htaccess
 
 # local env files
-frontend/.env.local
-frontend/.env.*.local
+web/.env.local
+web/.env.*.local
 
 # Log files
-frontend/npm-debug.log*
-frontend/yarn-debug.log*
-frontend/yarn-error.log*
+web/npm-debug.log*
+web/yarn-debug.log*
+web/yarn-error.log*
 
 # Editor directories and files
-frontend/.idea
-frontend/.vscode
-frontend/*.suo
-frontend/*.ntvs*
-frontend/*.njsproj
-frontend/*.sln
-frontend/*.sw?
+web/.idea
+web/.vscode
+web/*.suo
+web/*.ntvs*
+web/*.njsproj
+web/*.sln
+web/*.sw?
 
 # Frontend cache
-frontend/.eslintcache
+web/.eslintcache
 
 # Build output stats
-frontend/webpack-stats.json
+web/webpack-stats.json
 
 # Celery
 celerybeat-schedule.db
