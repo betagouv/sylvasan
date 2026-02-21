@@ -11,11 +11,6 @@
 import imgUrl from "../assets/forest.jpg"
 import backgroundUrl from "../assets/leaves.png"
 import ImageAttribution from "../components/ImageAttribution.vue"
-import { useRootStore } from "../stores/root"
-import { storeToRefs } from "pinia"
-
-const store = useRootStore()
-const { loggedUser } = storeToRefs(store)
 </script>
 
 <template>
@@ -34,20 +29,14 @@ const { loggedUser } = storeToRefs(store)
           <p>
             Votre plateforme dédiée au diagnostic et suivi sanitaire de la forêt
           </p>
-          <router-link
-            :to="{ name: '/LoginPage' }"
-            class="fr-btn fr-btn--md mt-4"
-            v-if="loggedUser"
+
+          <a
+            href="https://beta.gouv.fr/startups/sylva-san.html"
+            rel="noopener external"
+            class="fr-btn fr-btn--secondary fr-btn--md mt-4"
           >
-            Aller au tableau de bord
-          </router-link>
-          <router-link
-            :to="{ name: '/LoginPage' }"
-            class="fr-btn fr-btn--md mt-4"
-            v-else
-          >
-            S'identifier
-          </router-link>
+            En savoir plus
+          </a>
         </div>
       </div>
     </div>

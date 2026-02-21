@@ -2,7 +2,7 @@
 import { computed } from "vue"
 import { useRootStore } from "../stores/root"
 import { useToastStore } from "../stores/toast"
-import imgUrl from "../assets/logo.png"
+// import imgUrl from "../assets/logo.png"
 import { useApiFetch } from "../utils/data-fetching"
 import { useRouter } from "vue-router"
 
@@ -65,7 +65,7 @@ const logout = async () => {
   >
     <template #operator>
       <div class="flex items-center">
-        <img :src="imgUrl" alt="SylvaSan" class="h-10 object-contain" />
+        <!-- <img :src="imgUrl" alt="SylvaSan" class="h-10 object-contain" /> -->
         <p class="font-bold">SylvaSan</p>
       </div>
     </template>
