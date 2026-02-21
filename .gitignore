@@ -112,7 +112,7 @@ venv.bak/
 .DS_Store
 web/node_modules
 web/dist/**/*
-!web/dist/.htaccess
+!web/dist/.keep
 
 # local env files
 web/.env.local
