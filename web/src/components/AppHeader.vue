@@ -51,7 +51,7 @@ const quickLinks = computed(() => {
 const logout = async () => {
   await useApiFetch("/auth/logout/").post()
   store.setLoggedUser(null)
-  toast.show("Déconnexion réussite", "success")
+  toast.show("Déconnexion réussie", "success")
   router.push({ name: "/HomePage" })
 }
 </script>
