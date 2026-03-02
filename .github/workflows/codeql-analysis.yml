@@ -32,6 +32,10 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         config: |
+          paths:
+            - backend/**
+            - web/src/**
+            - mobile/src/**
           paths-ignore:
             - mobile/android/**
             - mobile/ios/**
