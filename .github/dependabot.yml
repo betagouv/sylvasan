@@ -1,0 +1,45 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    target-branch: "staging"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "backend"
+
+  - package-ecosystem: "npm"
+    directory: "/web"
+    target-branch: "staging"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "web"
+
+  - package-ecosystem: "npm"
+    directory: "/mobile"
+    target-branch: "staging"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "mobile"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "staging"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "github-actions"
