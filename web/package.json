@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@gouvfr/dsfr": "^1.14.3",
-    "@gouvminint/vue-dsfr": "^8.13.1",
+    "@gouvminint/vue-dsfr": "^8.15.0",
     "@tailwindcss/vite": "^4.1.18",
     "@vueuse/core": "^14.2.1",
     "@vueuse/integrations": "^14.2.0",
