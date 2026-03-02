@@ -29,11 +29,12 @@ jobs:
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
-      paths-ignore:
-        - mobile/android/**
-        - mobile/ios/**
       with:
         languages: ${{ matrix.language }}
+        config: |
+          paths-ignore:
+            - mobile/android/**
+            - mobile/ios/**
 
     - name: Autobuild
       uses: github/codeql-action/autobuild@v3
