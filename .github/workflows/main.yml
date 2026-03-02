@@ -59,6 +59,10 @@ jobs:
           DEBUG: True
           SECRET: test
           ENVIRONMENT: ci
+          FORCE_HTTPS: False
+          SECURE: False
+          ALLOWED_HOSTS: localhost
+          HOSTNAME: localhost
           DB_USER: postgres
           DB_PASSWORD: postgres
           DB_HOST: localhost
