@@ -49,5 +49,6 @@ describe("root store", () => {
     await store.fetchInitialData()
 
     expect(store.loggedUser?.firstName).toBe("Lena")
+    expect(store.initialDataLoaded).toBe(true)
   })
 })
