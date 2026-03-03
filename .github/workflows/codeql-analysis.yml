@@ -35,7 +35,9 @@ jobs:
           paths:
             - backend/**
             - web/src/**
+            - web/tests/**
             - mobile/src/**
+            - mobile/tests/**
           paths-ignore:
             - mobile/android/**
             - mobile/ios/**
