@@ -16,7 +16,7 @@
     "@capacitor/ios": "^8.1.0",
     "@capacitor/preferences": "^8.0.1",
     "@gouvfr/dsfr": "^1.14.3",
-    "@gouvminint/vue-dsfr": "^8.13.1",
+    "@gouvminint/vue-dsfr": "^8.15.0",
     "@ionic/vue": "^8.7.17",
     "@ionic/vue-router": "^8.7.17",
     "@tailwindcss/vite": "^4.1.18",
