@@ -19,6 +19,15 @@ type SylvaSanRouter = Router & {
 const router: SylvaSanRouter = createRouter({
   history: createWebHistory("/"),
   routes,
+  scrollBehavior(to, from, savedPosition) {
+    if (to.hash) return { el: to.hash }
+
+    // Ne pas scroller en haut si c'est simplement un changement de queryparam
+    if (from.name === to.name && from.fullPath !== to.fullPath) return
+
+    if (savedPosition) return savedPosition
+    return { top: 0 }
+  },
 })
 
 router.getPreviousRoute = () => previousRoute
