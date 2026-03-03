@@ -15,7 +15,7 @@ Faker==40.4.0
 idna==3.11
 jmespath==1.1.0
 packaging==26.0
-pipdeptree==2.30.0
+pipdeptree==2.31.0
 psycopg2==2.9.11
 PyJWT==2.11.0
 python-dateutil==2.9.0.post0
