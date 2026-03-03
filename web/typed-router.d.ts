@@ -40,6 +40,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/CookiesPage': RouteRecordInfo<
+      '/CookiesPage',
+      '/cookies',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/DashboardPage': RouteRecordInfo<
       '/DashboardPage',
       '/dashboard',
@@ -76,6 +83,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/HomePage.vue': {
       routes:
         | '/HomePage'
+      views:
+        | never
+    }
+    'src/pages/CookiesPage.vue': {
+      routes:
+        | '/CookiesPage'
       views:
         | never
     }
