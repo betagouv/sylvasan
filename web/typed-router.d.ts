@@ -68,6 +68,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/LegalNoticesPage': RouteRecordInfo<
+      '/LegalNoticesPage',
+      '/mentions-legales',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/LoginPage': RouteRecordInfo<
       '/LoginPage',
       '/s-identifier',
@@ -121,6 +128,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/PrivacyPolicyPage.vue': {
       routes:
         | '/PrivacyPolicyPage'
+      views:
+        | never
+    }
+    'src/pages/LegalNoticesPage.vue': {
+      routes:
+        | '/LegalNoticesPage'
       views:
         | never
     }
