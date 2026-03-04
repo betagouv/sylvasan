@@ -14,7 +14,7 @@
     <DsfrErrorPage
       title="Page non trouvée"
       subtitle="Erreur 404"
-      description="La page que vous cherchez n’existe pas ou l’url est erronée."
+      description="La page que vous recherchez est introuvable."
       class="p-0!"
     >
       <template v-slot:default>
