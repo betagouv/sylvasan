@@ -1,7 +1,6 @@
 import { createWebHistory, createRouter } from "vue-router"
 import type {
   Router,
-  NavigationGuardNext,
   RouteLocationNormalizedLoaded,
   RouteLocationNormalizedGeneric,
 } from "vue-router"
@@ -10,15 +9,25 @@ import { ref } from "vue"
 import { useStorage } from "@vueuse/core"
 import { useRootStore } from "../stores/root.ts"
 import { routes, handleHotUpdate } from "vue-router/auto-routes"
+import NotFoundPage from "../pages/NotFoundPage.vue"
 
 const previousRoute = ref<RouteLocationNormalizedGeneric | null>(null)
 type SylvaSanRouter = Router & {
   getPreviousRoute?: () => typeof previousRoute
 }
 
+const extendedRoutes = [
+  ...routes,
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: NotFoundPage,
+  },
+]
+
 const router: SylvaSanRouter = createRouter({
   history: createWebHistory("/"),
-  routes,
+  routes: extendedRoutes,
   scrollBehavior(to, from, savedPosition) {
     if (to.hash) return { el: to.hash }
 
@@ -34,38 +43,40 @@ router.getPreviousRoute = () => previousRoute
 
 const chooseAuthorisedRoute = async (
   to: RouteLocationNormalizedGeneric,
-  from: RouteLocationNormalizedGeneric,
-  next: NavigationGuardNext,
   store: StoreGeneric
 ) => {
-  // 1) vérifie si les données initiales sont chargées, sinon le fait avant toute chose
+  // Vérifie si les données initiales sont chargées, sinon le fait avant toute chose
   if (!store.initialDataLoaded) {
-    store
-      .fetchInitialData()
-      .then(() => chooseAuthorisedRoute(to, from, next, store))
-      .catch((e: Error) => {
-        console.error(`An error occurred: ${e}`)
-        next({ name: "/" })
-      })
-    return
+    try {
+      await store.fetchInitialData()
+    } catch (e) {
+      console.error(`An error occurred: ${e}`)
+      return { name: "/" }
+    }
   }
 
-  //2) vérifie les règles de redirection
+  // Vérifie les règles de redirection
   if (to.meta?.home) {
-    next({ name: store.loggedUser ? "/DashboardPage" : "/HomePage" })
-    return
+    return {
+      name: store.loggedUser ? "/DashboardPage" : "/HomePage",
+    }
   }
+
   if (to.meta.omitIfLoggedIn && store.loggedUser) {
-    next(to.query.next?.toString() || { name: "/" })
-    return
+    return to.query.next?.toString() || { name: "/" }
   }
 
   const authenticationCheck =
     !to.meta.authenticationRequired || store.loggedUser
 
-  if (!authenticationCheck)
-    next({ name: "/LoginPage", query: { next: to.path } })
-  else next()
+  if (!authenticationCheck) {
+    return {
+      name: "/LoginPage",
+      query: { next: to.path },
+    }
+  }
+
+  return true
 }
 
 const objectIsEmpty = (obj: object) => {
@@ -74,41 +85,52 @@ const objectIsEmpty = (obj: object) => {
   return true
 }
 
-const ensureDefaultQueryParams = (
-  route: RouteLocationNormalizedLoaded,
-  next: NavigationGuardNext
-) => {
+const ensureDefaultQueryParams = (route: RouteLocationNormalizedLoaded) => {
   let needsRedirection = false
   const savedQuery = useStorage(route.path, {})
+
+  const newQuery = { ...route.query }
+
   if (objectIsEmpty(route.query) && !objectIsEmpty(savedQuery.value)) {
-    route.query = savedQuery.value
+    Object.assign(newQuery, savedQuery.value)
     needsRedirection = true
   }
+
   if (route.meta.defaultQueryParams) {
     for (const [queryParam, value] of Object.entries(
       route.meta.defaultQueryParams
-    ))
-      if (!(queryParam in route.query)) {
-        route.query[queryParam] = value
+    )) {
+      if (!(queryParam in newQuery)) {
+        newQuery[queryParam] = value
         needsRedirection = true
       }
+    }
   }
+
   if (!needsRedirection) return true
-  next(route)
-  return false
+
+  return {
+    ...route,
+    query: newQuery,
+  }
 }
 
-router.beforeEach((to, from, next) => {
-  // sauvegarder la query de la page précédente
+router.beforeEach(async (to, from) => {
+  // Sauvegarde de la query précédente
   if (from.meta.saveQuery) {
     const savedQuery = useStorage(from.path, {})
     savedQuery.value = from.query
   }
-  // preparer la page suivante
+
   const store = useRootStore()
   previousRoute.value = from
-  if (ensureDefaultQueryParams(to, next))
-    chooseAuthorisedRoute(to, from, next, store)
+
+  // Mettre les query params
+  const queryResult = ensureDefaultQueryParams(to)
+  if (queryResult !== true) return queryResult
+
+  // Retourner la route autorisée
+  return await chooseAuthorisedRoute(to, store)
 })
 
 if (import.meta.hot) {
