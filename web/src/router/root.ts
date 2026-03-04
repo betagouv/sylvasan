@@ -10,15 +10,25 @@ import { ref } from "vue"
 import { useStorage } from "@vueuse/core"
 import { useRootStore } from "../stores/root.ts"
 import { routes, handleHotUpdate } from "vue-router/auto-routes"
+import NotFoundPage from "../pages/NotFoundPage.vue"
 
 const previousRoute = ref<RouteLocationNormalizedGeneric | null>(null)
 type SylvaSanRouter = Router & {
   getPreviousRoute?: () => typeof previousRoute
 }
 
+const extendedRoutes = [
+  ...routes,
+  {
+    path: "/:pathMatch(.*)*",
+    name: "NotFound",
+    component: NotFoundPage,
+  },
+]
+
 const router: SylvaSanRouter = createRouter({
   history: createWebHistory("/"),
-  routes,
+  routes: extendedRoutes,
   scrollBehavior(to, from, savedPosition) {
     if (to.hash) return { el: to.hash }
 
