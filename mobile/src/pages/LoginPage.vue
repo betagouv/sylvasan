@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { IonContent, IonPage } from "@ionic/vue"
-
 import * as z from "zod"
 import { ref } from "vue"
-import { DsfrInput } from "@gouvminint/vue-dsfr"
 import { ZodError } from "zod"
 import { useRouter } from "vue-router"
 import { useAuthStore } from "../stores/auth"
 
 const authStore = useAuthStore()
-
 const router = useRouter()
 
 const payload = ref({
@@ -24,11 +21,18 @@ const validator = z.object({
 
 const formErrors = ref<any>()
 
+const resetFields = () => {
+  payload.value.username = ""
+  payload.value.password = ""
+  formErrors.value = null
+}
+
 const submit = async () => {
   try {
     const validatedData = validator.parse(payload.value)
     await authStore.login(validatedData.username, validatedData.password)
     router.push({ name: "ProjectsPage" })
+    resetFields()
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
@@ -38,13 +42,13 @@ const submit = async () => {
 <template>
   <ion-page>
     <ion-content :scrollY="false">
-      <div
-        class="text-center w-[90%] p-[5%] absolute top-[50%] translate-y-[-50%]"
-      >
-        <h1>Se connecter</h1>
+      <div class="flex items-center justify-center min-h-full p-4 box-border!">
+        <div class="w-full">
+          <h1 class="fr-h2 text-center">Se connecter</h1>
 
-        <div class="overflow-auto mb-10">
-          <DsfrInputGroup :error-message="formErrors?.fieldErrors?.username">
+          <DsfrInputGroup
+            :error-message="formErrors?.fieldErrors?.username?.[0]"
+          >
             <DsfrInput
               v-model="payload.username"
               label="Identifiant ou adresse email"
@@ -54,8 +58,7 @@ const submit = async () => {
           </DsfrInputGroup>
 
           <DsfrInputGroup
-            :error-message="formErrors?.fieldErrors?.password"
-            type="password"
+            :error-message="formErrors?.fieldErrors?.password?.[0]"
           >
             <DsfrInput
               v-model="payload.password"
@@ -65,8 +68,11 @@ const submit = async () => {
               @keyup.enter="submit"
             />
           </DsfrInputGroup>
+
+          <div class="fr-mt-4w text-center">
+            <DsfrButton label="Se connecter" @click="submit" />
+          </div>
         </div>
-        <DsfrButton label="Se connecter" @click="submit" />
       </div>
     </ion-content>
   </ion-page>
