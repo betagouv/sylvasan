@@ -14,7 +14,7 @@
     "@gouvminint/vue-dsfr": "^8.15.0",
     "@tailwindcss/vite": "^4.2.1",
     "@vueuse/core": "^14.2.1",
-    "@vueuse/integrations": "^14.2.0",
+    "@vueuse/integrations": "^14.2.1",
     "pinia": "^3.0.4",
     "tailwindcss": "^4.2.1",
     "universal-cookie": "^8.0.1",
