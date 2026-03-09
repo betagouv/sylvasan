@@ -74,7 +74,9 @@ avec `git commit -m 'my message' --no-verify`.
 
 #### Compléter les variables d'environnement
 
-L'application utilise [django-environ](https://django-environ.readthedocs.io/en/latest/), vous pouvez donc créer un fichier `.env` à la racine du projet avec ces variables définies :
+#### Variables d'environnement backend
+
+L'application utilise [django-environ](https://django-environ.readthedocs.io/en/latest/), vous pouvez donc créer un fichier `.env` dans /backend avec ces variables définies :
 
 ```
 SECRET= Le secret pour Django (vous pouvez le [générer ici](https://djecrety.ir/))
@@ -96,6 +98,23 @@ CONTACT_EMAIL= par ex. 'contact@example.com'
 EMAIL_BACKEND= par ex. 'django.core.mail.backends.console.EmailBackend'. Pour utiliser SendInBlue : 'anymail.backends.sendinblue.EmailBackend'
 DEV_FRONTEND_ORIGINS= Une liste de hosts pour le développement en local. Cette liste doit contenir les applications web et mobile, normalement `localhost:5173,localhost:5174`
 ```
+
+#### Variables d'environnement web
+
+L'application web utilise également certaines variables d'environnement. Con utilise Vite, donc elles doivent toutes commencer par `VITE_`. Le fichier `.env` doit se placer à la racine de /web. Voici la liste :
+
+VITE_API_ROOT= La racine de l'URL pour l'API backend (par exemple `http://localhost:8000/platform/api`)
+VITE_CREDENTIALS= S'il faut inclure les credentials dans les appels API. Pour le développement mettre à `include`.
+VITE_MATOMO_URL= URL pour le tracking de Matomo (laisser vide pour le développement)
+VITE_MATOMO_ID= ID du site Matomo associé au projet (laisser vide pour le développement)
+
+#### Variables d'environnement mobile
+
+L'application mobile utilise également certaines variables d'environnement. Con utilise Vite, donc elles doivent toutes commencer par `VITE_`. Le fichier `.env` doit se placer à la racine de /mobile. Voici la liste :
+
+VITE_API_ROOT= La racine de l'URL pour l'API backend (par exemple `http://localhost:8000/platform/api`)
+VITE_CREDENTIALS= S'il faut inclure les credentials dans les appels API. Pour le développement mettre à `include`.
+
 
 #### Créer les différents modèles Django dans la base de données
 
