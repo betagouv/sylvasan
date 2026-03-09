@@ -7,6 +7,7 @@ import AppShell from "../pages/AppShell.vue"
 import ProjectsPage from "../pages/ProjectsPage.vue"
 import MapsPage from "../pages/MapsPage.vue"
 import ProfilePage from "../pages/ProfilePage.vue"
+import OfflineMapPage from "../pages/OfflineMapPage.vue"
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -42,6 +43,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/s-identifier",
     name: "LoginPage",
     component: LoginPage,
+  },
+  {
+    path: "/test-maps",
+    name: "OfflineMapPage",
+    component: OfflineMapPage,
   },
 ]
 
