@@ -3,11 +3,10 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 
-from django.utils.csp import CSP
-
 import environ
 import sentry_sdk
 from botocore.client import Config as BotoConfig
+from django.utils.csp import CSP
 from sentry_sdk.integrations.django import DjangoIntegration
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -257,14 +256,17 @@ CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_SECURE = env("SECURE", cast=bool)
 
 # Pour le développement on autorise Vue à accéder au backend
-DEV_FRONTEND_ORIGINS = env("DEV_FRONTEND_ORIGINS").split(",") if env("DEV_FRONTEND_ORIGINS", default=None) else None
+DEV_CORS_ORIGINS = [f"http://{x}" for x in env("DEV_FRONTEND_ORIGINS", default="").split(",") if x]
+ANDROID_CORS_ORIGINS = ["http://localhost", "https://localhost"]
+IOS_CORS_ORIGINS = ["capacitor://localhost"]
 
-if DEBUG and DEV_FRONTEND_ORIGINS:
-    CORS_ALLOWED_ORIGINS = [f"http://{x}" for x in DEV_FRONTEND_ORIGINS]
-    CSRF_TRUSTED_ORIGINS = [f"http://{x}" for x in DEV_FRONTEND_ORIGINS]
-    CORS_ALLOW_CREDENTIALS = True
-    SESSION_COOKIE_SAMESITE = "Lax"
+CORS_ALLOWED_ORIGINS = DEV_CORS_ORIGINS + ANDROID_CORS_ORIGINS + IOS_CORS_ORIGINS
 
+# le schéma capacitor:// n'est pas supporté par ici
+CSRF_TRUSTED_ORIGINS = DEV_CORS_ORIGINS + ANDROID_CORS_ORIGINS
+
+CORS_ALLOW_CREDENTIALS = True
+SESSION_COOKIE_SAMESITE = "Lax"
 
 # Configuration CSP avec nonces
 SECURE_CSP = {
