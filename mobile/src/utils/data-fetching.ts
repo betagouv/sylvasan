@@ -5,20 +5,13 @@ import { useFetch } from "@vueuse/core"
 
 const adjustOptions = (options: RequestInit) => {
   const { access } = storeToRefs(useAuthStore())
-  const unsafe = ["POST", "PUT", "PATCH", "DELETE"]
-  const headers = new Headers(options.headers || {})
-  const isUnsafeMethod = unsafe.includes(
-    (options.method || "GET").toUpperCase()
-  )
 
   // Ajout de l'entête d'authorisation si le token est disponible
-  if (access.value) headers.set("Authorization", `Bearer ${access.value}`)
-
-  // JSON par défaut si non spécifié
-  if (!headers.has("Content-Type") && isUnsafeMethod)
-    headers.set("Content-Type", "application/json")
-  options.headers = headers
-
+  if (access.value) {
+    const headers = new Headers(options.headers || {})
+    if (access.value) headers.set("Authorization", `Bearer ${access.value}`)
+    options.headers = headers
+  }
   options.credentials = (import.meta.env.VITE_CREDENTIALS ||
     "same-origin") as RequestCredentials
   return options
