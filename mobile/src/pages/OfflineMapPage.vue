@@ -95,11 +95,6 @@ onMounted(async () => {
     selectionBbox.value = getBboxFromSelectionBox()
     zoomLevels.value = getZoomLevels(currentZoom.value)
   })
-
-  // map.on("move", () => {
-  //   selectionBbox.value = getBboxFromSelectionBox()
-  //   zoomLevels.value = getZoomLevels(currentZoom.value)
-  // })
 })
 
 onBeforeUnmount(() => {

@@ -40,6 +40,7 @@ const MIN_DOWNLOAD_ZOOM = 9
 const tooZoomedOut = computed(() =>
   props.zoomLevels.some((x) => x < MIN_DOWNLOAD_ZOOM)
 )
+/////////
 
 async function startDownload() {
   await download(props.boundaryBox, props.zoomLevels)
@@ -47,31 +48,29 @@ async function startDownload() {
 </script>
 
 <template>
-  <div class="offline-dl">
+  <div class="p-2">
     <template v-if="status === 'idle'">
-      <div class="offline-dl__summary">
-        <div class="offline-dl__stat">
-          <span class="offline-dl__stat-value">{{
+      <div class="flex items-center justify-center gap-4 mb-2">
+        <div class="flex flex-col">
+          <span class="stat-value">{{
             tooZoomedOut ? "-" : estimate.tiles.toLocaleString("fr-FR")
           }}</span>
-          <span class="offline-dl__stat-label">tuiles</span>
+          <span class="stat-label">tuiles</span>
         </div>
-        <div class="offline-dl__divider" aria-hidden="true" />
-        <div class="offline-dl__stat">
-          <span class="offline-dl__stat-value" v-if="tooZoomedOut">-</span>
-          <span class="offline-dl__stat-value" v-else
-            >~{{ estimateMb }} Mo</span
-          >
-          <span class="offline-dl__stat-label">estimé</span>
+        <div class="w-px h-[2rem] bg-stone-300" aria-hidden="true" />
+        <div class="flex flex-col">
+          <span class="stat-value" v-if="tooZoomedOut">-</span>
+          <span class="stat-value" v-else>~{{ estimateMb }} Mo</span>
+          <span class="stat-label">estimé</span>
         </div>
       </div>
 
-      <p class="fr-text--sm fr-mb-2w offline-dl__info" v-if="tooZoomedOut">
+      <p class="fr-text--sm fr-mb-2w" v-if="tooZoomedOut">
         <strong>Zone trop large.</strong> <br />
         Merci d'augmenter le zoom.
       </p>
 
-      <p class="fr-text--sm fr-mb-2w offline-dl__info" v-else>
+      <p class="fr-text--sm fr-mb-2w" v-else>
         La zone visible sera téléchargée aux niveaux de zoom
         <strong>{{ zoomLevels[0] }}</strong> à
         <strong>{{ zoomLevels[zoomLevels.length - 1] }}</strong>
@@ -86,23 +85,23 @@ async function startDownload() {
     </template>
 
     <template v-else-if="status === 'downloading'">
-      <div class="offline-dl__progress-header">
-        <span class="offline-dl__progress-pct"
+      <div class="flex justify-between items-baseline mb-1">
+        <span class="text-3xl font-bold text-blue-france-sun-113 leading-none"
           >{{ progress.percent }}&thinsp;%</span
         >
-        <span class="offline-dl__progress-eta">ETA&nbsp;: {{ etaLabel }}</span>
+        <span class="text-sm">ETA&nbsp;: {{ etaLabel }}</span>
       </div>
 
       <ion-progress-bar
         :value="progress.percent / 100"
         color="primary"
-        class="offline-dl__bar"
+        class="progress-bar"
       />
 
-      <div class="offline-dl__stats-row">
+      <div class="flex flex-col gap-1 text-sm">
         <span>{{ progress.downloaded }} / {{ progress.total }} tuiles</span>
         <span>{{ mbDownloaded }} Mo téléchargés</span>
-        <span v-if="progress.failed > 0" class="offline-dl__failed">
+        <span v-if="progress.failed > 0" class="failed">
           ⚠ {{ progress.failed }} erreurs (nouvelle tentative automatique)
         </span>
       </div>
@@ -164,77 +163,27 @@ async function startDownload() {
 </template>
 
 <style scoped>
-.offline-dl {
-  padding: 1rem 0;
-}
-
-/* Summary stats row */
-.offline-dl__summary {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-.offline-dl__stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-}
-.offline-dl__stat-value {
+.stat-value {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--blue-france-sun-113-625, #000091);
   line-height: 1;
 }
-.offline-dl__stat-label {
+.stat-label {
   font-size: 0.75rem;
   color: var(--grey-625-425, #666);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.offline-dl__divider {
-  width: 1px;
-  height: 2rem;
-  background: var(--grey-925-125, #ddd);
-}
 
-.offline-dl__info {
-  color: var(--grey-425-625, #555);
-}
-
-/* Progress section */
-.offline-dl__progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.5rem;
-}
-.offline-dl__progress-pct {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--blue-france-sun-113-625, #000091);
-  line-height: 1;
-}
-.offline-dl__progress-eta {
-  font-size: 0.875rem;
-  color: var(--grey-425-625, #555);
-}
-
-.offline-dl__bar {
+.progress-bar {
   --progress-background: var(--blue-france-sun-113-625, #000091);
   height: 6px;
   border-radius: 3px;
   margin-bottom: 0.75rem;
 }
 
-.offline-dl__stats-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8125rem;
-  color: var(--grey-425-625, #555);
-}
-.offline-dl__failed {
+.failed {
   color: var(--warning-425-625, #b34000);
 }
 </style>
