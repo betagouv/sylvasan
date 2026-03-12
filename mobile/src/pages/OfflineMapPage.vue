@@ -1,260 +1,193 @@
 <script setup lang="ts">
-/**
- * OfflineMapDownload.vue
- * UI for selecting and downloading an offline IGN map area.
- *
- * Usage: drop into your Ionic page. Pass a boundaryBox and zoom levels
- * (e.g. derived from the current map view), then call download.
- */
-import { computed } from "vue"
-import { IonProgressBar } from "@ionic/vue"
-import { DsfrButton, DsfrAlert } from "@gouvminint/vue-dsfr"
+import { ref, onMounted, onBeforeUnmount, computed } from "vue"
 import {
-  useOfflineMap,
-  estimateDownload,
-  type BoundaryBox,
-} from "../composables/useOfflineMap"
+  IonPage,
+  IonContent,
+  IonHeader,
+  IonToolbar,
+  IonButtons,
+  IonMenuButton,
+  IonTitle,
+} from "@ionic/vue"
+import maplibregl from "maplibre-gl"
+import "maplibre-gl/dist/maplibre-gl.css"
+import MapDownloader from "../components/MapDownloader.vue"
+import type { BoundaryBox } from "../composables/useOfflineMap"
 
-// ---------------------------------------------------------------------------
-// Props – in a real integration these come from your map component
-// ---------------------------------------------------------------------------
-const props = withDefaults(
-  defineProps<{
-    boundaryBox?: BoundaryBox
-    zoomLevels?: number[]
-    mapId?: string
-  }>(),
-  {
-    // Demo defaults – replace with real map-derived values
-    boundaryBox: () => ({
-      minLng: 2.2,
-      minLat: 48.8,
-      maxLng: 2.4,
-      maxLat: 48.9,
-    }),
-    zoomLevels: () => [10, 11, 12, 13, 14, 15, 16],
-    mapId: "map-001",
+const IGN_STYLE_URL =
+  "https://data.geopf.fr/annexes/ressources/vectorTiles/styles/PLAN.IGN/standard.json"
+
+function getZoomLevels(currentZoom: number): number[] {
+  const minZ = Math.min(16, Math.floor(currentZoom))
+  const levels: number[] = []
+  for (let z = minZ; z <= 16; z++) levels.push(z)
+  return levels
+}
+
+const mapContainer = ref<HTMLDivElement | null>(null)
+const sheetOpen = ref(false)
+const currentZoom = ref(5)
+
+const selectionBbox = ref<BoundaryBox | null>(null)
+const zoomLevels = ref<number[]>([])
+
+let map: maplibregl.Map | null = null
+
+/**
+ * // TODO : move to utils
+ * Converts a pixel point relative to the map container into LngLat.
+ * The selection box is always centred — we only need its four corners.
+ */
+function getBboxFromSelectionBox(): BoundaryBox {
+  if (!map) throw new Error("map not ready")
+
+  const el = map.getContainer()
+  const cx = el.offsetWidth / 2
+  const cy = el.offsetHeight / 2
+  const half = 120 // px — matches the CSS size of .selection-box
+
+  const sw = map.unproject([cx - half, cy + half])
+  const ne = map.unproject([cx + half, cy - half])
+
+  return {
+    minLng: sw.lng,
+    minLat: sw.lat,
+    maxLng: ne.lng,
+    maxLat: ne.lat,
   }
-)
+}
 
-// ---------------------------------------------------------------------------
-// Composable
-// ---------------------------------------------------------------------------
-const { status, progress, errorMessage, download, cancel, reset } =
-  useOfflineMap()
+function closeSheet() {
+  sheetOpen.value = false
+}
 
-const estimate = computed(() =>
-  estimateDownload(props.boundaryBox, props.zoomLevels)
-)
-const estimateMb = computed(() => (estimate.value.bytes / 1_000_000).toFixed(1))
+onMounted(async () => {
+  if (!mapContainer.value) return // TODO : est-ce que ceci peut advenir ?
 
-const etaLabel = computed(() => {
-  const s = progress.value.etaSeconds
-  if (s <= 0) return "…"
-  const m = Math.floor(s / 60)
-  const sec = s % 60
-  return m > 0 ? `${m}min ${sec}s` : `${sec}s`
+  map = new maplibregl.Map({
+    container: mapContainer.value,
+    style: IGN_STYLE_URL,
+    zoom: 5,
+    center: [2.35, 46.8], // France métropolitaine
+    maxZoom: 18.9,
+    attributionControl: false,
+  })
+
+  map.addControl(
+    new maplibregl.AttributionControl({ compact: true }),
+    "bottom-left"
+  )
+
+  map.addControl(
+    new maplibregl.NavigationControl({ showCompass: false }),
+    "bottom-right"
+  )
+
+  map.on("zoom", () => {
+    currentZoom.value = map!.getZoom()
+    selectionBbox.value = getBboxFromSelectionBox()
+    zoomLevels.value = getZoomLevels(currentZoom.value)
+  })
+
+  // Petit hack pour forcer la carte à prendre l'espace total de son div
+  // après le premier chargement
+  map.on("load", () => {
+    selectionBbox.value = getBboxFromSelectionBox()
+    zoomLevels.value = getZoomLevels(currentZoom.value)
+  })
+
+  // map.on("move", () => {
+  //   selectionBbox.value = getBboxFromSelectionBox()
+  //   zoomLevels.value = getZoomLevels(currentZoom.value)
+  // })
 })
 
-const mbDownloaded = computed(() =>
-  (progress.value.bytesStored / 1_000_000).toFixed(1)
-)
-
-// ---------------------------------------------------------------------------
-// Actions
-// ---------------------------------------------------------------------------
-async function startDownload() {
-  await download(props.boundaryBox, props.zoomLevels, props.mapId)
-}
+onBeforeUnmount(() => {
+  map?.remove()
+  map = null
+})
 </script>
 
 <template>
-  <div class="offline-dl">
-    <!-- ── IDLE ─────────────────────────────────────── -->
-    <template v-if="status === 'idle'">
-      <div class="offline-dl__summary">
-        <div class="offline-dl__stat">
-          <span class="offline-dl__stat-value">{{
-            estimate.tiles.toLocaleString("fr-FR")
-          }}</span>
-          <span class="offline-dl__stat-label">tuiles</span>
+  <ion-page class="ion-padding">
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>Cartes hors-ligne</ion-title>
+        <ion-buttons slot="start">
+          <ion-menu-button />
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content :scroll-y="false">
+      <div class="flex flex-col w-full h-full">
+        <div class="w-full h-full relative">
+          <div ref="mapContainer" class="w-full h-full" />
+
+          <!-- carré au centre de la carte -->
+          <div
+            class="absolute inset-0 flex items-center justify-center pointer-events-none"
+            aria-hidden="true"
+          >
+            <div class="selection-box">
+              <span class="selection-box__corner selection-box__corner--tl" />
+              <span class="selection-box__corner selection-box__corner--tr" />
+              <span class="selection-box__corner selection-box__corner--bl" />
+              <span class="selection-box__corner selection-box__corner--br" />
+            </div>
+          </div>
         </div>
-        <div class="offline-dl__divider" aria-hidden="true" />
-        <div class="offline-dl__stat">
-          <span class="offline-dl__stat-value">~{{ estimateMb }} Mo</span>
-          <span class="offline-dl__stat-label">estimé</span>
+        <div class="p-4 text-center">
+          <MapDownloader
+            v-if="selectionBbox && zoomLevels"
+            :boundary-box="selectionBbox"
+            :zoom-levels="zoomLevels"
+          />
         </div>
       </div>
-
-      <p class="fr-text--sm fr-mb-2w offline-dl__info">
-        La zone visible sera téléchargée aux niveaux de zoom
-        <strong>{{ zoomLevels[0] }}</strong> à
-        <strong>{{ zoomLevels[zoomLevels.length - 1] }}</strong
-        >. Un accès internet sera nécessaire pour les tuiles manquantes.
-      </p>
-
-      <DsfrButton
-        label="Télécharger la zone"
-        icon="ri-download-2-line"
-        @click="startDownload"
-      />
-    </template>
-
-    <!-- ── DOWNLOADING ───────────────────────────────── -->
-    <template v-else-if="status === 'downloading'">
-      <div class="offline-dl__progress-header">
-        <span class="offline-dl__progress-pct"
-          >{{ progress.percent }}&thinsp;%</span
-        >
-        <span class="offline-dl__progress-eta">ETA&nbsp;: {{ etaLabel }}</span>
-      </div>
-
-      <!-- Native Ionic progress bar (thin, animated) -->
-      <ion-progress-bar
-        :value="progress.percent / 100"
-        color="primary"
-        class="offline-dl__bar"
-      />
-
-      <div class="offline-dl__stats-row">
-        <span>{{ progress.downloaded }} / {{ progress.total }} tuiles</span>
-        <span>{{ mbDownloaded }} Mo téléchargés</span>
-        <span v-if="progress.failed > 0" class="offline-dl__failed">
-          ⚠ {{ progress.failed }} erreurs (nouvelle tentative automatique)
-        </span>
-      </div>
-
-      <DsfrButton
-        label="Annuler"
-        secondary
-        icon="ri-close-line"
-        class="fr-mt-2w"
-        @click="cancel"
-      />
-    </template>
-
-    <!-- ── DONE ──────────────────────────────────────── -->
-    <template v-else-if="status === 'done'">
-      <DsfrAlert
-        type="success"
-        title="Carte téléchargée"
-        :description="`${progress.downloaded} tuiles enregistrées (${mbDownloaded} Mo). La zone est maintenant disponible hors ligne.`"
-        class="fr-mb-2w"
-      />
-      <DsfrButton label="Fermer" secondary @click="reset" />
-    </template>
-
-    <!-- ── CANCELLED ─────────────────────────────────── -->
-    <template v-else-if="status === 'cancelled'">
-      <DsfrAlert
-        type="warning"
-        title="Téléchargement annulé"
-        description="Les tuiles déjà téléchargées ont été conservées. Vous pouvez reprendre le téléchargement à tout moment."
-        class="fr-mb-2w"
-      />
-      <DsfrButton
-        label="Reprendre"
-        icon="ri-download-2-line"
-        @click="startDownload"
-      />
-      <DsfrButton
-        label="Recommencer"
-        secondary
-        class="fr-ml-1w"
-        @click="reset"
-      />
-    </template>
-
-    <!-- ── ERROR ─────────────────────────────────────── -->
-    <template v-else-if="status === 'error'">
-      <DsfrAlert
-        type="error"
-        title="Échec du téléchargement"
-        :description="errorMessage ?? 'Une erreur est survenue.'"
-        class="fr-mb-2w"
-      />
-      <DsfrButton
-        label="Réessayer"
-        icon="ri-refresh-line"
-        @click="startDownload"
-      />
-      <DsfrButton label="Annuler" secondary class="fr-ml-1w" @click="reset" />
-    </template>
-  </div>
+    </ion-content>
+  </ion-page>
 </template>
 
 <style scoped>
-.offline-dl {
-  padding: 1rem 0;
+/* Carré CSS dans le centre de la carte */
+
+.selection-box {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  opacity: 0.6;
 }
 
-/* Summary stats row */
-.offline-dl__summary {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+.selection-box__corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-color: black;
+  border-style: solid;
+  border-width: 0;
 }
-.offline-dl__stat {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+.selection-box__corner--tl {
+  top: 0;
+  left: 0;
+  border-top-width: 3px;
+  border-left-width: 3px;
 }
-.offline-dl__stat-value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--blue-france-sun-113-625, #000091);
-  line-height: 1;
+.selection-box__corner--tr {
+  top: 0;
+  right: 0;
+  border-top-width: 3px;
+  border-right-width: 3px;
 }
-.offline-dl__stat-label {
-  font-size: 0.75rem;
-  color: var(--grey-625-425, #666);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.selection-box__corner--bl {
+  bottom: 0;
+  left: 0;
+  border-bottom-width: 3px;
+  border-left-width: 3px;
 }
-.offline-dl__divider {
-  width: 1px;
-  height: 2rem;
-  background: var(--grey-925-125, #ddd);
-}
-
-.offline-dl__info {
-  color: var(--grey-425-625, #555);
-}
-
-/* Progress section */
-.offline-dl__progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.5rem;
-}
-.offline-dl__progress-pct {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--blue-france-sun-113-625, #000091);
-  line-height: 1;
-}
-.offline-dl__progress-eta {
-  font-size: 0.875rem;
-  color: var(--grey-425-625, #555);
-}
-
-.offline-dl__bar {
-  --progress-background: var(--blue-france-sun-113-625, #000091);
-  height: 6px;
-  border-radius: 3px;
-  margin-bottom: 0.75rem;
-}
-
-.offline-dl__stats-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.8125rem;
-  color: var(--grey-425-625, #555);
-}
-.offline-dl__failed {
-  color: var(--warning-425-625, #b34000);
+.selection-box__corner--br {
+  bottom: 0;
+  right: 0;
+  border-bottom-width: 3px;
+  border-right-width: 3px;
 }
 </style>

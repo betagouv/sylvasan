@@ -37,17 +37,17 @@ const routes: Array<RouteRecordRaw> = [
         name: "ProfilePage",
         component: ProfilePage,
       },
+      {
+        path: "/telecharger-une-carte",
+        name: "OfflineMapPage",
+        component: OfflineMapPage,
+      },
     ],
   },
   {
     path: "/s-identifier",
     name: "LoginPage",
     component: LoginPage,
-  },
-  {
-    path: "/test-maps",
-    name: "OfflineMapPage",
-    component: OfflineMapPage,
   },
 ]
 
