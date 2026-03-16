@@ -15,7 +15,7 @@
   "dependencies": {
     "@capacitor/android": "^8.1.0",
     "@capacitor/cli": "^8.1.0",
-    "@capacitor/core": "^8.0.2",
+    "@capacitor/core": "^8.2.0",
     "@capacitor/ios": "^8.1.0",
     "@capacitor/preferences": "^8.0.1",
     "@gouvfr/dsfr": "^1.14.3",
