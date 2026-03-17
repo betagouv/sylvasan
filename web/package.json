@@ -10,7 +10,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@gouvfr/dsfr": "^1.14.3",
+    "@gouvfr/dsfr": "^1.14.4",
     "@gouvminint/vue-dsfr": "^8.15.0",
     "@tailwindcss/vite": "^4.2.1",
     "@vueuse/core": "^14.2.1",
