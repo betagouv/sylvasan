@@ -1,25 +1,20 @@
-/**
- * useOfflineMap.ts
- * Composable for downloading and managing offline IGN map tiles.
- *
- * Key improvements over IGN reference implementation:
- * - Per-tile retry with exponential backoff (avoids full restart on transient errors)
- * - Resume support: already-stored tiles are skipped on retry
- * - Reactive progress state suitable for Vue UI binding
- * - Clean abort/cancel without corrupting stored data
- */
-
 import { ref, computed } from "vue"
 import { Capacitor } from "@capacitor/core"
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem"
 import { openDB, type IDBPDatabase } from "idb"
+import type {
+  BoundaryBox,
+  DownloadProgress,
+  DownloadStatus,
+  TileCoord,
+} from "../types/maps"
 
 const CONCURRENCY = 10
 const MAX_RETRIES = 3
 const RETRY_BASE_MS = 500
 
 // Taille moyenne de chaque tuile par niveau de zoom. Valeurs prises du code IGN
-// TODO : ajouter lien vers le fichier IGN
+// https://github.com/IGNF/cartes-ign-app/blob/92fd947e6721ce5e2c4bfdac3d1ea99f993b00c1/src/js/offline-maps.js#L40
 const AVG_TILE_BYTES: Record<number, number> = {
   0: 484467,
   1: 272629,
@@ -42,45 +37,8 @@ const AVG_TILE_BYTES: Record<number, number> = {
   18: 6291,
 }
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-export interface BoundaryBox {
-  minLng: number
-  minLat: number
-  maxLng: number
-  maxLat: number
-}
-
-export interface DownloadProgress {
-  downloaded: number
-  total: number
-  failed: number
-  bytesStored: number
-  etaSeconds: number
-  percent: number
-}
-
-export type DownloadStatus =
-  | "idle"
-  | "downloading"
-  | "paused"
-  | "done"
-  | "error"
-  | "cancelled"
-
-interface TileCoord {
-  z: number
-  x: number
-  y: number
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-// TODO : understand
+// Cette fonction fait la conversion entre une coordonnée lat/lng et un niveau de zoom
+// et la position x, y de la tuile.
 const lngLatToTile = (
   lng: number,
   lat: number,
@@ -111,10 +69,6 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
     binary += String.fromCharCode(bytes[i] || 0) // TODO : Klunk to apease TS
   return btoa(binary)
 }
-
-// ---------------------------------------------------------------------------
-// Storage abstraction (Capacitor on device, IndexedDB on web)
-// ---------------------------------------------------------------------------
 
 const getWebDb = async (): Promise<IDBPDatabase> => {
   return openDB("ign-tile-store", 1, {
@@ -159,10 +113,6 @@ const storeTile = async (
   }
 }
 
-// ---------------------------------------------------------------------------
-// Core fetch with retry + exponential backoff
-// ---------------------------------------------------------------------------
-
 const fetchTileWithRetry = async (
   url: string,
   signal: AbortSignal
@@ -183,10 +133,6 @@ const fetchTileWithRetry = async (
   }
   throw lastError
 }
-
-// ---------------------------------------------------------------------------
-// Tile enumeration
-// ---------------------------------------------------------------------------
 
 const enumerateTiles = (
   boundaryBox: BoundaryBox,
@@ -224,16 +170,12 @@ export const estimateDownload = (
 ): { tiles: number; bytes: number } => {
   const tiles = enumerateTiles(boundaryBox, zoomLevels)
   const bytes = tiles.reduce(
-    (sum, { z }) => sum + (AVG_TILE_BYTES[z] ?? 50000), // TODO : understand
+    (sum, { z }) => sum + (AVG_TILE_BYTES[z] ?? 50000),
     0
   )
-  // On ajoute 33% pour l'overhead de l'encoding en base 64 // TODO : nécessaire ?
-  return { tiles: tiles.length, bytes: Math.round(bytes * 1.33) }
+  // On ajoute 25% pour l'overhead de l'encodage en base 64
+  return { tiles: tiles.length, bytes: Math.round(bytes * 1.25) }
 }
-
-// ---------------------------------------------------------------------------
-// Composable
-// ---------------------------------------------------------------------------
 
 export const useOfflineMap = () => {
   const status = ref<DownloadStatus>("idle")
@@ -339,7 +281,7 @@ export const useOfflineMap = () => {
     if (progress.value.failed > 0) {
       const failRate = progress.value.failed / progress.value.total
       if (failRate > 0.05) {
-        // >5% failure rate → treat as error // TODO : penser à une valeur acceptable
+        // >5% d'échec -> erreur
         status.value = "error"
         errorMessage.value = `${progress.value.failed} tuiles n'ont pas pu être téléchargées.`
         return false

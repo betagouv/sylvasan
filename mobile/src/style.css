@@ -48,3 +48,9 @@
   --breakpoint-xl: 1440px;
   --breakpoint-2xl: initial;
 }
+
+/* Reset pour éviter des conflits avec le DSFR */
+ion-action-sheet .action-sheet-button,
+ion-alert .alert-button {
+  box-sizing: border-box;
+}

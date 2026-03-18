@@ -5,9 +5,9 @@ import { useAuthStore } from "../stores/auth"
 import AppShell from "../pages/AppShell.vue"
 
 import ProjectsPage from "../pages/ProjectsPage.vue"
-import MapsPage from "../pages/MapsPage.vue"
+import MapsPage from "../pages/MapsPage/index.vue"
 import ProfilePage from "../pages/ProfilePage.vue"
-import OfflineMapPage from "../pages/OfflineMapPage.vue"
+import MapDownloadPage from "../pages/MapDownloadPage.vue"
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -37,17 +37,17 @@ const routes: Array<RouteRecordRaw> = [
         name: "ProfilePage",
         component: ProfilePage,
       },
-      {
-        path: "/telecharger-une-carte",
-        name: "OfflineMapPage",
-        component: OfflineMapPage,
-      },
     ],
   },
   {
     path: "/s-identifier",
     name: "LoginPage",
     component: LoginPage,
+  },
+  {
+    path: "/telecharger-une-carte",
+    name: "MapDownloadPage",
+    component: MapDownloadPage,
   },
 ]
 

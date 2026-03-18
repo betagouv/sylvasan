@@ -64,18 +64,7 @@ const logout = async () => {
               router-direction="root"
             >
               <ion-icon slot="start" :icon="navigateCircleOutline" />
-              <ion-label>Cartes</ion-label>
-            </ion-item>
-          </ion-menu-toggle>
-
-          <ion-menu-toggle :auto-hide="true">
-            <ion-item
-              button
-              router-link="/telecharger-une-carte"
-              router-direction="root"
-            >
-              <ion-icon slot="start" :icon="navigateCircleOutline" />
-              <ion-label>Gestion de cartes</ion-label>
+              <ion-label>Cartes hors ligne</ion-label>
             </ion-item>
           </ion-menu-toggle>
 

@@ -1,22 +1,40 @@
 <script setup lang="ts">
 /**
- * UI pour télécharger une zone de la carte
+ * MapDownloader.vue
+ * UI pour télécharger une zone de la carte.
+ * Sauvegarde les métadonnées à la fin du téléchargement.
  */
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { IonProgressBar } from "@ionic/vue"
-import { DsfrButton, DsfrAlert } from "@gouvminint/vue-dsfr"
 import {
   useOfflineMap,
   estimateDownload,
   type BoundaryBox,
 } from "../composables/useOfflineMap"
+import {
+  saveMapRecord,
+  generateMapId,
+  type OfflineMapRecord,
+} from "../composables/offlineMapMetadata" // TODO Move to composable
 
 const props = defineProps<{
   boundaryBox: BoundaryBox
   zoomLevels: number[]
 }>()
+
+const emit = defineEmits<{
+  saved: [record: OfflineMapRecord]
+}>()
+
 const { status, progress, errorMessage, download, cancel, reset } =
   useOfflineMap()
+
+// ── Name input (shown in 'done' state) ───────────────────────────────────────
+
+const mapName = ref("")
+const nameError = ref<string | null>(null)
+// Generated once per download session, stable across retries
+let currentMapId = generateMapId()
 
 const estimate = computed(() =>
   estimateDownload(props.boundaryBox, props.zoomLevels)
@@ -35,45 +53,74 @@ const mbDownloaded = computed(() =>
   (progress.value.bytesStored / 1_000_000).toFixed(1)
 )
 
-// Gestion du niveau de zoom minimale autorisé
 const MIN_DOWNLOAD_ZOOM = 9
 const tooZoomedOut = computed(() =>
   props.zoomLevels.some((x) => x < MIN_DOWNLOAD_ZOOM)
 )
-/////////
+
+// ── Actions ───────────────────────────────────────────────────────────────────
 
 async function startDownload() {
+  currentMapId = generateMapId()
+  mapName.value = `Carte du ${new Date().toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+  })}`
   await download(props.boundaryBox, props.zoomLevels)
+}
+
+async function confirmSave() {
+  const name = mapName.value.trim()
+  if (!name) {
+    nameError.value = "Veuillez donner un nom à cette carte."
+    return
+  }
+  nameError.value = null
+
+  const record: OfflineMapRecord = {
+    id: currentMapId,
+    name,
+    createdAt: new Date().toISOString(),
+    tiles: progress.value.downloaded,
+    bytes: progress.value.bytesStored,
+    boundaryBox: props.boundaryBox,
+    zoomLevels: props.zoomLevels,
+  }
+
+  await saveMapRecord(record)
+  emit("saved", record)
+  reset()
 }
 </script>
 
 <template>
   <div class="p-2">
+    <!-- ── IDLE ──────────────────────────────────────────────────────────── -->
     <template v-if="status === 'idle'">
       <div class="flex items-center justify-center gap-4 mb-2">
         <div class="flex flex-col">
           <span class="stat-value">{{
-            tooZoomedOut ? "-" : estimate.tiles.toLocaleString("fr-FR")
+            tooZoomedOut ? "—" : estimate.tiles.toLocaleString("fr-FR")
           }}</span>
           <span class="stat-label">tuiles</span>
         </div>
         <div class="w-px h-[2rem] bg-stone-300" aria-hidden="true" />
         <div class="flex flex-col">
-          <span class="stat-value" v-if="tooZoomedOut">-</span>
-          <span class="stat-value" v-else>~{{ estimateMb }} Mo</span>
+          <span class="stat-value">{{
+            tooZoomedOut ? "—" : `~${estimateMb} Mo`
+          }}</span>
           <span class="stat-label">estimé</span>
         </div>
       </div>
 
       <p class="fr-text--sm fr-mb-2w" v-if="tooZoomedOut">
-        <strong>Zone trop large.</strong> <br />
-        Merci d'augmenter le zoom.
+        <strong>Zone trop large.</strong><br />Merci d'augmenter le zoom.
       </p>
-
       <p class="fr-text--sm fr-mb-2w" v-else>
         La zone visible sera téléchargée aux niveaux de zoom
         <strong>{{ zoomLevels[0] }}</strong> à
-        <strong>{{ zoomLevels[zoomLevels.length - 1] }}</strong>
+        <strong>{{ zoomLevels[zoomLevels.length - 1] }}</strong
+        >.
       </p>
 
       <DsfrButton
@@ -84,12 +131,13 @@ async function startDownload() {
       />
     </template>
 
+    <!-- ── DOWNLOADING ───────────────────────────────────────────────────── -->
     <template v-else-if="status === 'downloading'">
       <div class="flex justify-between items-baseline mb-1">
-        <span class="text-3xl font-bold text-blue-france-sun-113 leading-none"
-          >{{ progress.percent }}&thinsp;%</span
-        >
-        <span class="text-sm">ETA&nbsp;: {{ etaLabel }}</span>
+        <span class="text-3xl font-bold leading-none" style="color: #000091">
+          {{ progress.percent }}&thinsp;%
+        </span>
+        <span class="text-sm text-stone-500">ETA&nbsp;: {{ etaLabel }}</span>
       </div>
 
       <ion-progress-bar
@@ -115,16 +163,34 @@ async function startDownload() {
       />
     </template>
 
+    <!-- ── DONE → naming step ────────────────────────────────────────────── -->
     <template v-else-if="status === 'done'">
-      <DsfrAlert
-        type="success"
-        title="Carte téléchargée"
-        :description="`${progress.downloaded} tuiles enregistrées (${mbDownloaded} Mo). La zone est maintenant disponible hors ligne.`"
-        class="fr-mb-2w"
-      />
-      <DsfrButton label="Fermer" secondary @click="reset" />
+      <p class="fr-text--sm fr-mb-1w text-stone-600">
+        {{ progress.downloaded }} tuiles téléchargées ({{ mbDownloaded }} Mo).
+        Donnez un nom à cette carte pour la retrouver facilement.
+      </p>
+
+      <DsfrInputGroup :error-message="nameError ?? undefined">
+        <DsfrInput
+          v-model="mapName"
+          label="Nom de la carte"
+          label-visible
+          @keyup.enter="confirmSave"
+          class="box-border!"
+        />
+      </DsfrInputGroup>
+
+      <div class="flex gap-2 fr-mt-2w">
+        <DsfrButton
+          label="Enregistrer"
+          icon="ri-save-line"
+          @click="confirmSave"
+        />
+        <DsfrButton label="Ignorer" secondary @click="reset" />
+      </div>
     </template>
 
+    <!-- ── CANCELLED ─────────────────────────────────────────────────────── -->
     <template v-else-if="status === 'cancelled'">
       <DsfrAlert
         type="warning"
@@ -145,6 +211,7 @@ async function startDownload() {
       />
     </template>
 
+    <!-- ── ERROR ─────────────────────────────────────────────────────────── -->
     <template v-else-if="status === 'error'">
       <DsfrAlert
         type="error"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from "vue"
+import { ref, onMounted, onBeforeUnmount } from "vue"
 import {
   IonPage,
   IonContent,
@@ -13,7 +13,8 @@ import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import MapDownloader from "../components/MapDownloader.vue"
 import type { BoundaryBox } from "../composables/useOfflineMap"
-
+import { useIonRouter } from "@ionic/vue"
+const router = useIonRouter()
 const IGN_STYLE_URL =
   "https://data.geopf.fr/annexes/ressources/vectorTiles/styles/PLAN.IGN/standard.json"
 
@@ -55,10 +56,6 @@ function getBboxFromSelectionBox(): BoundaryBox {
     maxLng: ne.lng,
     maxLat: ne.lat,
   }
-}
-
-function closeSheet() {
-  sheetOpen.value = false
 }
 
 onMounted(async () => {
@@ -107,7 +104,7 @@ onBeforeUnmount(() => {
   <ion-page class="ion-padding">
     <ion-header>
       <ion-toolbar>
-        <ion-title>Cartes hors-ligne</ion-title>
+        <ion-title>Téléchargez une zone</ion-title>
         <ion-buttons slot="start">
           <ion-menu-button />
         </ion-buttons>
@@ -131,11 +128,12 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
-        <div class="p-4 text-center">
+        <div class="p-4 text-center border-t border-gray-200">
           <MapDownloader
             v-if="selectionBbox && zoomLevels"
             :boundary-box="selectionBbox"
             :zoom-levels="zoomLevels"
+            @saved="router.back()"
           />
         </div>
       </div>
