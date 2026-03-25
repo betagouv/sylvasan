@@ -1,10 +1,5 @@
-/**
- * useOfflineMaps.ts  (plural — list management)
- *
- * Complements useOfflineMap (singular — download logic).
- * Provides reactive state for the list of saved maps,
- * plus rename and delete operations including tile cleanup.
- */
+// Cet composable aide à la liste des cartes téléchargées et
+// offre la possibilité de les supprimer ou modifier
 
 import { ref } from "vue"
 import { Capacitor } from "@capacitor/core"
@@ -14,10 +9,10 @@ import {
   loadAllMapRecords,
   deleteMapRecord,
   renameMapRecord,
-  type OfflineMapRecord,
-} from "./offlineMapMetadata" // TODO : Rename en camelcase?
+} from "./offlineMapMetadata"
 
-// TODO : Put this in a helper/util - I think it is also used in useOfflineMap
+import type { OfflineMapRecord } from "../types/maps"
+
 function enumerateTileKeys(record: OfflineMapRecord): string[] {
   const { boundaryBox, zoomLevels } = record
   const keys: string[] = []
@@ -41,13 +36,11 @@ function enumerateTileKeys(record: OfflineMapRecord): string[] {
   return keys
 }
 
-// ── Tile deletion ─────────────────────────────────────────────────────────────
-// TODO : Bug  on counting tiles to avoid overlap deleting
-
 async function deleteTilesForMap(record: OfflineMapRecord): Promise<void> {
   const keysToDelete = new Set(enumerateTileKeys(record))
 
-  // Load all other maps and remove any key they also reference
+  // Pour éviter de supprimer des tuiles utilisées par d'autres cartes
+  // téléchargées, on vérifie les autres cartes
   const allRecords = await loadAllMapRecords()
   for (const other of allRecords) {
     if (other.id === record.id) continue
@@ -56,7 +49,8 @@ async function deleteTilesForMap(record: OfflineMapRecord): Promise<void> {
     }
   }
 
-  // Only delete tiles not referenced by any other map
+  // On ne supprime que les tuiles qui ne sont pas référencées par d'autres
+  // cartes
   if (Capacitor.isNativePlatform()) {
     await Promise.allSettled(
       [...keysToDelete].map((key) =>
@@ -75,8 +69,6 @@ async function deleteTilesForMap(record: OfflineMapRecord): Promise<void> {
     await tx.done
   }
 }
-
-// ── Composable ────────────────────────────────────────────────────────────────
 
 export function useOfflineMaps() {
   const maps = ref<OfflineMapRecord[]>([])
@@ -100,7 +92,6 @@ export function useOfflineMaps() {
     const record = maps.value.find((m) => m.id === id)
     if (!record) return
     try {
-      // Remove tiles from storage first, then metadata
       await deleteTilesForMap(record)
       await deleteMapRecord(id)
       maps.value = maps.value.filter((m) => m.id !== id)

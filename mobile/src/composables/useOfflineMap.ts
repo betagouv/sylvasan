@@ -66,7 +66,7 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
   const bytes = new Uint8Array(buffer)
   let binary = ""
   for (let i = 0; i < bytes.byteLength; i++)
-    binary += String.fromCharCode(bytes[i] || 0) // TODO : Klunk to apease TS
+    binary += String.fromCharCode(bytes[i] || 0) // TODO : Petit hack pour enlever une warning TS
   return btoa(binary)
 }
 
@@ -121,7 +121,7 @@ const fetchTileWithRetry = async (
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     if (signal.aborted) throw new DOMException("Aborted", "AbortError")
     try {
-      const response = await fetch(url, { signal }) // TODO: understand this signal
+      const response = await fetch(url, { signal })
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       return await response.arrayBuffer()
     } catch (err) {
@@ -189,7 +189,7 @@ export const useOfflineMap = () => {
   })
   const errorMessage = ref<string | null>(null)
 
-  let abortController = new AbortController() // TODO: understand abort controller
+  let abortController = new AbortController()
   let db: IDBPDatabase | undefined
 
   const isDownloading = computed(() => status.value === "downloading")

@@ -1,10 +1,6 @@
-/**
- * offlineMapMetadata.ts
- *
- * Persistence layer for offline map metadata.
- * Tile data lives in Filesystem/IndexedDB (handled by useOfflineMap).
- * Metadata (name, date, size, bbox) lives in @capacitor/preferences
- */
+// Persistence pour les metadonnées d'une carte téléchargée
+// Les tuiles sont dans Filesystem/IndexedDB. Les metadonnées
+// sont dans @capacitor/preferences
 
 import { Preferences } from "@capacitor/preferences"
 import type { OfflineMapRecord } from "../types/maps"
@@ -58,7 +54,6 @@ export function generateMapId(): string {
   return `map_${Date.now()}`
 }
 
-// TODO : Utilisé ailleurs, p-e exporter dans un utils
 export function formatBytes(bytes: number): string {
   if (bytes < 1_000) return `${bytes} o`
   if (bytes < 1_000_000) return `${(bytes / 1_000).toFixed(0)} Ko`

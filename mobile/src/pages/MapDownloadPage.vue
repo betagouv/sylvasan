@@ -12,7 +12,7 @@ import {
 import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import MapDownloader from "../components/MapDownloader.vue"
-import type { BoundaryBox } from "../composables/useOfflineMap"
+import type { BoundaryBox } from "../types/maps"
 import { useIonRouter } from "@ionic/vue"
 const router = useIonRouter()
 const IGN_STYLE_URL =
@@ -26,7 +26,6 @@ function getZoomLevels(currentZoom: number): number[] {
 }
 
 const mapContainer = ref<HTMLDivElement | null>(null)
-const sheetOpen = ref(false)
 const currentZoom = ref(5)
 
 const selectionBbox = ref<BoundaryBox | null>(null)
@@ -34,18 +33,14 @@ const zoomLevels = ref<number[]>([])
 
 let map: maplibregl.Map | null = null
 
-/**
- * // TODO : move to utils
- * Converts a pixel point relative to the map container into LngLat.
- * The selection box is always centred — we only need its four corners.
- */
+// Conversion d'un point à lon/lat
 function getBboxFromSelectionBox(): BoundaryBox {
   if (!map) throw new Error("map not ready")
 
   const el = map.getContainer()
   const cx = el.offsetWidth / 2
   const cy = el.offsetHeight / 2
-  const half = 120 // px — matches the CSS size of .selection-box
+  const half = 120 // px — doit être la taille du .selection-box
 
   const sw = map.unproject([cx - half, cy + half])
   const ne = map.unproject([cx + half, cy - half])
@@ -59,13 +54,16 @@ function getBboxFromSelectionBox(): BoundaryBox {
 }
 
 onMounted(async () => {
-  if (!mapContainer.value) return // TODO : est-ce que ceci peut advenir ?
+  // Check pour apaiser TypeScript
+  if (!mapContainer.value) return
+
+  const hexagone: maplibregl.LngLatLike = [2.35, 46.8]
 
   map = new maplibregl.Map({
     container: mapContainer.value,
     style: IGN_STYLE_URL,
     zoom: 5,
-    center: [2.35, 46.8], // France métropolitaine
+    center: hexagone,
     maxZoom: 18.9,
     attributionControl: false,
   })

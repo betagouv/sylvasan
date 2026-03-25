@@ -1,21 +1,12 @@
 <script setup lang="ts">
-/**
- * MapDownloader.vue
- * UI pour télécharger une zone de la carte.
- * Sauvegarde les métadonnées à la fin du téléchargement.
- */
+// UI pour télécharger une zone de la carte.
+// Sauvegarde les métadonnées à la fin du téléchargement.
+
 import { computed, ref } from "vue"
 import { IonProgressBar } from "@ionic/vue"
-import {
-  useOfflineMap,
-  estimateDownload,
-  type BoundaryBox,
-} from "../composables/useOfflineMap"
-import {
-  saveMapRecord,
-  generateMapId,
-  type OfflineMapRecord,
-} from "../composables/offlineMapMetadata" // TODO Move to composable
+import type { BoundaryBox, OfflineMapRecord } from "../types/maps"
+import { useOfflineMap, estimateDownload } from "../composables/useOfflineMap"
+import { saveMapRecord, generateMapId } from "../composables/offlineMapMetadata"
 
 const props = defineProps<{
   boundaryBox: BoundaryBox
@@ -29,11 +20,9 @@ const emit = defineEmits<{
 const { status, progress, errorMessage, download, cancel, reset } =
   useOfflineMap()
 
-// ── Name input (shown in 'done' state) ───────────────────────────────────────
-
 const mapName = ref("")
 const nameError = ref<string | null>(null)
-// Generated once per download session, stable across retries
+
 let currentMapId = generateMapId()
 
 const estimate = computed(() =>
@@ -57,8 +46,6 @@ const MIN_DOWNLOAD_ZOOM = 9
 const tooZoomedOut = computed(() =>
   props.zoomLevels.some((x) => x < MIN_DOWNLOAD_ZOOM)
 )
-
-// ── Actions ───────────────────────────────────────────────────────────────────
 
 async function startDownload() {
   currentMapId = generateMapId()
@@ -95,7 +82,6 @@ async function confirmSave() {
 
 <template>
   <div class="p-2">
-    <!-- ── IDLE ──────────────────────────────────────────────────────────── -->
     <template v-if="status === 'idle'">
       <div class="flex items-center justify-center gap-4 mb-2">
         <div class="flex flex-col">
@@ -131,7 +117,6 @@ async function confirmSave() {
       />
     </template>
 
-    <!-- ── DOWNLOADING ───────────────────────────────────────────────────── -->
     <template v-else-if="status === 'downloading'">
       <div class="flex justify-between items-baseline mb-1">
         <span class="text-3xl font-bold leading-none" style="color: #000091">
@@ -163,7 +148,6 @@ async function confirmSave() {
       />
     </template>
 
-    <!-- ── DONE → naming step ────────────────────────────────────────────── -->
     <template v-else-if="status === 'done'">
       <p class="fr-text--sm fr-mb-1w text-stone-600">
         {{ progress.downloaded }} tuiles téléchargées ({{ mbDownloaded }} Mo).
@@ -190,7 +174,6 @@ async function confirmSave() {
       </div>
     </template>
 
-    <!-- ── CANCELLED ─────────────────────────────────────────────────────── -->
     <template v-else-if="status === 'cancelled'">
       <DsfrAlert
         type="warning"
@@ -211,7 +194,6 @@ async function confirmSave() {
       />
     </template>
 
-    <!-- ── ERROR ─────────────────────────────────────────────────────────── -->
     <template v-else-if="status === 'error'">
       <DsfrAlert
         type="error"
