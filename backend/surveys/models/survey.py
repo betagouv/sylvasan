@@ -19,7 +19,7 @@ class Survey(TimeStampable, Deactivable):
     )
     pole = models.ForeignKey(Pole, related_name="surveys", on_delete=models.SET_NULL, null=True, blank=True)
 
-    title = models.CharField(max_length=255, verbose_name="titre")
+    title = models.CharField("titre")
     json_schema = models.JSONField(verbose_name="schéma JSON", null=True, blank=True)
 
     created_by = models.ForeignKey(

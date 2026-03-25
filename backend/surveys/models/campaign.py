@@ -8,7 +8,7 @@ class Campaign(TimeStampable, Deactivable):
     class Meta:
         verbose_name = "campagne"
 
-    title = models.CharField(max_length=255, verbose_name="titre")
+    title = models.CharField("titre")
 
     start_date = models.DateTimeField(verbose_name="date de début", null=True, blank=True)
     end_date = models.DateTimeField(verbose_name="date de fin", null=True, blank=True)

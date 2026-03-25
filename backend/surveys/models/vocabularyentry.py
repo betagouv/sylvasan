@@ -9,6 +9,6 @@ class VocabularyEntry(models.Model):
         unique_together = ("vocabulary_set", "code")
 
     vocabulary_set = models.ForeignKey(VocabularySet, related_name="entries", on_delete=models.CASCADE)
-    code = models.CharField(max_length=255)
-    label = models.TextField()
+    code = models.CharField()
+    label = models.CharField()
     position = models.IntegerField(null=True, blank=True)
