@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { downloadOutline, mapOutline } from "ionicons/icons"
+import { mapOutline } from "ionicons/icons"
 
 import { useIonRouter, IonIcon } from "@ionic/vue"
 

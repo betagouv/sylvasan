@@ -20,11 +20,10 @@ import MapListItem from "./MapListItem.vue"
 import MapListLoading from "./MapListLoading.vue"
 import MapListError from "./MapListError.vue"
 import MapListEmpty from "./MapListEmpty.vue"
-import {
-  formatBytes,
-  type OfflineMapRecord,
-} from "../../composables/offlineMapMetadata"
+import { formatBytes } from "../../composables/offlineMapMetadata"
 import { useIonRouter } from "@ionic/vue"
+
+import type { OfflineMapRecord } from "../../types/maps"
 
 const router = useIonRouter()
 const { maps, loading, error, loadMaps, deleteMap, renameMap } =

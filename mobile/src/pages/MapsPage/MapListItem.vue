@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import { eyeOutline } from "ionicons/icons"
-import {
-  formatBytes,
-  formatDate,
-  type OfflineMapRecord,
-} from "../../composables/offlineMapMetadata"
+import { formatBytes, formatDate } from "../../composables/offlineMapMetadata"
+import type { OfflineMapRecord } from "../../types/maps"
 
 const { map } = defineProps<{
   map: OfflineMapRecord
