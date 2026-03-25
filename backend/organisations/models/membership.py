@@ -28,3 +28,6 @@ class Membership(TimeStampable):
     # Si besoin de restreindre le rôle à un pôle de l'organisation cette colonne doit être remplie
     pole = models.ForeignKey(Pole, related_name="memberships", null=True, blank=True, on_delete=models.CASCADE)
     membership_type = models.CharField(choices=MembershipType, verbose_name="type de rôle")
+
+    def __str__(self):
+        return f"{self.user} – {self.organisation} ({self.membership_type})"

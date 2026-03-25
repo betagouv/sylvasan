@@ -15,3 +15,6 @@ class Campaign(TimeStampable, Deactivable):
 
     organisation = models.ForeignKey(Organisation, related_name="campaigns", on_delete=models.CASCADE)
     pole = models.ForeignKey(Pole, related_name="campaigns", on_delete=models.SET_NULL, null=True, blank=True)
+
+    def __str__(self):
+        return self.title

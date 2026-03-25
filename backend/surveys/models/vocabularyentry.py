@@ -12,3 +12,6 @@ class VocabularyEntry(models.Model):
     code = models.CharField()
     label = models.CharField()
     position = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"

@@ -11,3 +11,6 @@ class Pole(TimeStampable, Deactivable):
 
     name = models.CharField("nom")
     organisation = models.ForeignKey(Organisation, related_name="poles", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name

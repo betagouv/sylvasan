@@ -35,6 +35,9 @@ class Survey(TimeStampable, Deactivable):
 
     campaign = models.ForeignKey(Campaign, verbose_name="campagne", on_delete=models.SET_NULL, null=True, blank=True)
 
+    def __str__(self):
+        return self.title
+
     def clean(self):
         if self.campaign:
             if self.organisation != self.campaign.organisation or self.pole != self.campaign.pole:

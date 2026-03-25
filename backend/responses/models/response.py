@@ -28,3 +28,6 @@ class Response(TimeStampable):
     # Pour des informations supplémentaires nécessaires dans des enquêtes plus complexes. Par
     # example, on pourrait avoir ici les arbres assignés à une personne
     context = models.JSONField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.survey} – {self.get_status_display()}"
