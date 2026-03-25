@@ -64,7 +64,7 @@ const logout = async () => {
               router-direction="root"
             >
               <ion-icon slot="start" :icon="navigateCircleOutline" />
-              <ion-label>Cartes</ion-label>
+              <ion-label>Cartes hors ligne</ion-label>
             </ion-item>
           </ion-menu-toggle>
 

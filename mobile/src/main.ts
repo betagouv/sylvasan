@@ -14,6 +14,8 @@ import "@ionic/vue/css/core.css"
 // import "@ionic/vue/css/structure.css"
 // import "@ionic/vue/css/typography.css"
 
+import "maplibre-gl/dist/maplibre-gl.css"
+
 const pinia = createPinia()
 const app = createApp(App).use(pinia).use(VueDsfr).use(IonicVue)
 
