@@ -3,10 +3,11 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 
+from django.utils.csp import CSP
+
 import environ
 import sentry_sdk
 from botocore.client import Config as BotoConfig
-from django.utils.csp import CSP
 from sentry_sdk.integrations.django import DjangoIntegration
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -43,6 +44,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "users",
     "common",
+    "organisations",
+    "responses",
+    "surveys",
+    "organisation_specific.dsf",
 ]
 
 MIDDLEWARE = [
