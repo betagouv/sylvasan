@@ -3,10 +3,11 @@ import sys
 from datetime import timedelta
 from pathlib import Path
 
+from django.utils.csp import CSP
+
 import environ
 import sentry_sdk
 from botocore.client import Config as BotoConfig
-from django.utils.csp import CSP
 from sentry_sdk.integrations.django import DjangoIntegration
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -40,9 +41,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "simple_history",
     "rest_framework",
     "users",
     "common",
+    "organisations",
+    "responses",
+    "surveys",
+    "organisation_specific.dsf",
 ]
 
 MIDDLEWARE = [
@@ -53,6 +59,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
