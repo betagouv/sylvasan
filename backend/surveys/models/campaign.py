@@ -1,10 +1,10 @@
 from django.db import models
 
-from common.behaviours import Deactivable, TimeStampable
+from common.behaviours import Deactivable, Historisable, TimeStampable
 from organisations.models import Organisation, Pole
 
 
-class Campaign(TimeStampable, Deactivable):
+class Campaign(TimeStampable, Deactivable, Historisable):
     class Meta:
         verbose_name = "campagne"
 

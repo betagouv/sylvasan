@@ -1,5 +1,7 @@
 from django.db import models
 
+from simple_history.models import HistoricalRecords
+
 
 class TimeStampable(models.Model):
     class Meta:
@@ -14,3 +16,10 @@ class Deactivable(models.Model):
         abstract = True
 
     is_active = models.BooleanField(default=True)
+
+
+class Historisable(models.Model):
+    class Meta:
+        abstract = True
+
+    history = HistoricalRecords(inherit=True)

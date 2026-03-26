@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from common.behaviours import TimeStampable
+from common.behaviours import Historisable, TimeStampable
 from surveys.models import Survey
 
 
@@ -11,7 +11,7 @@ class ResponseStatus(models.TextChoices):
     EXPORTED = "exported", "Exporté"
 
 
-class Response(TimeStampable):
+class Response(TimeStampable, Historisable):
     survey = models.ForeignKey(Survey, related_name="responses", verbose_name="enquête", on_delete=models.CASCADE)
     respondant = models.ForeignKey(
         get_user_model(),

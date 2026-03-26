@@ -1,9 +1,10 @@
 from django.db import models
 
+from common.behaviours import Historisable
 from organisations.models import Organisation
 
 
-class VocabularySet(models.Model):
+class VocabularySet(Historisable):
     class Meta:
         verbose_name = "set de vocabulaire"
         unique_together = ("organisation", "code")

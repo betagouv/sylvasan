@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from common.behaviours import Deactivable, TimeStampable
+from common.behaviours import Deactivable, Historisable, TimeStampable
 from organisations.models import Organisation, Pole
 
 from surveys.surveytype import SurveyType
@@ -10,7 +10,7 @@ from surveys.surveytype import SurveyType
 from .campaign import Campaign
 
 
-class Survey(TimeStampable, Deactivable):
+class Survey(TimeStampable, Deactivable, Historisable):
     class Meta:
         verbose_name = "enquête"
 
