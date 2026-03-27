@@ -14,6 +14,7 @@ class MembershipType(models.TextChoices):
 
 
 class Membership(TimeStampable):
+    # TODO : unique constraint on org/pole/user ?
     class Meta:
         verbose_name = "rôle"
 
