@@ -24,6 +24,11 @@ const actions = [
     description: "Visualisez les réponses soumises de votre part",
     link: { name: "/HomePage" },
   },
+  {
+    title: "Créer une enquête",
+    description: "Créez une nouvelle enquête",
+    link: { name: "/FormCreationPage/" },
+  },
 ]
 
 const userActions = [
