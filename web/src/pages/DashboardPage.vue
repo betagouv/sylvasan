@@ -13,21 +13,17 @@ import { useRootStore } from "../stores/root"
 import { storeToRefs } from "pinia"
 const { loggedUser } = storeToRefs(useRootStore())
 
+// TODO : filter by role
 const actions = [
-  {
-    title: "Mes formulaires",
-    description: "Consultez et créez des nouveaux formulaires à publier",
-    link: { name: "/HomePage" },
-  },
-  {
-    title: "Mes contributions",
-    description: "Visualisez les réponses soumises de votre part",
-    link: { name: "/HomePage" },
-  },
   {
     title: "Créer une enquête",
     description: "Créez une nouvelle enquête",
     link: { name: "/FormCreationPage/" },
+  },
+  {
+    title: "Mes enquêtes",
+    description: "Toutes mes enquêtes",
+    link: { name: "/SurveyListPage/" },
   },
 ]
 

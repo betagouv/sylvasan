@@ -47,7 +47,7 @@ const createSurvey = async () => {
   const { response } = await useApiFetch("/surveys/").post(payload).json()
   if (response.value?.ok) {
     toast.show("Enquête créée", "success")
-    router.push({ name: "/HomePage" })
+    router.push({ name: "/DashboardPage" })
   } else {
     toast.show("Une erreur s'est produite", "error")
   }
@@ -58,7 +58,7 @@ const createSurvey = async () => {
   <div class="fr-container">
     <DsfrBreadcrumb
       :links="[
-        { to: '/DashboardPage', text: 'Dashboard' },
+        { to: '/dashboard', text: 'Dashboard' },
         { text: 'Création d\'enquête' },
       ]"
     />

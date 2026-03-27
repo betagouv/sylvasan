@@ -96,6 +96,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/SurveyListPage/': RouteRecordInfo<
+      '/SurveyListPage/',
+      '/enquetes',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -166,6 +173,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/LoginPage.vue': {
       routes:
         | '/LoginPage'
+      views:
+        | never
+    }
+    'src/pages/SurveyListPage/index.vue': {
+      routes:
+        | '/SurveyListPage/'
       views:
         | never
     }
