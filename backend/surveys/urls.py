@@ -5,7 +5,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 import surveys.views as views
 
 urlpatterns = {
-    path("api/surveys/", views.SurveyCreateAPIView.as_view(), name="create_survey"),
+    path("api/surveys/", views.SurveyListCreateAPIView.as_view(), name="survey_list_create"),
 }
 
 urlpatterns = format_suffix_patterns(urlpatterns)

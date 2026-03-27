@@ -1,1 +1,1 @@
-from .survey import SurveyCreateAPIView
+from .survey import SurveyListCreateAPIView
