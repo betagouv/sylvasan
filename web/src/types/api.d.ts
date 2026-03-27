@@ -1,6 +1,16 @@
+type Organisation = {
+  id: number
+  name: string
+}
+
+type Pole = {
+  id: number
+  name: string
+}
+
 type Membership = {
-  organisation: number
-  pole: number | null
+  organisation: Organisation
+  pole: Pole | null
   membershipType: string
 }
 
@@ -12,4 +22,4 @@ type LoggedUser = {
   memberships: Membership[]
 }
 
-export { LoggedUser, Membership }
+export { LoggedUser, Membership, Organisation, Pole }

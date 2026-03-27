@@ -7,4 +7,4 @@ from surveys.models import Survey
 
 @admin.register(Survey)
 class SurveyAdmin(SimpleHistoryAdmin):
-    list_display = ("title", "organisation", "pole", "created_by")
+    list_display = ("title", "organisation", "pole", "created_by", "creation_date")

@@ -43,6 +43,7 @@ class TestUserApi(APITestCase):
         self.assertEqual(len(json_response["memberships"]), 1)
 
         membership_data = json_response["memberships"][0]
-        self.assertEqual(membership_data["organisation"], membership.organisation.id)
+        self.assertEqual(membership_data["organisation"]["id"], membership.organisation.id)
+        self.assertEqual(membership_data["organisation"]["name"], membership.organisation.name)
         self.assertIsNone(membership_data["pole"])
         self.assertEqual(membership_data["membershipType"], membership.membership_type)
