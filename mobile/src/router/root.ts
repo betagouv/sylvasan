@@ -4,7 +4,8 @@ import type { RouteRecordRaw } from "vue-router"
 import { useAuthStore } from "../stores/auth"
 import AppShell from "../pages/AppShell.vue"
 
-import ProjectsPage from "../pages/ProjectsPage.vue"
+import SurveyListPage from "../pages/SurveyListPage.vue"
+import SurveyPage from "../pages/SurveyPage.vue"
 import MapsPage from "../pages/MapsPage/index.vue"
 import ProfilePage from "../pages/ProfilePage.vue"
 import MapDownloadPage from "../pages/MapDownloadPage.vue"
@@ -24,8 +25,8 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: "projets",
-        name: "ProjectsPage",
-        component: ProjectsPage,
+        name: "SurveyListPage",
+        component: SurveyListPage,
       },
       {
         path: "gestion-des-cartes",
@@ -49,6 +50,11 @@ const routes: Array<RouteRecordRaw> = [
     name: "MapDownloadPage",
     component: MapDownloadPage,
   },
+  {
+    path: "/enquete/:id",
+    name: "SurveyPage",
+    component: SurveyPage,
+  },
 ]
 
 const router = createRouter({
@@ -62,7 +68,7 @@ router.beforeEach(async (to) => {
   if (!authStore.isLoggedIn && to.name !== "LoginPage")
     return { name: "LoginPage" }
   if (authStore.isLoggedIn && to.name === "LoginPage")
-    return { name: "ProjectsPage" }
+    return { name: "SurveyListPage" }
 })
 
 export default router

@@ -31,7 +31,7 @@ const submit = async () => {
   try {
     const validatedData = validator.parse(payload.value)
     await authStore.login(validatedData.username, validatedData.password)
-    router.push({ name: "ProjectsPage" })
+    router.push({ name: "SurveyListPage" })
     resetFields()
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)

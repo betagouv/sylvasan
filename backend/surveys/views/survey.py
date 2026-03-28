@@ -1,7 +1,7 @@
 from django.db.models import Q
 
 from organisations.models import Membership
-from rest_framework.generics import ListCreateAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from surveys.models import Survey
@@ -25,3 +25,7 @@ class SurveyListCreateAPIView(ListCreateAPIView):
         pole_ids = Membership.objects.filter(user=user, pole__isnull=False).values_list("pole_id", flat=True)
 
         return Survey.objects.filter(Q(organisation_id__in=org_ids) | Q(pole_id__in=pole_ids))
+
+
+class SurveyRetrieveAPIView(RetrieveAPIView):
+    serializer_class = SurveySerializer

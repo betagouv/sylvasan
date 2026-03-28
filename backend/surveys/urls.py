@@ -6,6 +6,7 @@ import surveys.views as views
 
 urlpatterns = {
     path("api/surveys/", views.SurveyListCreateAPIView.as_view(), name="survey_list_create"),
+    path("api/surveys/<int:pk>", views.SurveyListCreateAPIView.as_view(), name="survey_list_create"),
 }
 
 urlpatterns = format_suffix_patterns(urlpatterns)
