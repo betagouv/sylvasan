@@ -2,6 +2,7 @@
 import { computed } from "vue"
 import { useRoute } from "vue-router"
 import { useSurveysStore } from "../stores/surveys"
+import { useAuthStore } from "../stores/auth"
 import {
   IonPage,
   IonHeader,
@@ -17,11 +18,18 @@ import { useApiFetch } from "../utils/data-fetching"
 const router = useIonRouter()
 const route = useRoute()
 const store = useSurveysStore()
+const authStore = useAuthStore()
 
 const survey = computed(() => store.getSurveyById(Number(route.params.id)))
 
 const saveResponse = async (data: object) => {
-  const { response } = await useApiFetch("/responses/").post(data).json()
+  const { response } = await useApiFetch("/responses/")
+    .post({
+      survey: Number(route.params.id),
+      respondant: authStore.loggedUser?.id,
+      data,
+    })
+    .json()
   if (response.value?.ok) {
     alert("Votre réponse a été envoyée")
     router.navigate({ name: "SurveyListPage" }, "back", "replace")
