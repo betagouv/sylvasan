@@ -109,6 +109,8 @@ venv.bak/
 # certificates
 *.pem
 
+node_modules
+
 .DS_Store
 web/node_modules
 web/dist/**/*
