@@ -13,6 +13,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@sylvasan/shared": "*",
     "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^8.2.0",
     "@capacitor/core": "^8.0.2",

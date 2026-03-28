@@ -10,6 +10,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@sylvasan/shared": "*",
     "@gouvfr/dsfr": "^1.14.4",
     "@gouvminint/vue-dsfr": "^8.15.0",
     "@tailwindcss/vite": "^4.2.1",

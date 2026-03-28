@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, computed } from "vue"
 import { DsfrInput } from "@gouvminint/vue-dsfr"
-import type { SurveySchema, SurveyField } from "../types/survey"
+import type { SurveySchema, SurveyField } from "@sylvasan/shared"
 
 const props = defineProps<{
   schema: SurveySchema
@@ -32,7 +32,7 @@ function handleSubmit() {
       <DsfrInput
         v-for="field in textFields"
         :key="field.id"
-        v-model="formData[field.id]"
+        v-model="formData[field.id] as string"
         :label="field.label"
         :required="field.required ?? false"
         :label-visible="true"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import type { SurveyField } from "../../types/survey"
+import type { SurveyField } from "@sylvasan/shared"
 import * as z from "zod"
 import { ZodError } from "zod"
 import { DsfrInputGroup } from "@gouvminint/vue-dsfr"
