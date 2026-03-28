@@ -13,7 +13,7 @@ import { useIonRouter } from "@ionic/vue"
 
 const router = useIonRouter()
 const surveysStore = useSurveysStore()
-const { surveys, syncing } = storeToRefs(surveysStore)
+const { surveys } = storeToRefs(surveysStore)
 
 function openSurvey(id: number) {
   router.push({ name: "SurveyPage", params: { id } })

@@ -12,7 +12,7 @@ updates:
       - "backend"
 
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/web"
     target-branch: "staging"
     schedule:
       interval: "weekly"
@@ -20,6 +20,18 @@ updates:
       default-days: 7
     labels:
       - "dependencies"
+      - "web"
+
+  - package-ecosystem: "npm"
+    directory: "/mobile"
+    target-branch: "staging"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+    labels:
+      - "dependencies"
+      - "mobile"
 
   - package-ecosystem: "github-actions"
     directory: "/"
