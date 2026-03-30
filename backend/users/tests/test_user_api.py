@@ -1,6 +1,8 @@
-from common.utils import authenticate
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+
+from common.utils import authenticate
+from organisations.factories import MembershipFactory
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -25,3 +27,23 @@ class TestUserApi(APITestCase):
         self.assertEqual(json_response["firstName"], authenticate.user.first_name)
         self.assertEqual(json_response["lastName"], authenticate.user.last_name)
         self.assertEqual(json_response["username"], authenticate.user.username)
+        self.assertEqual(json_response["memberships"], [])
+
+    @authenticate
+    def test_me_authenticated_returns_memberships(self):
+        """
+        L'endpoint /me retourne les rôles de l'utilisateur connecté
+        """
+        membership = MembershipFactory(user=authenticate.user)
+
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        json_response = response.json()
+        self.assertEqual(len(json_response["memberships"]), 1)
+
+        membership_data = json_response["memberships"][0]
+        self.assertEqual(membership_data["organisation"]["id"], membership.organisation.id)
+        self.assertEqual(membership_data["organisation"]["name"], membership.organisation.name)
+        self.assertIsNone(membership_data["pole"])
+        self.assertEqual(membership_data["membershipType"], membership.membership_type)

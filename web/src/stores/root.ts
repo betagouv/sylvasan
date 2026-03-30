@@ -1,6 +1,6 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
-import type { LoggedUser } from "../types/api"
+import type { LoggedUser } from "@shared-types/api"
 import { useApiFetch } from "../utils/data-fetching"
 
 export const useRootStore = defineStore("root", () => {

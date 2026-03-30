@@ -11,7 +11,7 @@ import {
   renameMapRecord,
 } from "./offlineMapMetadata"
 
-import type { OfflineMapRecord } from "../types/maps"
+import type { OfflineMapRecord } from "@shared-types/maps"
 
 function enumerateTileKeys(record: OfflineMapRecord): string[] {
   const { boundaryBox, zoomLevels } = record

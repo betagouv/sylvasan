@@ -14,7 +14,7 @@ import ImageAttribution from "../components/ImageAttribution.vue"
 </script>
 
 <template>
-  <div class="">
+  <div>
     <div class="bg-blue-france-975 relative inset-shadow-sm">
       <img
         class="hidden md:block absolute w-60 opacity-25 top-0 right-0 md:right-0 lg:right-10 xl:right-50"

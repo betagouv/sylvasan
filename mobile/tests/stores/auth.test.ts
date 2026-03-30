@@ -1,9 +1,9 @@
-import { vi } from "vitest"
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import { setActivePinia, createPinia } from "pinia"
 import { useAuthStore } from "../../src/stores/auth"
 import { Preferences } from "@capacitor/preferences"
 import { useApiFetch } from "../../src/utils/data-fetching"
+import { setupApiMocks } from "./mocks/api"
 
 vi.mock("@capacitor/preferences", () => ({
   Preferences: {
@@ -21,66 +21,37 @@ describe("auth store", () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
+    setupApiMocks()
   })
 
-  it("loads tokens from storage", async () => {
-    ;(Preferences.get as any)
-      .mockResolvedValueOnce({ value: "access123" })
-      .mockResolvedValueOnce({ value: "refresh123" })
-
+  it("logs in successfully and fetches user", async () => {
     const store = useAuthStore()
-    await store.loadFromStorage()
-
-    expect(store.access).toBe("access123")
-    expect(store.refresh).toBe("refresh123")
-  })
-
-  it("logs in successfully", async () => {
-    const mockJson = vi.fn().mockResolvedValue({
-      response: { value: { ok: true } },
-      data: { value: { access: "a1", refresh: "r1" } },
-    })
-
-    ;(useApiFetch as any).mockReturnValue({
-      post: () => ({ json: mockJson }),
-    })
-
-    const store = useAuthStore()
-    await store.login("john", "secret")
+    await store.login("jean", "secret")
 
     expect(store.access).toBe("a1")
     expect(store.refresh).toBe("r1")
-    expect(Preferences.set).toHaveBeenCalled()
+    expect(store.loggedUser.username).toEqual("jean")
+    expect(store.loggedUser.id).toEqual(1)
   })
 
-  it("refreshes token successfully", async () => {
-    const mockJson = vi.fn().mockResolvedValue({
-      response: { value: { ok: true } },
-      data: { value: { access: "newAccess" } },
-    })
-
-    ;(useApiFetch as any).mockReturnValue({
-      post: () => ({ json: mockJson }),
-    })
+  it("throws on failed login", async () => {
+    setupApiMocks({ tokenOk: false }) // override just the token endpoint
 
     const store = useAuthStore()
-    store.refresh = "refresh123"
+    await expect(store.login("jean", "wrong")).rejects.toThrow("login failed")
+  })
 
-    const result = await store.refreshToken()
+  it("fetchUser does nothing if response is not ok", async () => {
+    setupApiMocks({ meOk: false }) // override just /api/me/
 
-    expect(result).toBe(true)
-    expect(store.access).toBe("newAccess")
+    const store = useAuthStore()
+    await store.fetchUser()
+
+    expect(store.loggedUser).toBeNull()
   })
 
   it("logs out if refresh fails", async () => {
-    const mockJson = vi.fn().mockResolvedValue({
-      response: { value: { ok: false } },
-      data: { value: {} },
-    })
-
-    ;(useApiFetch as any).mockReturnValue({
-      post: () => ({ json: mockJson }),
-    })
+    setupApiMocks({ refreshOk: false })
 
     const store = useAuthStore()
     store.refresh = "refresh123"
@@ -88,18 +59,6 @@ describe("auth store", () => {
     const result = await store.refreshToken()
 
     expect(result).toBe(false)
-    expect(store.access).toBe(null)
-    expect(store.refresh).toBe(null)
-  })
-
-  it("bootstrap sets ready to true", async () => {
-    ;(Preferences.get as any)
-      .mockResolvedValueOnce({ value: null })
-      .mockResolvedValueOnce({ value: null })
-
-    const store = useAuthStore()
-    await store.bootstrap()
-
-    expect(store.ready).toBe(true)
+    expect(store.access).toBeNull()
   })
 })

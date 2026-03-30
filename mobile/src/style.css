@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" layer(utilities);
 
 @theme {
   --color-blue-france-main-525: #6a6af4;
@@ -53,4 +53,17 @@
 ion-action-sheet .action-sheet-button,
 ion-alert .alert-button {
   box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+ion-content {
+  --padding-top: 1rem;
+  --padding-bottom: 1rem;
+  --padding-start: 1rem;
+  --padding-end: 1rem;
 }

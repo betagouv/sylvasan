@@ -5,7 +5,7 @@ const store = useToastStore()
 
 <template>
   <div
-    class="fixed top-1 right-1 d-flex flex-col gap-2 z-9999 bg-white"
+    class="fixed top-1 right-1 flex flex-col gap-2 z-9999 bg-white"
     aria-live="polite"
   >
     <TransitionGroup name="toast">

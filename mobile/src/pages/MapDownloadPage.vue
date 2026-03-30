@@ -12,7 +12,7 @@ import {
 import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import MapDownloader from "../components/MapDownloader.vue"
-import type { BoundaryBox } from "../types/maps"
+import type { BoundaryBox } from "@shared-types/maps"
 import { useIonRouter } from "@ionic/vue"
 const router = useIonRouter()
 const IGN_STYLE_URL =

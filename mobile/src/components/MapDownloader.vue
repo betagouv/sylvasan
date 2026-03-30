@@ -4,7 +4,7 @@
 
 import { computed, ref } from "vue"
 import { IonProgressBar } from "@ionic/vue"
-import type { BoundaryBox, OfflineMapRecord } from "../types/maps"
+import type { BoundaryBox, OfflineMapRecord } from "@shared-types/maps"
 import { useOfflineMap, estimateDownload } from "../composables/useOfflineMap"
 import { saveMapRecord, generateMapId } from "../composables/offlineMapMetadata"
 

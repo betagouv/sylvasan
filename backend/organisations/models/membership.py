@@ -16,6 +16,7 @@ class MembershipType(models.TextChoices):
 class Membership(TimeStampable):
     class Meta:
         verbose_name = "rôle"
+        unique_together = ("organisation", "user", "pole", "membership_type")
 
     user = models.ForeignKey(
         get_user_model(),
@@ -30,4 +31,4 @@ class Membership(TimeStampable):
     membership_type = models.CharField(choices=MembershipType, verbose_name="type de rôle")
 
     def __str__(self):
-        return f"{self.user} – {self.organisation} ({self.membership_type})"
+        return f"{self.user} – {self.organisation} ({self.pole or 'tous les poles'}) ({self.membership_type})"

@@ -21,8 +21,13 @@ const app = createApp(App).use(pinia).use(VueDsfr).use(IonicVue)
 
 import { useAuthStore } from "./stores/auth"
 const auth = useAuthStore()
-
 await auth.bootstrap()
+
+import { useSurveysStore } from "./stores/surveys"
+const surveys = useSurveysStore()
+if (auth.isLoggedIn) {
+  await surveys.bootstrap()
+}
 
 import router from "./router/root"
 app.use(router)

@@ -1,0 +1,164 @@
+{
+  "$defs": {
+    "compound_condition": {
+      "additionalProperties": false,
+      "properties": {
+        "conditions": {
+          "items": {
+            "$ref": "#/$defs/condition"
+          },
+          "minItems": 2,
+          "type": "array"
+        },
+        "operator": {
+          "enum": [
+            "and",
+            "or"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "operator",
+        "conditions"
+      ],
+      "type": "object"
+    },
+    "condition": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/simple_condition"
+        },
+        {
+          "$ref": "#/$defs/compound_condition"
+        }
+      ]
+    },
+    "field": {
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "$ref": "#/$defs/condition"
+        },
+        "id": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "type": "string"
+        },
+        "label": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        },
+        "validation": {
+          "additionalProperties": false,
+          "properties": {
+            "max": {
+              "type": "number"
+            },
+            "maxLength": {
+              "type": "integer"
+            },
+            "min": {
+              "type": "number"
+            },
+            "minLength": {
+              "type": "integer"
+            },
+            "required_if": {
+              "$ref": "#/$defs/condition"
+            }
+          },
+          "type": "object"
+        },
+        "vocabulary": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "label"
+      ],
+      "type": "object"
+    },
+    "page": {
+      "additionalProperties": false,
+      "properties": {
+        "fields": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "id": {
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "fields"
+      ],
+      "type": "object"
+    },
+    "simple_condition": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "operator": {
+          "enum": [
+            "eq",
+            "neq",
+            "in",
+            "not_in"
+          ],
+          "type": "string"
+        },
+        "value": {}
+      },
+      "required": [
+        "field",
+        "operator",
+        "value"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "fields": {
+      "items": {
+        "$ref": "#/$defs/field"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "pages": {
+      "items": {
+        "$ref": "#/$defs/page"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "version": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "version",
+    "fields"
+  ],
+  "type": "object"
+}

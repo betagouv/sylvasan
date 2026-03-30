@@ -9,20 +9,25 @@
 </route>
 
 <script setup lang="ts">
+import { computed } from "vue"
 import { useRootStore } from "../stores/root"
 import { storeToRefs } from "pinia"
 const { loggedUser } = storeToRefs(useRootStore())
 
-const actions = [
+const userIsAdmin = computed(() =>
+  loggedUser.value?.memberships.find((x) => x.membershipType === "admin")
+)
+
+const adminActions = [
   {
-    title: "Mes formulaires",
-    description: "Consultez et créez des nouveaux formulaires à publier",
-    link: { name: "/HomePage" },
+    title: "Créer une enquête",
+    description: "Créez une nouvelle enquête",
+    link: { name: "/FormCreationPage/" },
   },
   {
-    title: "Mes contributions",
-    description: "Visualisez les réponses soumises de votre part",
-    link: { name: "/HomePage" },
+    title: "Mes enquêtes",
+    description: "Toutes mes enquêtes",
+    link: { name: "/SurveyListPage/" },
   },
 ]
 
@@ -53,7 +58,8 @@ const userActions = [
     <h1 class="fr-h6">Mon tableau de bord</h1>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <DsfrCard
-        v-for="(action, index) in actions"
+        v-for="(action, index) in adminActions"
+        v-if="userIsAdmin"
         :key="`${action.title}-${index}`"
         :title="action.title"
         :description="action.description"

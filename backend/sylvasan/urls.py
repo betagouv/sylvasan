@@ -6,4 +6,6 @@ from django.urls import path
 urlpatterns = [
     path(f"platform/{settings.ADMIN_URL}/", admin.site.urls),
     path("platform/", include("users.urls")),
+    path("platform/", include("surveys.urls")),
+    path("platform/", include("responses.urls")),
 ]
