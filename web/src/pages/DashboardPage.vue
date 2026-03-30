@@ -9,12 +9,16 @@
 </route>
 
 <script setup lang="ts">
+import { computed } from "vue"
 import { useRootStore } from "../stores/root"
 import { storeToRefs } from "pinia"
 const { loggedUser } = storeToRefs(useRootStore())
 
-// TODO : filter by role
-const actions = [
+const userIsAdmin = computed(() =>
+  loggedUser.value?.memberships.find((x) => x.membershipType === "admin")
+)
+
+const adminActions = [
   {
     title: "Créer une enquête",
     description: "Créez une nouvelle enquête",
@@ -54,7 +58,8 @@ const userActions = [
     <h1 class="fr-h6">Mon tableau de bord</h1>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <DsfrCard
-        v-for="(action, index) in actions"
+        v-for="(action, index) in adminActions"
+        v-if="userIsAdmin"
         :key="`${action.title}-${index}`"
         :title="action.title"
         :description="action.description"

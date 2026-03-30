@@ -15,19 +15,21 @@ import {
 } from "@ionic/vue"
 import SurveyRenderer from "../components/SurveyRenderer.vue"
 import { useApiFetch } from "../utils/data-fetching"
+import { storeToRefs } from "pinia"
 
 const router = useIonRouter()
 const route = useRoute()
 const store = useSurveysStore()
 const authStore = useAuthStore()
 
+const { loggedUser } = storeToRefs(authStore)
 const survey = computed(() => store.getSurveyById(Number(route.params.id)))
 
 const saveResponse = async (data: object) => {
   const { response } = await useApiFetch("/responses/")
     .post({
       survey: Number(route.params.id),
-      respondant: authStore.loggedUser?.id,
+      respondant: loggedUser.value?.id,
       data,
     })
     .json()
