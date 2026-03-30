@@ -34,6 +34,8 @@ export const setupApiMocks = ({
   meData = mockUser,
   refreshOk = true,
   refreshData = { access: "newAccess" },
+  surveyOk = true,
+  surveysData = [],
 } = {}) => {
   ;(useApiFetch as ReturnType<typeof vi.fn>).mockImplementation(
     (url: string) => {
@@ -41,6 +43,7 @@ export const setupApiMocks = ({
       if (url === "/mobile/token/refresh/")
         return makePostMock(refreshOk, refreshData)
       if (url === "/auth/me/") return makeGetMock(meOk, meData)
+      if (url === "/surveys/") return makeGetMock(surveyOk, surveysData)
       throw new Error(`Unexpected useApiFetch call with URL: ${url}`)
     }
   )
