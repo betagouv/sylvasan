@@ -2,6 +2,7 @@ import { defineStore } from "pinia"
 import { Preferences } from "@capacitor/preferences"
 import { useApiFetch } from "../utils/data-fetching"
 import type { LoggedUser } from "@shared-types/api"
+import { useSurveysStore } from "./surveys"
 
 const ACCESS_KEY = "auth_access"
 const REFRESH_KEY = "auth_refresh"
@@ -79,6 +80,10 @@ export const useAuthStore = defineStore("auth", {
       this.refresh = data.value.refresh
 
       await Promise.all([this.persist(), this.fetchUser()])
+
+      // Fetch les enquêtes
+      const surveyStore = useSurveysStore()
+      await surveyStore.sync()
     },
 
     async refreshToken() {

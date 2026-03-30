@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { reactive, computed } from "vue"
-import { DsfrInput } from "@gouvminint/vue-dsfr"
 import type { SurveySchema, SurveyField } from "@shared-types/survey"
 
 const props = defineProps<{
@@ -28,17 +27,15 @@ function handleSubmit() {
 
 <template>
   <form @submit.prevent="handleSubmit">
-    <div class="fr-form-group">
+    <DsfrInputGroup v-for="field in textFields" :key="field.id">
       <DsfrInput
-        v-for="field in textFields"
-        :key="field.id"
         v-model="formData[field.id]"
         :label="field.label"
         :required="field.required ?? false"
         :label-visible="true"
       />
-    </div>
+    </DsfrInputGroup>
 
-    <DsfrButton type="submit" label="Soumettre" class="fr-mt-3w" />
+    <DsfrButton type="submit" label="Soumettre" />
   </form>
 </template>

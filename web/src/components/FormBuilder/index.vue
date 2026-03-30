@@ -8,9 +8,16 @@ const schema = defineModel<SurveySchema>({ required: true })
 
 const modalOpened = ref(false)
 
-const addField = (field: SurveyField) => schema.value.fields.push(field)
-const removeField = (fieldId: string) =>
-  (schema.value.fields = schema.value.fields.filter((x) => x.id !== fieldId))
+const addField = (field: SurveyField) => {
+  schema.value = { ...schema.value, fields: [...schema.value.fields, field] }
+  closeModal()
+}
+const removeField = (fieldId: string) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.filter((x) => x.id !== fieldId),
+  }
+}
 const closeModal = () => (modalOpened.value = false)
 </script>
 
@@ -29,7 +36,7 @@ const closeModal = () => (modalOpened.value = false)
       />
     </div>
     <DsfrModal :opened="modalOpened" @close="closeModal">
-      <NewFieldModal @add="(f) => addField(f) && closeModal()" />
+      <NewFieldModal @add="(f) => addField(f)" />
     </DsfrModal>
   </div>
 </template>

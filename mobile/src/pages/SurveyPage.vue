@@ -10,6 +10,7 @@ import {
   IonContent,
   IonButtons,
   IonBackButton,
+  IonTitle,
   useIonRouter,
 } from "@ionic/vue"
 import SurveyRenderer from "../components/SurveyRenderer.vue"
@@ -43,6 +44,9 @@ const saveResponse = async (data: object) => {
   <ion-page>
     <ion-header>
       <ion-toolbar>
+        <ion-title>
+          {{ survey?.title }}
+        </ion-title>
         <ion-buttons slot="start">
           <ion-back-button :default-href="{ name: 'SurveyListPage' }" />
         </ion-buttons>
@@ -53,7 +57,6 @@ const saveResponse = async (data: object) => {
     <ion-content class="ion-padding">
       <div v-if="!survey">Enquête introuvable.</div>
       <div v-else class="box-border! p-4!">
-        <h1>{{ survey.title }}</h1>
         <SurveyRenderer :schema="survey.jsonSchema" @submit="saveResponse" />
       </div>
     </ion-content>
