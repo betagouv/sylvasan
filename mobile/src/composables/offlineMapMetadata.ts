@@ -3,7 +3,7 @@
 // sont dans @capacitor/preferences
 
 import { Preferences } from "@capacitor/preferences"
-import type { OfflineMapRecord } from "../types/maps"
+import type { OfflineMapRecord } from "@shared-types/maps"
 
 const MAPS_INDEX_KEY = "offline_maps_index"
 

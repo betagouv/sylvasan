@@ -1,7 +1,7 @@
 import { defineStore } from "pinia"
 import { Preferences } from "@capacitor/preferences"
 import { useApiFetch } from "../utils/data-fetching"
-import type { LoggedUser } from "../types/api"
+import type { LoggedUser } from "@shared-types/api"
 
 const ACCESS_KEY = "auth_access"
 const REFRESH_KEY = "auth_refresh"

@@ -1,7 +1,7 @@
 import { defineStore } from "pinia"
 import { Preferences } from "@capacitor/preferences"
 import { useApiFetch } from "../utils/data-fetching"
-import type { SurveySchema } from "../types/survey"
+import type { SurveySchema } from "@shared-types/survey"
 
 const SURVEYS_KEY = "surveys_cache"
 const SURVEYS_SYNCED_AT_KEY = "surveys_synced_at"

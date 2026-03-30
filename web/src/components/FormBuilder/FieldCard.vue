@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SurveyField } from "../../types/survey"
+import type { SurveyField } from "@shared-types/survey"
 
 const { field } = defineProps<{ field: SurveyField }>()
 const emit = defineEmits(["delete"])

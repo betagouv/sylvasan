@@ -23,7 +23,7 @@ import MapListEmpty from "./MapListEmpty.vue"
 import { formatBytes } from "../../composables/offlineMapMetadata"
 import { useIonRouter } from "@ionic/vue"
 
-import type { OfflineMapRecord } from "../../types/maps"
+import type { OfflineMapRecord } from "@shared-types/maps"
 
 const router = useIonRouter()
 const { maps, loading, error, loadMaps, deleteMap, renameMap } =

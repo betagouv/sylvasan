@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { formatBytes, formatDate } from "../../composables/offlineMapMetadata"
-import type { OfflineMapRecord } from "../../types/maps"
+import type { OfflineMapRecord } from "@shared-types/maps"
 
 const { map } = defineProps<{
   map: OfflineMapRecord

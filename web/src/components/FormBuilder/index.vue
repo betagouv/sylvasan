@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue"
-import type { SurveySchema, SurveyField } from "../../types/survey"
+import type { SurveySchema, SurveyField } from "@shared-types/survey"
 import NewFieldModal from "./NewFieldModal.vue"
 import FieldCard from "./FieldCard.vue"
 

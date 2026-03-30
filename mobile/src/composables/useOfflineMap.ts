@@ -7,7 +7,7 @@ import type {
   DownloadProgress,
   DownloadStatus,
   TileCoord,
-} from "../types/maps"
+} from "@shared-types/maps"
 
 const CONCURRENCY = 10
 const MAX_RETRIES = 3

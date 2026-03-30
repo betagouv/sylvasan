@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import FormBuilder from "../../components/FormBuilder/index.vue"
-import type { SurveySchema } from "../../types/survey"
+import type { SurveySchema } from "@shared-types/survey"
 import { DsfrBreadcrumb } from "@gouvminint/vue-dsfr"
 import { useApiFetch } from "../../utils/data-fetching"
 import { useToastStore } from "../../stores/toast"
