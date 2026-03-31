@@ -6,6 +6,12 @@ import path from "path"
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
+  css: {
+    lightningcss: {
+      // Fix d'un bug de lightningCSS décrit ici : https://github.com/parcel-bundler/lightningcss/issues/214
+      errorRecovery: true,
+    },
+  },
   resolve: {
     alias: {
       "@shared-types": path.resolve(__dirname, "../shared/types"),
