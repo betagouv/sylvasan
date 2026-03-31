@@ -19,7 +19,12 @@ const rows = computed(() =>
   responses.value?.map((response: Response) => ({
     rowData: [
       response.id,
-      response.survey.title,
+      {
+        component: "router-link",
+        text: `${response.survey.title}`,
+        class: "font-bold",
+        to: { name: "/ResponsePage/", params: { id: response.id } },
+      },
       `${response.respondant?.firstName} ${response.respondant?.lastName}`,
       `${new Date(response.creationDate).toLocaleDateString("fr-FR", {
         day: "numeric",

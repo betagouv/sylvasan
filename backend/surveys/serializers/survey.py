@@ -16,6 +16,7 @@ class SurveyDisplaySerializer(serializers.ModelSerializer):
             "pole_name",
             "title",
             "campaign_title",
+            "creation_date",
         )
         read_only_fields = fields
 

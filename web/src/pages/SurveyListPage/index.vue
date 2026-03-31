@@ -10,8 +10,38 @@
 
 <script setup lang="ts">
 import { useApiFetch } from "../../utils/data-fetching"
+import { computed } from "vue"
+import type { SurveyDisplay } from "@shared-types/api"
 
 const { data: surveys } = useApiFetch("/surveys/").get().json()
+
+const rows = computed(() =>
+  surveys.value?.map((survey: SurveyDisplay) => ({
+    rowData: [
+      survey.id,
+      {
+        component: "router-link",
+        text: survey.title,
+        class: "font-bold",
+        to: { name: "/SurveyPage/", params: { id: survey.id } },
+      },
+      survey.organisationName,
+      survey.poleName,
+      `${new Date(survey.creationDate).toLocaleDateString("fr-FR", {
+        day: "numeric",
+        month: "long",
+      })}`,
+    ],
+  }))
+)
+
+const headers = [
+  { text: "ID", headerAttrs: { id: "th-id" } },
+  { text: "Titre", headerAttrs: { id: "th-title" } },
+  { text: "Organisation", headerAttrs: { id: "th-organisation" } },
+  { text: "Pole", headerAttrs: { id: "th-pole" } },
+  { text: "Date de création", headerAttrs: { id: "th-creation-date" } },
+]
 </script>
 
 <template>
@@ -22,24 +52,12 @@ const { data: surveys } = useApiFetch("/surveys/").get().json()
         { text: 'Mes enquêtes' },
       ]"
     />
-    <h1 class="fr-h4">Mes enquêtes</h1>
-    <div class="flex flex-col gap-6 my-2">
-      <div
-        v-for="survey in surveys"
-        :key="`survey-${survey.id}`"
-        class="border p-4 rounded border-slate-200"
-      >
-        <h5 class="mb-0!">{{ survey.title }}</h5>
-
-        <ul>
-          <li
-            v-for="field in survey.jsonSchema.fields"
-            :key="`field-${survey.id}-${field.id}`"
-          >
-            {{ field.label }} (type « {{ field.type }} »)
-          </li>
-        </ul>
-      </div>
-    </div>
+    <DsfrTable :rows="rows" :headers="headers" />
   </div>
 </template>
+
+<style scoped>
+.fr-table :deep(table) {
+  @apply table!;
+}
+</style>
