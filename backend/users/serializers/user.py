@@ -1,7 +1,17 @@
+from organisations.serializers import MembershipSerializer
 from rest_framework import serializers
 
-from organisations.serializers import MembershipSerializer
 from users.models import User
+
+
+class UserDisplaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "first_name",
+            "last_name",
+        )
 
 
 class SimpleUserSerializer(serializers.ModelSerializer):
@@ -9,4 +19,10 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("id", "first_name", "last_name", "username", "memberships")
+        fields = (
+            "id",
+            "first_name",
+            "last_name",
+            "username",
+            "memberships",
+        )

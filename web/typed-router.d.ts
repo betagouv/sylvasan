@@ -89,6 +89,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/ResponseListPage/': RouteRecordInfo<
+      '/ResponseListPage/',
+      '/reponses',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/LoginPage': RouteRecordInfo<
       '/LoginPage',
       '/s-identifier',
@@ -167,6 +174,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/NotFoundPage.vue': {
       routes:
         | '/NotFoundPage'
+      views:
+        | never
+    }
+    'src/pages/ResponseListPage/index.vue': {
+      routes:
+        | '/ResponseListPage/'
       views:
         | never
     }

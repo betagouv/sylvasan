@@ -23,7 +23,7 @@ class TestCreateResponse(APITestCase):
         """
         survey = SurveyFactory()
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             {"survey": survey.id, "data": {}},
             format="json",
         )
@@ -36,7 +36,7 @@ class TestCreateResponse(APITestCase):
         """
         survey = SurveyFactory()
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             response_payload(survey, authenticate.user),
             format="json",
         )
@@ -52,7 +52,7 @@ class TestCreateResponse(APITestCase):
             user=authenticate.user, organisation=survey.organisation, membership_type=MembershipType.ADMIN
         )
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             response_payload(survey, authenticate.user),
             format="json",
         )
@@ -68,7 +68,7 @@ class TestCreateResponse(APITestCase):
             user=authenticate.user, organisation=survey.organisation, membership_type=MembershipType.MANAGER
         )
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             response_payload(survey, authenticate.user),
             format="json",
         )
@@ -84,7 +84,7 @@ class TestCreateResponse(APITestCase):
             user=authenticate.user, organisation=survey.organisation, membership_type=MembershipType.RESPONDER
         )
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             response_payload(survey, authenticate.user),
             format="json",
         )
@@ -100,7 +100,7 @@ class TestCreateResponse(APITestCase):
         survey = SurveyFactory(organisation=org, pole=pole)
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             response_payload(survey, authenticate.user),
             format="json",
         )
@@ -115,7 +115,7 @@ class TestCreateResponse(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
         other_survey = SurveyFactory()
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             response_payload(other_survey, authenticate.user),
             format="json",
         )
@@ -133,7 +133,7 @@ class TestCreateResponse(APITestCase):
             user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER
         )
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             response_payload(survey, authenticate.user),
             format="json",
         )
@@ -151,7 +151,7 @@ class TestCreateResponse(APITestCase):
             user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER
         )
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             response_payload(survey, authenticate.user),
             format="json",
         )
@@ -170,7 +170,7 @@ class TestCreateResponse(APITestCase):
             user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER
         )
         response = self.client.post(
-            reverse("response_create"),
+            reverse("response_list_create"),
             response_payload(survey, authenticate.user),
             format="json",
         )
