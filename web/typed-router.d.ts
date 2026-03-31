@@ -96,6 +96,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/ResponsePage/': RouteRecordInfo<
+      '/ResponsePage/',
+      '/response/:id',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/LoginPage': RouteRecordInfo<
       '/LoginPage',
       '/s-identifier',
@@ -106,6 +113,13 @@ declare module 'vue-router/auto-routes' {
     '/SurveyListPage/': RouteRecordInfo<
       '/SurveyListPage/',
       '/enquetes',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/SurveyPage/': RouteRecordInfo<
+      '/SurveyPage/',
+      '/enquete/:id',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -183,6 +197,12 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
+    'src/pages/ResponsePage/index.vue': {
+      routes:
+        | '/ResponsePage/'
+      views:
+        | never
+    }
     'src/pages/LoginPage.vue': {
       routes:
         | '/LoginPage'
@@ -192,6 +212,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/SurveyListPage/index.vue': {
       routes:
         | '/SurveyListPage/'
+      views:
+        | never
+    }
+    'src/pages/SurveyPage/index.vue': {
+      routes:
+        | '/SurveyPage/'
       views:
         | never
     }

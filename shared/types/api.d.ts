@@ -28,6 +28,7 @@ type SurveyDisplay = {
   organisationName: string | null
   poleName: string | null
   campaignTitle: string | null
+  creationDate: string
 }
 
 type UserDisplay = {

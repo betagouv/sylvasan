@@ -1,16 +1,15 @@
 from django.db.models import Q
+
+from organisations.models import Membership, MembershipType
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from organisations.models import Membership, MembershipType
 from responses.models import Response
 from responses.permissions import CanCreateResponse
 from responses.serializers import ResponseDisplaySerializer, ResponseSerializer
 
 
 class ResponseListCreateAPIView(ListCreateAPIView):
-    serializer_class = ResponseSerializer
-
     def get_serializer_class(self):
         if self.request.method == "GET":
             return ResponseDisplaySerializer
