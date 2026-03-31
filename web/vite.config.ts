@@ -10,6 +10,12 @@ export default defineConfig(({ mode }) => ({
     noExternal: mode === "development" ? ["vue-router"] : [],
   },
   plugins: [VueRouter(), vue(), tailwindcss()],
+  css: {
+    lightningcss: {
+      // Fix d'un bug de lightningCSS décrit ici : https://github.com/parcel-bundler/lightningcss/issues/214
+      errorRecovery: true,
+    },
+  },
   base: "/",
   resolve: {
     alias: {
