@@ -22,4 +22,37 @@ type LoggedUser = {
   memberships: Membership[]
 }
 
-export { LoggedUser, Membership, Organisation, Pole }
+type SurveyDisplay = {
+  id: number
+  title: string
+  organisationName: string | null
+  poleName: string | null
+  campaignTitle: string | null
+}
+
+type UserDisplay = {
+  id: number
+  firstName: string
+  lastName: string
+}
+
+type ResponseStatus = "draft" | "submitted" | "exported"
+
+type Response = {
+  id: number
+  survey: SurveyDisplay
+  respondant: UserDisplay | null
+  status: ResponseStatus
+  creationDate: string
+}
+
+export {
+  LoggedUser,
+  Membership,
+  Organisation,
+  Pole,
+  Response,
+  ResponseStatus,
+  SurveyDisplay,
+  UserDisplay,
+}

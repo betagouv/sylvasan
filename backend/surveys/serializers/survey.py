@@ -3,6 +3,23 @@ from rest_framework import serializers
 from surveys.models import Survey
 
 
+class SurveyDisplaySerializer(serializers.ModelSerializer):
+    organisation_name = serializers.CharField(source="organisation.name", allow_null=True)
+    pole_name = serializers.CharField(source="pole.name", allow_null=True)
+    campaign_title = serializers.CharField(source="campaigne.title", allow_null=True)
+
+    class Meta:
+        model = Survey
+        fields = (
+            "id",
+            "organisation_name",
+            "pole_name",
+            "title",
+            "campaign_title",
+        )
+        read_only_fields = fields
+
+
 class SurveySerializer(serializers.ModelSerializer):
     class Meta:
         model = Survey

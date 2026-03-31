@@ -9,7 +9,6 @@
 </route>
 
 <script setup lang="ts">
-import { DsfrBreadcrumb } from "@gouvminint/vue-dsfr"
 import { useApiFetch } from "../../utils/data-fetching"
 
 const { data: surveys } = useApiFetch("/surveys/").get().json()

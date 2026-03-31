@@ -29,6 +29,11 @@ const adminActions = [
     description: "Toutes mes enquêtes",
     link: { name: "/SurveyListPage/" },
   },
+  {
+    title: "Réponses",
+    description: "Réponses à mes enquêtes",
+    link: { name: "/ResponseListPage/" },
+  },
 ]
 
 const userActions = [
