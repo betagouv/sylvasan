@@ -10,6 +10,11 @@ updates:
     labels:
       - "dependencies"
       - "backend"
+    groups:
+      boto:
+        patterns:
+          - "boto3"
+          - "botocore"
 
   - package-ecosystem: "npm"
     directory: "/web"
@@ -21,6 +26,15 @@ updates:
     labels:
       - "dependencies"
       - "web"
+    groups:
+      vite:
+        patterns:
+          - "vite"
+          - "@tailwindcss/vite"
+          - "tailwindcss"
+      vueuse:
+        patterns:
+          - "@vueuse/*"
 
   - package-ecosystem: "npm"
     directory: "/mobile"
@@ -32,6 +46,21 @@ updates:
     labels:
       - "dependencies"
       - "mobile"
+    groups:
+      vite:
+        patterns:
+          - "vite"
+          - "@tailwindcss/vite"
+          - "tailwindcss"
+      capacitor:
+        patterns:
+          - "@capacitor/*"
+      ionic:
+        patterns:
+          - "@ionic/*"
+      vueuse:
+        patterns:
+          - "@vueuse/*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
