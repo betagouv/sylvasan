@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from surveys.models import Survey
 from surveys.permissions import CanCreateSurvey
-from surveys.serializers import SurveyDisplaySerializer, SurveySerializer
+from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer, SurveySerializer
 
 
 class SurveyListCreateAPIView(ListCreateAPIView):
@@ -31,7 +31,7 @@ class SurveyListCreateAPIView(ListCreateAPIView):
 
 
 class SurveyRetrieveAPIView(RetrieveAPIView):
-    serializer_class = SurveyDisplaySerializer
+    serializer_class = FullSurveySerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):

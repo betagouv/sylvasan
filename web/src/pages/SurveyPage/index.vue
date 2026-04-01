@@ -26,8 +26,22 @@ const { data: survey } = useApiFetch(`/surveys/${route.params.id}`).json()
         { text: `Enquête ${route.params.id}` },
       ]"
     />
-    <div v-if="survey">
-      <h1>Enquête « {{ survey.title }} »</h1>
+    <div v-if="survey" class="mb-4">
+      <h1 class="fr-h4">Enquête « {{ survey.title }} »</h1>
+      <div class="mb-4">
+        <p class="fr-badge">
+          {{ survey.organisation.name }}
+        </p>
+        <p v-if="survey.pole" class="fr-badge">{{ survey.pole.name }}</p>
+      </div>
+      <h2>Schema JSON</h2>
+      <div class="bg-stone-100 p-4 rounded border border-stone-200">
+        <pre>
+<code>
+{{ survey.jsonSchema }}
+</code>
+        </pre>
+      </div>
     </div>
   </div>
 </template>

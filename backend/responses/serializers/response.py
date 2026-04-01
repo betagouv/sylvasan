@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from surveys.serializers import SurveyDisplaySerializer
+from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer
 from users.serializers import UserDisplaySerializer
 
 from responses.models import Response
@@ -25,5 +25,28 @@ class ResponseDisplaySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Response
-        fields = ("id", "survey", "respondant", "status", "creation_date")
+        fields = (
+            "id",
+            "survey",
+            "respondant",
+            "status",
+            "creation_date",
+        )
+        read_only_fields = fields
+
+
+class FullResponseSerializer(serializers.ModelSerializer):
+    respondant = UserDisplaySerializer(read_only=True)
+    survey = FullSurveySerializer(read_only=True)
+
+    class Meta:
+        model = Response
+        fields = (
+            "id",
+            "survey",
+            "respondant",
+            "data",
+            "context",
+            "status",
+        )
         read_only_fields = fields
