@@ -1,25 +1,15 @@
 from django.db.models import Q
 
 from organisations.models import Membership, MembershipType
-from rest_framework.generics import ListCreateAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from responses.models import Response
 from responses.permissions import CanCreateResponse
-from responses.serializers import ResponseDisplaySerializer, ResponseSerializer
+from responses.serializers import FullResponseSerializer, ResponseDisplaySerializer, ResponseSerializer
 
 
-class ResponseListCreateAPIView(ListCreateAPIView):
-    def get_serializer_class(self):
-        if self.request.method == "GET":
-            return ResponseDisplaySerializer
-        return ResponseSerializer
-
-    def get_permissions(self):
-        if self.request.method == "POST":
-            return [IsAuthenticated(), CanCreateResponse()]
-        return [IsAuthenticated()]
-
+class ResponseQuerySetMixin:
     def get_queryset(self):
         user = self.request.user
         memberships = Membership.objects.filter(user=user)
@@ -37,3 +27,20 @@ class ResponseListCreateAPIView(ListCreateAPIView):
                 query |= Q(survey__organisation=membership.organisation)
 
         return Response.objects.filter(query).distinct()
+
+
+class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return ResponseDisplaySerializer
+        return ResponseSerializer
+
+    def get_permissions(self):
+        if self.request.method == "POST":
+            return [IsAuthenticated(), CanCreateResponse()]
+        return [IsAuthenticated()]
+
+
+class ResponseRetrieveAPIView(ResponseQuerySetMixin, RetrieveAPIView):
+    serializer_class = FullResponseSerializer
+    permission_classes = [IsAuthenticated]

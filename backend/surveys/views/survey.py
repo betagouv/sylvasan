@@ -6,10 +6,20 @@ from rest_framework.permissions import IsAuthenticated
 
 from surveys.models import Survey
 from surveys.permissions import CanCreateSurvey
-from surveys.serializers import SurveyDisplaySerializer, SurveySerializer
+from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer, SurveySerializer
 
 
-class SurveyListCreateAPIView(ListCreateAPIView):
+class SurveyQuerySetMixin:
+    def get_queryset(self):
+        user = self.request.user
+
+        org_ids = Membership.objects.filter(user=user, pole__isnull=True).values_list("organisation_id", flat=True)
+        pole_ids = Membership.objects.filter(user=user, pole__isnull=False).values_list("pole_id", flat=True)
+
+        return Survey.objects.filter(Q(organisation_id__in=org_ids) | Q(pole_id__in=pole_ids))
+
+
+class SurveyListCreateAPIView(SurveyQuerySetMixin, ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == "GET":
             return SurveyDisplaySerializer
@@ -20,24 +30,7 @@ class SurveyListCreateAPIView(ListCreateAPIView):
             return [IsAuthenticated(), CanCreateSurvey()]
         return [IsAuthenticated()]
 
-    def get_queryset(self):
-        user = self.request.user
 
-        org_ids = Membership.objects.filter(user=user, pole__isnull=True).values_list("organisation_id", flat=True)
-
-        pole_ids = Membership.objects.filter(user=user, pole__isnull=False).values_list("pole_id", flat=True)
-
-        return Survey.objects.filter(Q(organisation_id__in=org_ids) | Q(pole_id__in=pole_ids))
-
-
-class SurveyRetrieveAPIView(RetrieveAPIView):
-    serializer_class = SurveyDisplaySerializer
+class SurveyRetrieveAPIView(SurveyQuerySetMixin, RetrieveAPIView):
+    serializer_class = FullSurveySerializer
     permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-
-        org_ids = Membership.objects.filter(user=user, pole__isnull=True).values_list("organisation_id", flat=True)
-        pole_ids = Membership.objects.filter(user=user, pole__isnull=False).values_list("pole_id", flat=True)
-
-        return Survey.objects.filter(Q(organisation_id__in=org_ids) | Q(pole_id__in=pole_ids))
