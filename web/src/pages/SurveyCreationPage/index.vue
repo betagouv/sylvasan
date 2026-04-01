@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import FormBuilder from "../../components/FormBuilder/index.vue"
+import SurveyBuilder from "../../components/SurveyBuilder/index.vue"
 import type { SurveySchema } from "@shared-types/survey"
 import { DsfrBreadcrumb } from "@gouvminint/vue-dsfr"
 import { useApiFetch } from "../../utils/data-fetching"
@@ -138,7 +138,7 @@ const createSurvey = async () => {
       />
     </div>
     <div class="my-6">
-      <FormBuilder
+      <SurveyBuilder
         v-model="schema"
         @update:modelValue="clearFieldError('fields')"
       />

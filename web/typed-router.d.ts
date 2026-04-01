@@ -68,13 +68,6 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/FormCreationPage/': RouteRecordInfo<
-      '/FormCreationPage/',
-      '/creation-enquete',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
     '/LegalNoticesPage': RouteRecordInfo<
       '/LegalNoticesPage',
       '/mentions-legales',
@@ -106,6 +99,13 @@ declare module 'vue-router/auto-routes' {
     '/LoginPage': RouteRecordInfo<
       '/LoginPage',
       '/s-identifier',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/SurveyCreationPage/': RouteRecordInfo<
+      '/SurveyCreationPage/',
+      '/creation-enquete',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -173,12 +173,6 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
-    'src/pages/FormCreationPage/index.vue': {
-      routes:
-        | '/FormCreationPage/'
-      views:
-        | never
-    }
     'src/pages/LegalNoticesPage.vue': {
       routes:
         | '/LegalNoticesPage'
@@ -206,6 +200,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/LoginPage.vue': {
       routes:
         | '/LoginPage'
+      views:
+        | never
+    }
+    'src/pages/SurveyCreationPage/index.vue': {
+      routes:
+        | '/SurveyCreationPage/'
       views:
         | never
     }

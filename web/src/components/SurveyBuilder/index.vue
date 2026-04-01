@@ -12,20 +12,46 @@ const addField = (field: SurveyField) => {
   schema.value = { ...schema.value, fields: [...schema.value.fields, field] }
   closeModal()
 }
+
 const removeField = (fieldId: string) => {
   schema.value = {
     ...schema.value,
     fields: schema.value.fields.filter((x) => x.id !== fieldId),
   }
 }
+
+const moveFieldUp = (fieldId: string) => {
+  const fields = [...schema.value.fields]
+  const index = fields.findIndex((f) => f.id === fieldId)
+  if (index <= 0) return
+  ;[fields[index - 1], fields[index]] = [fields[index], fields[index - 1]]
+  schema.value = { ...schema.value, fields }
+}
+
+const moveFieldDown = (fieldId: string) => {
+  const fields = [...schema.value.fields]
+  const index = fields.findIndex((f) => f.id === fieldId)
+  if (index === -1 || index >= fields.length - 1) return
+  ;[fields[index], fields[index + 1]] = [fields[index + 1], fields[index]]
+  schema.value = { ...schema.value, fields }
+}
+
 const closeModal = () => (modalOpened.value = false)
 </script>
 
 <template>
   <div class="border border-slate-300 bg-slate-100 rounded p-6">
-    <div v-for="field in schema.fields" :key="field.id">
-      <FieldCard :field="field" @delete="removeField(field.id)" class="mb-1" />
-    </div>
+    <TransitionGroup tag="div" name="field-list">
+      <FieldCard
+        v-for="field in schema.fields"
+        :key="field.id"
+        :field="field"
+        @move-up="moveFieldUp(field.id)"
+        @move-down="moveFieldDown(field.id)"
+        @delete="removeField(field.id)"
+        class="mb-1"
+      />
+    </TransitionGroup>
     <hr v-if="schema.fields.length" />
     <div class="flex items-center justify-center">
       <DsfrButton
@@ -42,9 +68,7 @@ const closeModal = () => (modalOpened.value = false)
 </template>
 
 <style scoped>
-.license-logo {
-  height: 1em;
-  margin-right: 0.125em;
-  display: inline;
+.field-list-move {
+  transition: transform 0.25s ease;
 }
 </style>
