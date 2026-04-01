@@ -8,14 +8,15 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
     // Shared items
     "baseUrl": ".",
     "paths": {
-      "@shared-types/*": ["../shared/types/*"]
+      "@shared-types/*": ["../shared/types/*"],
+      "@shared-components/*": ["../shared/components/*"],
+      "vue": ["./node_modules/vue"]
     }
   },
   "include": [

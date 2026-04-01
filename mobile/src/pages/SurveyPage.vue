@@ -13,7 +13,7 @@ import {
   IonTitle,
   useIonRouter,
 } from "@ionic/vue"
-import SurveyRenderer from "../components/SurveyRenderer.vue"
+import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import { useApiFetch } from "../utils/data-fetching"
 import { storeToRefs } from "pinia"
 
@@ -59,7 +59,11 @@ const saveResponse = async (data: object) => {
     <ion-content class="ion-padding">
       <div v-if="!survey">Enquête introuvable.</div>
       <div v-else class="box-border! p-4!">
-        <SurveyRenderer :schema="survey.jsonSchema" @submit="saveResponse" />
+        <SurveyRenderer
+          :allowSubmit="true"
+          :schema="survey.jsonSchema"
+          @submit="saveResponse"
+        />
       </div>
     </ion-content>
   </ion-page>

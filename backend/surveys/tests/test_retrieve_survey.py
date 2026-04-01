@@ -249,3 +249,165 @@ class TestRetrieveSurvey(APITestCase):
         response = self.client.get(survey_url(other_survey.id), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class TestSurveyResponderList(APITestCase):
+    def test_unauthenticated_cannot_list_responder_surveys(self):
+        """
+        Un·e utilisateur·ice non authentifié·e reçoit une 401
+        """
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @authenticate
+    def test_no_membership_returns_empty_list(self):
+        """
+        Un·e utilisateur·ice sans rôle ne voit aucune enquête
+        """
+        SurveyFactory()
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), [])
+
+    @authenticate
+    def test_admin_returns_empty_list(self):
+        """
+        Un·e ADMIN ne peut pas répondre aux enquêtes — la liste est vide
+        """
+        org = OrganisationFactory()
+        SurveyFactory(organisation=org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), [])
+
+    @authenticate
+    def test_manager_returns_empty_list(self):
+        """
+        Un·e MANAGER ne peut pas répondre aux enquêtes — la liste est vide
+        """
+        org = OrganisationFactory()
+        SurveyFactory(organisation=org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), [])
+
+    @authenticate
+    def test_org_responder_sees_org_level_surveys(self):
+        """
+        Un·e RESPONDER au niveau organisation voit les enquêtes au niveau organisation
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org, pole=None)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()]
+        self.assertIn(survey.id, ids)
+
+    @authenticate
+    def test_org_responder_sees_pole_surveys_within_org(self):
+        """
+        Un·e RESPONDER au niveau organisation voit aussi les enquêtes des pôles de cette organisation
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=pole)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()]
+        self.assertIn(survey.id, ids)
+
+    @authenticate
+    def test_org_responder_cannot_see_surveys_from_other_org(self):
+        """
+        Un·e RESPONDER ne voit pas les enquêtes d'une autre organisation
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        other_survey = SurveyFactory()
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()]
+        self.assertNotIn(other_survey.id, ids)
+
+    @authenticate
+    def test_pole_responder_sees_their_pole_surveys(self):
+        """
+        Un·e RESPONDER de pôle voit les enquêtes de son pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=pole)
+        MembershipFactory(
+            user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER
+        )
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()]
+        self.assertIn(survey.id, ids)
+
+    @authenticate
+    def test_pole_responder_cannot_see_org_level_surveys(self):
+        """
+        Un·e RESPONDER de pôle ne voit pas les enquêtes au niveau organisation (sans pôle)
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        org_survey = SurveyFactory(organisation=org, pole=None)
+        MembershipFactory(
+            user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER
+        )
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()]
+        self.assertNotIn(org_survey.id, ids)
+
+    @authenticate
+    def test_pole_responder_cannot_see_other_pole_surveys(self):
+        """
+        Un·e RESPONDER de pôle ne voit pas les enquêtes d'un autre pôle de la même organisation
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        other_pole = PoleFactory(organisation=org)
+        other_survey = SurveyFactory(organisation=org, pole=other_pole)
+        MembershipFactory(
+            user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER
+        )
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()]
+        self.assertNotIn(other_survey.id, ids)
+
+    @authenticate
+    def test_response_includes_json_schema(self):
+        """
+        La réponse inclut le json_schema nécessaire au cache hors-ligne de l'application mobile
+        """
+        org = OrganisationFactory()
+        SurveyFactory(organisation=org, json_schema={"version": "1.0", "fields": []})
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("json_schema", response.json()[0])
