@@ -9,7 +9,27 @@ from responses.permissions import CanCreateResponse
 from responses.serializers import FullResponseSerializer, ResponseDisplaySerializer, ResponseSerializer
 
 
-class ResponseListCreateAPIView(ListCreateAPIView):
+class ResponseQuerySetMixin:
+    def get_queryset(self):
+        user = self.request.user
+        memberships = Membership.objects.filter(user=user)
+
+        if not memberships.exists():
+            return Response.objects.none()
+
+        query = Q()
+        for membership in memberships:
+            if membership.membership_type == MembershipType.RESPONDER:
+                query |= Q(respondant=user)
+            elif membership.pole is not None:
+                query |= Q(survey__pole=membership.pole)
+            else:
+                query |= Q(survey__organisation=membership.organisation)
+
+        return Response.objects.filter(query).distinct()
+
+
+class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == "GET":
             return ResponseDisplaySerializer
@@ -20,43 +40,7 @@ class ResponseListCreateAPIView(ListCreateAPIView):
             return [IsAuthenticated(), CanCreateResponse()]
         return [IsAuthenticated()]
 
-    def get_queryset(self):
-        user = self.request.user
-        memberships = Membership.objects.filter(user=user)
 
-        if not memberships.exists():
-            return Response.objects.none()
-
-        query = Q()
-        for membership in memberships:
-            if membership.membership_type == MembershipType.RESPONDER:
-                query |= Q(respondant=user)
-            elif membership.pole is not None:
-                query |= Q(survey__pole=membership.pole)
-            else:
-                query |= Q(survey__organisation=membership.organisation)
-
-        return Response.objects.filter(query).distinct()
-
-
-class ResponseRetrieveAPIView(RetrieveAPIView):
+class ResponseRetrieveAPIView(ResponseQuerySetMixin, RetrieveAPIView):
     serializer_class = FullResponseSerializer
     permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        memberships = Membership.objects.filter(user=user)
-
-        if not memberships.exists():
-            return Response.objects.none()
-
-        query = Q()
-        for membership in memberships:
-            if membership.membership_type == MembershipType.RESPONDER:
-                query |= Q(respondant=user)
-            elif membership.pole is not None:
-                query |= Q(survey__pole=membership.pole)
-            else:
-                query |= Q(survey__organisation=membership.organisation)
-
-        return Response.objects.filter(query).distinct()
