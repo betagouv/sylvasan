@@ -12,6 +12,8 @@ const payload = ref<SurveyField>({
   label: "",
   required: false,
   id: "",
+  hint: undefined,
+  placeholder: undefined,
 })
 
 const validator = z.object({
@@ -23,24 +25,16 @@ const formErrors = ref<any>()
 
 const typeOptions = [{ text: "Texte", value: "text" }]
 
-const fieldPayload = computed<SurveyField | null>(() => {
-  if (!payload.value.label || !payload.value.type || !payload.value.id)
-    return null
-  return {
-    type: payload.value.type,
-    label: payload.value.label,
-    required: payload.value.required,
-    id: payload.value.id,
-  }
-})
 const addField = () => {
   try {
     validator.parse(payload.value)
-    emit("add", fieldPayload.value)
+    emit("add", { ...payload.value })
     payload.value.type = "text"
     payload.value.label = ""
     payload.value.required = false
     payload.value.id = ""
+    payload.value.hint = ""
+    payload.value.placeholder = ""
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
@@ -59,6 +53,16 @@ const addField = () => {
     />
     <DsfrInputGroup :error-message="formErrors?.fieldErrors?.label?.[0]">
       <DsfrInput label-visible v-model="payload.label" label="Titre" />
+    </DsfrInputGroup>
+    <DsfrInputGroup :error-message="formErrors?.fieldErrors?.hint?.[0]">
+      <DsfrInput label-visible v-model="payload.hint" label="Aide" />
+    </DsfrInputGroup>
+    <DsfrInputGroup :error-message="formErrors?.fieldErrors?.placeholder?.[0]">
+      <DsfrInput
+        label-visible
+        v-model="payload.placeholder"
+        label="Placeholder"
+      />
     </DsfrInputGroup>
     <DsfrToggleSwitch
       v-model="payload.required"
