@@ -1,9 +1,4 @@
-export type FieldType =
-  | "text"
-  | "textarea"
-  | "number"
-  | "date"
-  | "vocabulary_select"
+export type FieldType = "string" | "number" | "boolean" | "array"
 
 export type ConditionOperator = "eq" | "neq" | "in" | "not_in"
 export type LogicalOperator = "and" | "or"

@@ -69,9 +69,12 @@ const closeModal = () => (modalOpened.value = false)
           secondary
         />
       </div>
-      <DsfrModal :opened="modalOpened" @close="closeModal">
-        <NewFieldModal @add="(f) => addField(f)" />
-      </DsfrModal>
+
+      <NewFieldModal
+        @add="(f) => addField(f)"
+        :opened="modalOpened"
+        @close="closeModal"
+      />
     </div>
 
     <!-- Preview -->

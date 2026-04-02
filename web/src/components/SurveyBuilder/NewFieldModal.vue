@@ -1,40 +1,87 @@
 <script setup lang="ts">
-import { ref } from "vue"
-import type { SurveyField } from "@shared-types/survey"
+import { ref, computed } from "vue"
+import type { FieldType, SurveyField, FieldWidget } from "@shared-types/survey"
 import * as z from "zod"
 import { ZodError } from "zod"
 import { DsfrInputGroup } from "@gouvminint/vue-dsfr"
 
-const emit = defineEmits(["add"])
+const emit = defineEmits(["add", "close"])
 
-const emptyPayload: SurveyField = {
-  type: "text",
+const props = defineProps(["opened"])
+
+const makeEmptyPayload = (): SurveyField => ({
+  type: "string",
   label: "",
   required: false,
   id: "",
   ui: {
     hint: undefined,
     placeholder: undefined,
-    widget: undefined,
+    widget: "input",
   },
-}
-
-const payload = ref<SurveyField>(emptyPayload)
-
-const validator = z.object({
-  type: z.string().min(1, "Ce champ ne peut pas être vide"),
-  label: z.string().min(1, "Ce champ ne peut pas être vide"),
-  id: z.string().min(1, "Ce champ ne peut pas être vide"),
+  validation: {},
 })
+
+const payload = ref<SurveyField>(makeEmptyPayload())
+
+const validator = z
+  .object({
+    type: z.string().min(1, "Ce champ ne peut pas être vide"),
+    label: z.string().min(1, "Ce champ ne peut pas être vide"),
+    id: z.string().min(1, "Ce champ ne peut pas être vide"),
+    validation: z.object({ min: z.any(), max: z.any() }).optional(),
+  })
+  .superRefine((data, ctx) => {
+    // Validation que min est inférieur à max pour les champs numériques
+    if (data.type === "number") {
+      const min = data.validation?.min
+      const max = data.validation?.max
+      const minFilled = min !== undefined && min !== null && min !== ""
+      const maxFilled = max !== undefined && max !== null && max !== ""
+      if (minFilled && maxFilled && Number(min) >= Number(max)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Le minimum doit être inférieur au maximum",
+          path: ["validationNumericLimits"],
+        })
+      }
+    }
+  })
 const formErrors = ref<any>()
 
-const typeOptions = [{ text: "Texte", value: "text" }]
+const typeOptions = computed(() =>
+  Object.entries(typeWidgetMapping).map((x) => ({
+    text: x[1].label,
+    value: x[0],
+  }))
+)
+
+const typeWidgetMapping: Record<
+  FieldWidget,
+  { type: FieldType; widget: FieldWidget; label: string }
+> = {
+  input: { type: "string", widget: "input", label: "Texte" },
+  number: { type: "number", widget: "number", label: "Numérique" },
+  select: { type: "string", widget: "select", label: "Liste déroulante" },
+  checkbox: { type: "string", widget: "checkbox", label: "Cases à cocher" },
+  textarea: { type: "string", widget: "textarea", label: "Texte multi-ligne" },
+  radio: { type: "string", widget: "radio", label: "Boutons radio" },
+  date: { type: "string", widget: "date", label: "Date" },
+}
+
+const assignWidgetAndType = (option: FieldWidget) => {
+  const mapping = typeWidgetMapping[option]
+  if (!mapping) return
+  payload.value.type = mapping.type
+  if (payload.value.ui) payload.value.ui.widget = mapping.widget
+}
 
 const addField = () => {
   try {
     validator.parse(payload.value)
-    emit("add", { ...payload.value })
-    payload.value = emptyPayload
+    const emitValue = { ...payload.value }
+    payload.value = makeEmptyPayload()
+    emit("add", emitValue)
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
@@ -42,48 +89,103 @@ const addField = () => {
 </script>
 
 <template>
-  <div>
-    <h3>Nouveau champ</h3>
-    <DsfrSelect
-      v-model="payload.type"
-      :error-message="formErrors?.fieldErrors?.type?.[0]"
-      label="Type"
-      :options="typeOptions"
-      :required="true"
-    />
-    <DsfrInputGroup :error-message="formErrors?.fieldErrors?.label?.[0]">
-      <DsfrInput label-visible v-model="payload.label" label="Titre" />
-    </DsfrInputGroup>
-    <DsfrInputGroup :error-message="formErrors?.fieldErrors?.hint?.[0]">
-      <DsfrInput
-        label-visible
-        v-model="payload.ui.hint"
-        v-if="payload.ui"
-        label="Aide"
+  <DsfrModal :opened="props.opened" @close="() => emit('close')" size="xl">
+    <h3 class="fr-text--md">Nouveau champ</h3>
+    <div class="md:flex gap-6">
+      <DsfrSelect
+        @update:modelValue="(value: FieldWidget) => assignWidgetAndType(value)"
+        value="input"
+        :error-message="formErrors?.fieldErrors?.type?.[0]"
+        label="Type"
+        :options="typeOptions"
+        :required="true"
       />
-    </DsfrInputGroup>
-    <DsfrInputGroup :error-message="formErrors?.fieldErrors?.placeholder?.[0]">
-      <DsfrInput
-        label-visible
-        v-model="payload.ui.placeholder"
-        v-if="payload.ui"
-        label="Placeholder"
+      <DsfrInputGroup :error-message="formErrors?.fieldErrors?.label?.[0]">
+        <DsfrInput
+          label-visible
+          v-model="payload.label"
+          :required="true"
+          label="Titre"
+        />
+      </DsfrInputGroup>
+      <DsfrInputGroup :error-message="formErrors?.fieldErrors?.id?.[0]">
+        <DsfrInput
+          label-visible
+          v-model="payload.id"
+          :required="true"
+          label="Id du champ"
+        />
+      </DsfrInputGroup>
+      <DsfrToggleSwitch
+        v-model="payload.required"
+        label="Champ obligatoire ?"
+        activeText="Oui"
+        inactiveText="Non"
+        class="my-4"
       />
-    </DsfrInputGroup>
-    <DsfrToggleSwitch
-      v-model="payload.required"
-      label="Champ obligatoire ?"
-      activeText="Oui"
-      inactiveText="Non"
-      class="my-4"
-    />
-    <hr />
-    <DsfrInputGroup :error-message="formErrors?.fieldErrors?.id?.[0]">
-      <DsfrInput label-visible v-model="payload.id" label="Id du champ" />
-    </DsfrInputGroup>
-    <hr />
-    <div class="flex items-center justify-center">
-      <DsfrButton label="Ajouter" @click="addField" />
     </div>
-  </div>
+    <hr />
+
+    <!-- Options pour widget "input" / number -->
+    <div
+      class="flex gap-6"
+      v-if="payload.ui?.widget === 'input' || payload.ui?.widget === 'number'"
+    >
+      <DsfrInputGroup :error-message="formErrors?.fieldErrors?.hint?.[0]">
+        <DsfrInput
+          label-visible
+          v-model="payload.ui.hint"
+          v-if="payload.ui"
+          label="Aide"
+        />
+      </DsfrInputGroup>
+      <DsfrInputGroup
+        :error-message="formErrors?.fieldErrors?.placeholder?.[0]"
+      >
+        <DsfrInput
+          label-visible
+          v-model="payload.ui.placeholder"
+          label="Placeholder"
+        />
+      </DsfrInputGroup>
+
+      <!-- Validation min/max pour les chiffres -->
+      <div v-if="payload.validation && payload.ui.widget === 'number'">
+        <DsfrInputGroup
+          :error-message="formErrors?.fieldErrors?.validationNumericLimits?.[0]"
+        >
+          <div class="flex gap-4">
+            <div>
+              <DsfrInput
+                type="number"
+                v-model="payload.validation.min"
+                label="Valeur minimale"
+                label-visible
+              />
+            </div>
+            <div>
+              <DsfrInput
+                type="number"
+                v-model="payload.validation.max"
+                label="Valeur maximale"
+                label-visible
+              />
+            </div>
+          </div>
+        </DsfrInputGroup>
+      </div>
+    </div>
+
+    <!-- Pas encore gérés -->
+    <div v-else>
+      <DsfrNotice type="warning" title="Pas encore disponible" />
+    </div>
+
+    <!-- Footer -->
+    <template v-slot:footer>
+      <div class="flex justify-end w-full">
+        <DsfrButton label="Ajouter" @click="addField" />
+      </div>
+    </template>
+  </DsfrModal>
 </template>
