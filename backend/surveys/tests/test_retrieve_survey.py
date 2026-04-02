@@ -410,4 +410,4 @@ class TestSurveyResponderList(APITestCase):
         response = self.client.get(reverse("survey_responder_retrieve"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("json_schema", response.json()[0])
+        self.assertIn("jsonSchema", response.json()[0])
