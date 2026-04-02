@@ -40,9 +40,6 @@
         "condition": {
           "$ref": "#/$defs/condition"
         },
-        "hint": {
-          "type": "string"
-        },
         "id": {
           "pattern": "^[a-z][a-z0-9_]*$",
           "type": "string"
@@ -51,14 +48,59 @@
           "minLength": 1,
           "type": "string"
         },
-        "placeholder": {
-          "type": "string"
-        },
         "required": {
           "type": "boolean"
         },
         "type": {
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ],
           "type": "string"
+        },
+        "ui": {
+          "additionalProperties": false,
+          "properties": {
+            "choices": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {}
+                },
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "type": "object"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "hint": {
+              "type": "string"
+            },
+            "placeholder": {
+              "type": "string"
+            },
+            "widget": {
+              "enum": [
+                "input",
+                "textarea",
+                "number",
+                "select",
+                "radio",
+                "checkbox",
+                "date"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "validation": {
           "additionalProperties": false,
@@ -89,8 +131,7 @@
         "id",
         "type",
         "label"
-      ],
-      "type": "object"
+      ]
     },
     "page": {
       "additionalProperties": false,

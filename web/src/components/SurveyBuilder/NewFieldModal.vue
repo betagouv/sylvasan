@@ -7,14 +7,19 @@ import { DsfrInputGroup } from "@gouvminint/vue-dsfr"
 
 const emit = defineEmits(["add"])
 
-const payload = ref<SurveyField>({
+const emptyPayload: SurveyField = {
   type: "text",
   label: "",
   required: false,
   id: "",
-  hint: undefined,
-  placeholder: undefined,
-})
+  ui: {
+    hint: undefined,
+    placeholder: undefined,
+    widget: undefined,
+  },
+}
+
+const payload = ref<SurveyField>(emptyPayload)
 
 const validator = z.object({
   type: z.string().min(1, "Ce champ ne peut pas être vide"),
@@ -29,12 +34,7 @@ const addField = () => {
   try {
     validator.parse(payload.value)
     emit("add", { ...payload.value })
-    payload.value.type = "text"
-    payload.value.label = ""
-    payload.value.required = false
-    payload.value.id = ""
-    payload.value.hint = ""
-    payload.value.placeholder = ""
+    payload.value = emptyPayload
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
@@ -55,12 +55,18 @@ const addField = () => {
       <DsfrInput label-visible v-model="payload.label" label="Titre" />
     </DsfrInputGroup>
     <DsfrInputGroup :error-message="formErrors?.fieldErrors?.hint?.[0]">
-      <DsfrInput label-visible v-model="payload.hint" label="Aide" />
+      <DsfrInput
+        label-visible
+        v-model="payload.ui.hint"
+        v-if="payload.ui"
+        label="Aide"
+      />
     </DsfrInputGroup>
     <DsfrInputGroup :error-message="formErrors?.fieldErrors?.placeholder?.[0]">
       <DsfrInput
         label-visible
-        v-model="payload.placeholder"
+        v-model="payload.ui.placeholder"
+        v-if="payload.ui"
         label="Placeholder"
       />
     </DsfrInputGroup>

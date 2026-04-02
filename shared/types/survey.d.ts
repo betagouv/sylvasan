@@ -29,17 +29,32 @@ export interface FieldValidation {
   required_if?: Condition
 }
 
+export interface FieldUI {
+  widget?: FieldWidget
+  choices?: FieldChoice[]
+  hint?: string
+  placeholder?: string
+}
+
 export interface SurveyField {
   id: string
   type: FieldType
   label: string
-  hint?: string
-  placeholder?: string
   required?: boolean
   vocabulary?: string
   condition?: Condition
   validation?: FieldValidation
+  ui?: FieldUI
 }
+
+export type FieldWidget =
+  | "input"
+  | "textarea"
+  | "number"
+  | "select"
+  | "radio"
+  | "checkbox"
+  | "date"
 
 export interface SurveyPage {
   id: string

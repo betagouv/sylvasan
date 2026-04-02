@@ -35,8 +35,8 @@ function handleSubmit() {
           :label="field.label"
           :required="field.required ?? false"
           :label-visible="true"
-          :hint="field.hint"
-          :placeholder="field.placeholder"
+          :hint="field.ui?.hint"
+          :placeholder="field.ui?.placeholder"
           v-if="field.type === 'text'"
         />
       </DsfrInputGroup>
