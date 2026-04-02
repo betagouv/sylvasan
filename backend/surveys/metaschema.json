@@ -40,12 +40,18 @@
         "condition": {
           "$ref": "#/$defs/condition"
         },
+        "hint": {
+          "type": "string"
+        },
         "id": {
           "pattern": "^[a-z][a-z0-9_]*$",
           "type": "string"
         },
         "label": {
           "minLength": 1,
+          "type": "string"
+        },
+        "placeholder": {
           "type": "string"
         },
         "required": {

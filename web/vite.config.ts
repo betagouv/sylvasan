@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@shared-types": path.resolve(__dirname, "../shared/types"),
+      "@shared-components": path.resolve(__dirname, "../shared/components"),
     },
   },
 }))

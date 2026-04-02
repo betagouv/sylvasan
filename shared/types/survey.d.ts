@@ -33,6 +33,8 @@ export interface SurveyField {
   id: string
   type: FieldType
   label: string
+  hint?: string
+  placeholder?: string
   required?: boolean
   vocabulary?: string
   condition?: Condition

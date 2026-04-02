@@ -54,7 +54,9 @@ export const useSurveysStore = defineStore("surveys", {
       // À utiliser lors d'un pull to refresh par exemple
       this.syncing = true
       try {
-        const { data, response } = await useApiFetch("/surveys/").get().json()
+        const { data, response } = await useApiFetch("/mobile/surveys/")
+          .get()
+          .json()
         if (response.value?.ok) {
           this.surveys = data.value
           this.syncedAt = new Date().toISOString()

@@ -1,7 +1,7 @@
 from django.db.models import Q
 
-from organisations.models import Membership
-from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
+from organisations.models import Membership, MembershipType
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from surveys.models import Survey
@@ -29,6 +29,29 @@ class SurveyListCreateAPIView(SurveyQuerySetMixin, ListCreateAPIView):
         if self.request.method == "POST":
             return [IsAuthenticated(), CanCreateSurvey()]
         return [IsAuthenticated()]
+
+
+class SurveyResponderListAPIView(ListAPIView):
+    """
+    Retourne seulement les enquêtes auxquelles l'utilisateur·ice connecté·e peut répondre.
+    Seuls les rôles RESPONDER sont pris en compte — les ADMIN et MANAGER obtiennent une liste vide.
+    """
+
+    serializer_class = FullSurveySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+
+        org_ids = Membership.objects.filter(
+            user=user, membership_type=MembershipType.RESPONDER, pole__isnull=True
+        ).values_list("organisation_id", flat=True)
+
+        pole_ids = Membership.objects.filter(
+            user=user, membership_type=MembershipType.RESPONDER, pole__isnull=False
+        ).values_list("pole_id", flat=True)
+
+        return Survey.objects.filter(Q(organisation_id__in=org_ids) | Q(pole_id__in=pole_ids))
 
 
 class SurveyRetrieveAPIView(SurveyQuerySetMixin, RetrieveAPIView):
