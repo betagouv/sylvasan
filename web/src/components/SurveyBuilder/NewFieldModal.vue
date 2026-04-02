@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref } from "vue"
 import type { SurveyField } from "@shared-types/survey"
 import * as z from "zod"
 import { ZodError } from "zod"
