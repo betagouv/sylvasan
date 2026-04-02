@@ -76,7 +76,10 @@ const closeModal = () => (modalOpened.value = false)
 
     <!-- Preview -->
     <div class="col-span-12 sm:col-span-6 md:col-span-5 lg:col-span-4">
-      <div class="border rounded border-slate-300 p-4">
+      <div
+        v-if="schema.fields.length"
+        class="border rounded border-slate-300 p-4"
+      >
         <SurveyRenderer :schema="schema" :allowSubmit="false" />
       </div>
     </div>
