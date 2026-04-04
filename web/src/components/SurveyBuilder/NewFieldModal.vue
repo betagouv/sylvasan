@@ -6,6 +6,7 @@ import { ZodError } from "zod"
 import { DsfrInputGroup } from "@gouvminint/vue-dsfr"
 import SelectOption from "./SelectOption.vue"
 import type { DsfrSelectOption } from "@gouvminint/vue-dsfr"
+import { typeWidgetMapping } from "./mappings"
 
 const emit = defineEmits(["add", "close"])
 
@@ -58,19 +59,6 @@ const typeOptions = computed(() =>
   }))
 )
 
-const typeWidgetMapping: Record<
-  FieldWidget,
-  { type: FieldType; widget: FieldWidget; label: string }
-> = {
-  input: { type: "string", widget: "input", label: "Texte" },
-  number: { type: "number", widget: "number", label: "Numérique" },
-  select: { type: "string", widget: "select", label: "Liste déroulante" },
-  checkbox: { type: "string", widget: "checkbox", label: "Cases à cocher" },
-  textarea: { type: "string", widget: "textarea", label: "Texte multi-ligne" },
-  radio: { type: "string", widget: "radio", label: "Boutons radio" },
-  date: { type: "string", widget: "date", label: "Date" },
-}
-
 const assignWidgetAndType = (option: FieldWidget) => {
   const mapping = typeWidgetMapping[option]
   if (!mapping) return
@@ -83,7 +71,6 @@ const addField = () => {
     validator.parse(payload.value)
     const emitValue = { ...payload.value }
     payload.value = makeEmptyPayload()
-    formErrors.value.fieldErrors = undefined
     emit("add", emitValue)
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
@@ -105,10 +92,15 @@ const removeOption = (option: DsfrSelectOption) => {
     (x: DsfrSelectOption) => x !== option
   )
 }
+
+const close = () => {
+  formErrors.value.fieldErrors = undefined
+  emit("close")
+}
 </script>
 
 <template>
-  <DsfrModal :opened="props.opened" @close="() => emit('close')" size="xl">
+  <DsfrModal :opened="props.opened" @close="close" size="xl">
     <h3 class="fr-text--md">Nouveau champ</h3>
     <div class="md:flex gap-6">
       <DsfrSelect
