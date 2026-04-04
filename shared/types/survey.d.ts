@@ -26,7 +26,7 @@ export interface FieldValidation {
 
 export interface FieldUI {
   widget?: FieldWidget
-  choices?: FieldChoice[]
+  choices?: DsfrSelectOption[]
   hint?: string
   placeholder?: string
 }

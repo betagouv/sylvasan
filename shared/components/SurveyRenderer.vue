@@ -26,35 +26,44 @@ function handleSubmit() {
 <template>
   <form @submit.prevent="handleSubmit">
     <TransitionGroup tag="div" name="field-area" v-if="schema.fields?.length">
-      <DsfrInputGroup
-        v-for="field in schema.fields"
-        :key="`render-${field.id}`"
-      >
-        <!-- Champ texte -->
-        <DsfrInput
-          v-model="formData[field.id]"
-          :label="field.label"
-          :required="field.required ?? false"
-          :label-visible="true"
-          :hint="field.ui?.hint"
-          :placeholder="field.ui?.placeholder"
-          v-if="field.ui?.widget === 'input'"
-        />
+      <div v-for="field in schema.fields" :key="`render-${field.id}`">
+        <DsfrInputGroup>
+          <!-- Champ texte -->
+          <DsfrInput
+            v-model="formData[field.id]"
+            :label="field.label"
+            :required="field.required ?? false"
+            :label-visible="true"
+            :hint="field.ui?.hint"
+            :placeholder="field.ui?.placeholder"
+            v-if="field.ui?.widget === 'input'"
+          />
+        </DsfrInputGroup>
+        <DsfrInputGroup>
+          <!-- Champ numérique -->
+          <DsfrInput
+            v-model="formData[field.id]"
+            :label="field.label"
+            :required="field.required ?? false"
+            :label-visible="true"
+            :hint="field.ui?.hint"
+            type="number"
+            :placeholder="field.ui?.placeholder"
+            :min="field.validation?.min"
+            :max="field.validation?.max"
+            v-if="field.ui?.widget === 'number'"
+          />
+        </DsfrInputGroup>
 
-        <!-- Champ numérique -->
-        <DsfrInput
-          v-model="formData[field.id]"
+        <!-- Champ select -->
+        <DsfrSelect
+          :options="field.ui?.choices"
           :label="field.label"
           :required="field.required ?? false"
-          :label-visible="true"
-          :hint="field.ui?.hint"
-          type="number"
-          :placeholder="field.ui?.placeholder"
-          :min="field.validation?.min"
-          :max="field.validation?.max"
-          v-else-if="field.ui?.widget === 'number'"
+          v-model="formData[field.id]"
+          v-if="field.ui?.widget === 'select'"
         />
-      </DsfrInputGroup>
+      </div>
     </TransitionGroup>
 
     <DsfrButton

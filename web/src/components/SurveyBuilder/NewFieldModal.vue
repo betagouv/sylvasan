@@ -4,6 +4,8 @@ import type { FieldType, SurveyField, FieldWidget } from "@shared-types/survey"
 import * as z from "zod"
 import { ZodError } from "zod"
 import { DsfrInputGroup } from "@gouvminint/vue-dsfr"
+import SelectOption from "./SelectOption.vue"
+import type { DsfrSelectOption } from "@gouvminint/vue-dsfr"
 
 const emit = defineEmits(["add", "close"])
 
@@ -81,10 +83,27 @@ const addField = () => {
     validator.parse(payload.value)
     const emitValue = { ...payload.value }
     payload.value = makeEmptyPayload()
+    formErrors.value.fieldErrors = undefined
     emit("add", emitValue)
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
+}
+
+const addOption = (option: DsfrSelectOption) => {
+  if (!payload.value.ui) return
+  if (!payload.value.ui.choices) {
+    payload.value.ui.choices = [option]
+    return
+  }
+  payload.value.ui.choices.push(option)
+}
+
+const removeOption = (option: DsfrSelectOption) => {
+  if (!payload.value.ui?.choices) return
+  payload.value.ui.choices = payload.value.ui?.choices.filter(
+    (x: DsfrSelectOption) => x !== option
+  )
 }
 </script>
 
@@ -174,6 +193,27 @@ const addField = () => {
           </div>
         </DsfrInputGroup>
       </div>
+    </div>
+
+    <div v-else-if="payload.ui?.widget === 'select'">
+      <h6>Options</h6>
+      <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
+        <div
+          v-for="choice in payload.ui.choices"
+          :key="`choice-${choice.value}`"
+          class="col-span-1 p-2 border border-slate-300 flex items-center gap-4"
+        >
+          <DsfrButton
+            tertiary
+            size="sm"
+            icon-only
+            icon="ri-delete-bin-line"
+            @click="() => removeOption(choice)"
+          />
+          <p class="mb-0!">{{ choice.text }} ({{ choice.value }})</p>
+        </div>
+      </div>
+      <SelectOption class="mt-4" @add="addOption" />
     </div>
 
     <!-- Pas encore gérés -->
