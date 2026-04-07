@@ -4,7 +4,8 @@ import type { RouteRecordRaw } from "vue-router"
 import { useAuthStore } from "../stores/auth"
 import AppShell from "../pages/AppShell.vue"
 
-import SurveyListPage from "../pages/SurveyListPage.vue"
+import PositionPage from "../pages/PositionPage.vue"
+import ObservationsPage from "../pages/ObservationsPage.vue"
 import SurveyPage from "../pages/SurveyPage.vue"
 import MapsPage from "../pages/MapsPage/index.vue"
 import ProfilePage from "../pages/ProfilePage.vue"
@@ -13,28 +14,29 @@ import MapDownloadPage from "../pages/MapDownloadPage.vue"
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/projets",
+    redirect: "/carte",
   },
   {
     path: "/",
     component: AppShell,
     children: [
       {
-        path: "",
-        redirect: "/projets",
+        path: "carte",
+        name: "PositionPage",
+        component: PositionPage,
       },
       {
-        path: "projets",
-        name: "SurveyListPage",
-        component: SurveyListPage,
+        path: "observations",
+        name: "ObservationsPage",
+        component: ObservationsPage,
       },
       {
-        path: "gestion-des-cartes",
+        path: "cartes",
         name: "MapsPage",
         component: MapsPage,
       },
       {
-        path: "mon-profil",
+        path: "profil",
         name: "ProfilePage",
         component: ProfilePage,
       },
@@ -68,7 +70,7 @@ router.beforeEach(async (to) => {
   if (!authStore.isLoggedIn && to.name !== "LoginPage")
     return { name: "LoginPage" }
   if (authStore.isLoggedIn && to.name === "LoginPage")
-    return { name: "SurveyListPage" }
+    return { name: "CartePage" }
 })
 
 export default router

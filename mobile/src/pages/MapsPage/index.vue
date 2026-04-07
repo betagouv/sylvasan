@@ -8,7 +8,6 @@ import {
   IonTitle,
   IonContent,
   IonButtons,
-  IonMenuButton,
   IonActionSheet,
   alertController,
   IonIcon,
@@ -111,9 +110,6 @@ onIonViewDidEnter(loadMaps)
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-menu-button />
-        </ion-buttons>
         <ion-title>Mes cartes</ion-title>
         <ion-buttons slot="end">
           <ion-button @click="router.push({ name: 'MapDownloadPage' })">
