@@ -21,7 +21,7 @@ psycopg2==2.9.11
 PyJWT==2.12.1
 python-dateutil==2.9.0.post0
 requests==2.33.1
-ruff==0.15.7
+ruff==0.15.8
 s3transfer==0.16.0
 sentry-sdk==2.57.0
 six==1.17.0
