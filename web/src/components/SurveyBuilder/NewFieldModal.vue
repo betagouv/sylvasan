@@ -25,6 +25,7 @@ const makeEmptyPayload = (): SurveyField => ({
     placeholder: undefined,
     widget: "input",
     textarea: false,
+    choices: [],
   },
   validation: {},
 })
@@ -68,6 +69,18 @@ const assignWidgetAndType = (option: FieldWidget) => {
   if (!mapping) return
   payload.value.type = mapping.type
   if (payload.value.ui) payload.value.ui.widget = mapping.widget
+
+  // Reset des champs annexes
+  payload.value.label = ""
+  payload.value.required = false
+  payload.value.id = ""
+  if (payload.value.ui) {
+    payload.value.ui.hint = undefined
+    payload.value.ui.placeholder = undefined
+    payload.value.ui.textarea = false
+    payload.value.ui.choices = []
+  }
+  payload.value.validation = {}
 }
 
 const addField = () => {
@@ -281,7 +294,15 @@ const close = () => {
       <RadioOption class="mt-4" @add="addOption" />
     </div>
 
-    <div class="flex gap-6" v-if="payload.ui?.widget === 'date'">
+    <div class="flex gap-6" v-else-if="payload.ui?.widget === 'date'">
+      <DsfrInputGroup>
+        <DsfrInput
+          label-visible
+          v-model="payload.ui.hint"
+          v-if="payload.ui"
+          label="Aide"
+        />
+      </DsfrInputGroup>
       <div v-if="payload.validation">
         <DsfrInput
           type="date"
@@ -299,6 +320,7 @@ const close = () => {
         />
       </div>
     </div>
+
     <!-- Pas encore gérés -->
     <div v-else>
       <DsfrNotice type="warning" title="Pas encore disponible" />

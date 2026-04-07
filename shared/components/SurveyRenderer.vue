@@ -60,8 +60,9 @@ function handleSubmit() {
             :isTextarea="field.ui?.textarea"
           />
         </DsfrInputGroup>
+
+        <!-- Champ numérique -->
         <DsfrInputGroup v-if="field.ui?.widget === 'number'">
-          <!-- Champ numérique -->
           <DsfrInput
             v-model="formData[field.id]"
             :label="field.label"
@@ -116,6 +117,20 @@ function handleSubmit() {
             :legend="field.label"
             :required="field.required ?? false"
             v-model="formData[field.id]"
+          />
+        </DsfrInputGroup>
+
+        <!-- Champ date -->
+        <DsfrInputGroup v-if="field.ui?.widget === 'date'">
+          <DsfrInput
+            v-model="formData[field.id]"
+            :label="field.label"
+            :required="field.required ?? false"
+            :label-visible="true"
+            :hint="field.ui?.hint"
+            type="date"
+            :min="field.validation?.min"
+            :max="field.validation?.max"
           />
         </DsfrInputGroup>
       </div>

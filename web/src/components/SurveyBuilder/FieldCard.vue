@@ -61,26 +61,25 @@ const formatDate = (isoString: string): string => {
 
       <!-- Champ text / numérique -->
 
-      <div
-        v-if="field.ui?.widget === 'input' || field.ui?.widget === 'number'"
-      ></div>
-      <div class="flex gap-2" v-if="field.ui?.placeholder">
-        <div class="text-gray-500 text-medium">Placeholder</div>
-        <div>{{ field.ui.placeholder }}</div>
-      </div>
-      <div class="flex gap-2" v-if="field.ui?.hint">
-        <div class="text-gray-500 text-medium">Aide</div>
-        <div>{{ field.ui.hint }}</div>
-      </div>
-      <div v-if="field.ui?.widget === 'number'">
-        <div class="flex gap-2" v-if="field.validation?.min">
-          <div class="text-gray-500 text-medium">Valeur min.</div>
-          <div>{{ field.validation.min }}</div>
+      <div v-if="field.ui?.widget === 'input' || field.ui?.widget === 'number'">
+        <div class="flex gap-2" v-if="field.ui?.placeholder">
+          <div class="text-gray-500 text-medium">Placeholder</div>
+          <div>{{ field.ui.placeholder }}</div>
         </div>
+        <div class="flex gap-2" v-if="field.ui?.hint">
+          <div class="text-gray-500 text-medium">Aide</div>
+          <div>{{ field.ui.hint }}</div>
+        </div>
+        <div v-if="field.ui?.widget === 'number'">
+          <div class="flex gap-2" v-if="field.validation?.min">
+            <div class="text-gray-500 text-medium">Valeur min.</div>
+            <div>{{ field.validation.min }}</div>
+          </div>
 
-        <div class="flex gap-2" v-if="field.validation?.max">
-          <div class="text-gray-500 text-medium">Valeur max.</div>
-          <div>{{ field.validation.max }}</div>
+          <div class="flex gap-2" v-if="field.validation?.max">
+            <div class="text-gray-500 text-medium">Valeur max.</div>
+            <div>{{ field.validation.max }}</div>
+          </div>
         </div>
       </div>
 
@@ -99,6 +98,10 @@ const formatDate = (isoString: string): string => {
 
       <!-- Champ Date -->
       <div v-if="field.ui?.widget === 'date'">
+        <div class="flex gap-2" v-if="field.ui?.hint">
+          <div class="text-gray-500 text-medium">Aide</div>
+          <div>{{ field.ui.hint }}</div>
+        </div>
         <div class="flex gap-2" v-if="field.validation?.min">
           <div class="text-gray-500 text-medium">Date min</div>
           <div v-if="typeof field.validation.min === 'string'">
