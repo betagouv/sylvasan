@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import type { SurveyField, FieldWidget } from "@shared-types/survey"
+import type { SurveyField, FieldWidget, FieldType } from "@shared-types/survey"
 import * as z from "zod"
 import { ZodError } from "zod"
 import { DsfrInputGroup } from "@gouvminint/vue-dsfr"
@@ -15,15 +15,18 @@ const emit = defineEmits(["add", "close"])
 
 const props = defineProps(["opened"])
 
-const makeEmptyPayload = (): SurveyField => ({
-  type: "string",
+const makeEmptyPayload = (
+  type: FieldType = "string",
+  widget: FieldWidget = "input"
+): SurveyField => ({
+  type: type,
   label: "",
   required: false,
   id: "",
   ui: {
     hint: undefined,
     placeholder: undefined,
-    widget: "input",
+    widget: widget,
     textarea: false,
     choices: [],
   },
@@ -67,20 +70,8 @@ const typeOptions = computed(() =>
 const assignWidgetAndType = (option: FieldWidget) => {
   const mapping = typeWidgetMapping[option]
   if (!mapping) return
-  payload.value.type = mapping.type
-  if (payload.value.ui) payload.value.ui.widget = mapping.widget
 
-  // Reset des champs annexes
-  payload.value.label = ""
-  payload.value.required = false
-  payload.value.id = ""
-  if (payload.value.ui) {
-    payload.value.ui.hint = undefined
-    payload.value.ui.placeholder = undefined
-    payload.value.ui.textarea = false
-    payload.value.ui.choices = []
-  }
-  payload.value.validation = {}
+  payload.value = makeEmptyPayload(mapping.type, mapping.widget)
 }
 
 const addField = () => {
