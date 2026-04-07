@@ -280,6 +280,25 @@ const close = () => {
       </div>
       <RadioOption class="mt-4" @add="addOption" />
     </div>
+
+    <div class="flex gap-6" v-if="payload.ui?.widget === 'date'">
+      <div v-if="payload.validation">
+        <DsfrInput
+          type="date"
+          v-model="payload.validation.min"
+          label="Valeur minimale"
+          label-visible
+        />
+      </div>
+      <div v-if="payload.validation">
+        <DsfrInput
+          type="date"
+          v-model="payload.validation.max"
+          label="Valeur maximale"
+          label-visible
+        />
+      </div>
+    </div>
     <!-- Pas encore gérés -->
     <div v-else>
       <DsfrNotice type="warning" title="Pas encore disponible" />

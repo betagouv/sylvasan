@@ -19,8 +19,8 @@ export type Condition = SimpleCondition | CompoundCondition
 export interface FieldValidation {
   maxLength?: number
   minLength?: number
-  min?: number
-  max?: number
+  min?: number | string
+  max?: number | string
   required_if?: Condition
 }
 

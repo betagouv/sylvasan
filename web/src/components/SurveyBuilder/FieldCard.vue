@@ -14,6 +14,14 @@ const label = computed(() => widgetData.value?.label)
 
 const { field } = defineProps<{ field: SurveyField }>()
 const emit = defineEmits(["delete", "moveUp", "moveDown"])
+
+const formatDate = (isoString: string): string => {
+  return new Date(isoString).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+}
 </script>
 
 <template>
@@ -86,6 +94,22 @@ const emit = defineEmits(["delete", "moveUp", "moveDown"])
       <div v-if="field.ui?.widget === 'checkboxes'">
         <div class="flex gap-2" v-if="field.ui?.choices">
           <div>{{ field.ui.choices.length }} options</div>
+        </div>
+      </div>
+
+      <!-- Champ Date -->
+      <div v-if="field.ui?.widget === 'date'">
+        <div class="flex gap-2" v-if="field.validation?.min">
+          <div class="text-gray-500 text-medium">Date min</div>
+          <div v-if="typeof field.validation.min === 'string'">
+            {{ formatDate(field.validation.min) }}
+          </div>
+        </div>
+        <div class="flex gap-2" v-if="field.validation?.max">
+          <div class="text-gray-500 text-medium">Date max</div>
+          <div v-if="typeof field.validation.max === 'string'">
+            {{ formatDate(field.validation.max) }}
+          </div>
         </div>
       </div>
     </div>
