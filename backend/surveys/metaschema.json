@@ -40,9 +40,6 @@
         "condition": {
           "$ref": "#/$defs/condition"
         },
-        "hint": {
-          "type": "string"
-        },
         "id": {
           "pattern": "^[a-z][a-z0-9_]*$",
           "type": "string"
@@ -51,26 +48,85 @@
           "minLength": 1,
           "type": "string"
         },
-        "placeholder": {
-          "type": "string"
-        },
         "required": {
           "type": "boolean"
         },
         "type": {
+          "enum": [
+            "string",
+            "number",
+            "boolean",
+            "array"
+          ],
           "type": "string"
+        },
+        "ui": {
+          "additionalProperties": false,
+          "properties": {
+            "activeText": {
+              "type": "string"
+            },
+            "choices": {
+              "items": {
+                "properties": {
+                  "label": {
+                    "type": "string"
+                  },
+                  "value": {}
+                },
+                "required": [
+                  "value",
+                  "label"
+                ],
+                "type": "object"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "hint": {
+              "type": "string"
+            },
+            "inactiveText": {
+              "type": "string"
+            },
+            "placeholder": {
+              "type": "string"
+            },
+            "textarea": {
+              "type": "boolean"
+            },
+            "widget": {
+              "enum": [
+                "input",
+                "number",
+                "select",
+                "radio",
+                "checkboxes",
+                "switch",
+                "date"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "validation": {
           "additionalProperties": false,
           "properties": {
             "max": {
-              "type": "number"
+              "type": [
+                "number",
+                "string"
+              ]
             },
             "maxLength": {
               "type": "integer"
             },
             "min": {
-              "type": "number"
+              "type": [
+                "number",
+                "string"
+              ]
             },
             "minLength": {
               "type": "integer"
@@ -89,8 +145,7 @@
         "id",
         "type",
         "label"
-      ],
-      "type": "object"
+      ]
     },
     "page": {
       "additionalProperties": false,

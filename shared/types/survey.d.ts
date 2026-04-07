@@ -1,9 +1,4 @@
-export type FieldType =
-  | "text"
-  | "textarea"
-  | "number"
-  | "date"
-  | "vocabulary_select"
+export type FieldType = "string" | "number" | "boolean" | "array"
 
 export type ConditionOperator = "eq" | "neq" | "in" | "not_in"
 export type LogicalOperator = "and" | "or"
@@ -24,22 +19,40 @@ export type Condition = SimpleCondition | CompoundCondition
 export interface FieldValidation {
   maxLength?: number
   minLength?: number
-  min?: number
-  max?: number
+  min?: number | string
+  max?: number | string
   required_if?: Condition
+}
+
+export interface FieldUI {
+  widget?: FieldWidget
+  choices?: DsfrSelectOption[] | DsfrCheckboxProps[]
+  hint?: string
+  placeholder?: string
+  textarea?: boolean
+  activeText?: string
+  inactiveText?: string
 }
 
 export interface SurveyField {
   id: string
   type: FieldType
   label: string
-  hint?: string
-  placeholder?: string
   required?: boolean
   vocabulary?: string
   condition?: Condition
   validation?: FieldValidation
+  ui?: FieldUI
 }
+
+export type FieldWidget =
+  | "input"
+  | "number"
+  | "select"
+  | "radio"
+  | "checkboxes"
+  | "switch"
+  | "date"
 
 export interface SurveyPage {
   id: string
