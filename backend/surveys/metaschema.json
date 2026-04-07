@@ -63,9 +63,11 @@
         "ui": {
           "additionalProperties": false,
           "properties": {
+            "activeText": {
+              "type": "string"
+            },
             "choices": {
               "items": {
-                "additionalProperties": false,
                 "properties": {
                   "label": {
                     "type": "string"
@@ -84,8 +86,14 @@
             "hint": {
               "type": "string"
             },
+            "inactiveText": {
+              "type": "string"
+            },
             "placeholder": {
               "type": "string"
+            },
+            "textarea": {
+              "type": "boolean"
             },
             "widget": {
               "enum": [
@@ -94,6 +102,7 @@
                 "select",
                 "radio",
                 "checkboxes",
+                "switch",
                 "date"
               ],
               "type": "string"
@@ -105,13 +114,19 @@
           "additionalProperties": false,
           "properties": {
             "max": {
-              "type": "number"
+              "type": [
+                "number",
+                "string"
+              ]
             },
             "maxLength": {
               "type": "integer"
             },
             "min": {
-              "type": "number"
+              "type": [
+                "number",
+                "string"
+              ]
             },
             "minLength": {
               "type": "integer"
