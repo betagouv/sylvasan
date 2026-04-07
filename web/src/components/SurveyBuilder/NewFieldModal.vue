@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import type { FieldType, SurveyField, FieldWidget } from "@shared-types/survey"
+import type { SurveyField, FieldWidget } from "@shared-types/survey"
 import * as z from "zod"
 import { ZodError } from "zod"
 import { DsfrInputGroup } from "@gouvminint/vue-dsfr"
 import SelectOption from "./SelectOption.vue"
+import RadioOption from "./RadioOption.vue"
 import type { DsfrSelectOption } from "@gouvminint/vue-dsfr"
+import CheckboxOption from "./CheckboxOption.vue"
 import { typeWidgetMapping } from "./mappings"
+import ChoiceCard from "./ChoiceCard.vue"
 
 const emit = defineEmits(["add", "close"])
 
@@ -21,6 +24,7 @@ const makeEmptyPayload = (): SurveyField => ({
     hint: undefined,
     placeholder: undefined,
     widget: "input",
+    textarea: false,
   },
   validation: {},
 })
@@ -94,7 +98,7 @@ const removeOption = (option: DsfrSelectOption) => {
 }
 
 const close = () => {
-  formErrors.value.fieldErrors = undefined
+  if (formErrors.value?.fieldErrors) formErrors.value.fieldErrors = undefined
   emit("close")
 }
 </script>
@@ -142,7 +146,7 @@ const close = () => {
       class="flex gap-6"
       v-if="payload.ui?.widget === 'input' || payload.ui?.widget === 'number'"
     >
-      <DsfrInputGroup :error-message="formErrors?.fieldErrors?.hint?.[0]">
+      <DsfrInputGroup>
         <DsfrInput
           label-visible
           v-model="payload.ui.hint"
@@ -150,15 +154,25 @@ const close = () => {
           label="Aide"
         />
       </DsfrInputGroup>
-      <DsfrInputGroup
-        :error-message="formErrors?.fieldErrors?.placeholder?.[0]"
-      >
+      <DsfrInputGroup>
         <DsfrInput
           label-visible
           v-model="payload.ui.placeholder"
           label="Placeholder"
         />
       </DsfrInputGroup>
+
+      <div
+        class="grow"
+        v-if="payload.validation && payload.ui.widget === 'input'"
+      ></div>
+      <DsfrToggleSwitch
+        v-if="payload.validation && payload.ui.widget === 'input'"
+        label="Champ multiligne"
+        activeText="Oui"
+        inactiveText="Non"
+        v-model="payload.ui.textarea"
+      />
 
       <!-- Validation min/max pour les chiffres -->
       <div v-if="payload.validation && payload.ui.widget === 'number'">
@@ -190,6 +204,65 @@ const close = () => {
     <div v-else-if="payload.ui?.widget === 'select'">
       <h6>Options</h6>
       <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
+        <ChoiceCard
+          v-for="choice in payload.ui.choices"
+          :key="`choice-${choice.value}`"
+          class="col-span-1 p-2 border border-slate-300 flex items-center gap-4"
+          :choice="choice"
+          @delete="removeOption(choice)"
+        />
+      </div>
+      <SelectOption class="mt-4" @add="addOption" />
+    </div>
+
+    <div v-else-if="payload.ui?.widget === 'checkboxes'">
+      <h6>Options</h6>
+      <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
+        <ChoiceCard
+          v-for="choice in payload.ui.choices"
+          :key="`checkbox-choice-${choice.value}`"
+          class="col-span-1 p-2 border border-slate-300 flex items-center gap-4"
+          :choice="choice"
+          @delete="removeOption(choice)"
+        />
+      </div>
+      <CheckboxOption class="mt-4" @add="addOption" />
+    </div>
+
+    <div
+      v-else-if="payload.ui?.widget === 'switch'"
+      class="flex gap-4 items-end switch-fields"
+    >
+      <!-- TODO : automatically add ID et nom, verifier à quoi ils servent -->
+      <DsfrInputGroup>
+        <DsfrInput
+          label-visible
+          v-model="payload.ui.hint"
+          v-if="payload.ui"
+          label="Aide"
+        />
+      </DsfrInputGroup>
+      <DsfrInputGroup>
+        <DsfrInput
+          label-visible
+          v-model="payload.ui.activeText"
+          label="Text actif"
+          hint="Texte à afficher lorsqu'il est activé"
+        />
+      </DsfrInputGroup>
+      <DsfrInputGroup>
+        <DsfrInput
+          label-visible
+          v-model="payload.ui.inactiveText"
+          label="Text inactif"
+          hint="Texte à afficher lorsqu'il est desactivé"
+        />
+      </DsfrInputGroup>
+    </div>
+
+    <div v-else-if="payload.ui?.widget === 'radio'">
+      <h6>Options</h6>
+      <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
         <div
           v-for="choice in payload.ui.choices"
           :key="`choice-${choice.value}`"
@@ -202,12 +275,11 @@ const close = () => {
             icon="ri-delete-bin-line"
             @click="() => removeOption(choice)"
           />
-          <p class="mb-0!">{{ choice.text }} ({{ choice.value }})</p>
+          <p class="mb-0!">{{ choice.label }} ({{ choice.value }})</p>
         </div>
       </div>
-      <SelectOption class="mt-4" @add="addOption" />
+      <RadioOption class="mt-4" @add="addOption" />
     </div>
-
     <!-- Pas encore gérés -->
     <div v-else>
       <DsfrNotice type="warning" title="Pas encore disponible" />
@@ -221,3 +293,9 @@ const close = () => {
     </template>
   </DsfrModal>
 </template>
+
+<style scoped>
+.switch-fields :deep(.fr-input-group) {
+  margin-bottom: 0;
+}
+</style>

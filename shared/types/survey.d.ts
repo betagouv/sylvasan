@@ -26,9 +26,12 @@ export interface FieldValidation {
 
 export interface FieldUI {
   widget?: FieldWidget
-  choices?: DsfrSelectOption[]
+  choices?: DsfrSelectOption[] | DsfrCheckboxProps[]
   hint?: string
   placeholder?: string
+  textarea?: boolean
+  activeText?: string
+  inactiveText?: string
 }
 
 export interface SurveyField {
@@ -44,11 +47,11 @@ export interface SurveyField {
 
 export type FieldWidget =
   | "input"
-  | "textarea"
   | "number"
   | "select"
   | "radio"
-  | "checkbox"
+  | "checkboxes"
+  | "switch"
   | "date"
 
 export interface SurveyPage {

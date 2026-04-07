@@ -90,11 +90,10 @@
             "widget": {
               "enum": [
                 "input",
-                "textarea",
                 "number",
                 "select",
                 "radio",
-                "checkbox",
+                "checkboxes",
                 "date"
               ],
               "type": "string"

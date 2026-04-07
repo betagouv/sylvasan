@@ -10,7 +10,6 @@ const widgetData = computed(() =>
     : undefined
 )
 const icon = computed(() => widgetData.value?.icon)
-const color = computed(() => widgetData.value?.color)
 const label = computed(() => widgetData.value?.label)
 
 const { field } = defineProps<{ field: SurveyField }>()
@@ -35,13 +34,16 @@ const emit = defineEmits(["delete", "moveUp", "moveDown"])
     </div>
     <div class="flex flex-col grow border-r border-slate-300 pr-4">
       <div class="flex gap-2 items-end mb-4">
-        <h3
-          :class="`fr-text--sm mb-0! border border-slate-100 px-1 rounded pt-1 field-${widgetData?.widget}`"
+        <div
+          :class="`border border-slate-100 px-1 rounded-full pt-1 field-${widgetData?.widget}`"
         >
-          <v-icon :icon="icon" /> {{ field.label }}
+          <v-icon :icon="icon" />
+        </div>
+        <h3 :class="`fr-text--sm mb-0! `">
+          {{ field.label }}
         </h3>
 
-        <p class="fr-text--sm mb-0!">{{ widgetData?.label }}</p>
+        <p class="fr-text--sm mb-0! text-gray-500">{{ label }}</p>
         <p class="mb-0! fr-text--sm italic text-gray-500" v-if="field.required">
           *Champ requis
         </p>
@@ -73,8 +75,15 @@ const emit = defineEmits(["delete", "moveUp", "moveDown"])
           <div>{{ field.validation.max }}</div>
         </div>
       </div>
+
       <!-- Champ select -->
       <div v-if="field.ui?.widget === 'select'">
+        <div class="flex gap-2" v-if="field.ui?.choices">
+          <div>{{ field.ui.choices.length }} options</div>
+        </div>
+      </div>
+      <!-- Champ Checkbox -->
+      <div v-if="field.ui?.widget === 'checkboxes'">
         <div class="flex gap-2" v-if="field.ui?.choices">
           <div>{{ field.ui.choices.length }} options</div>
         </div>
@@ -104,14 +113,17 @@ const emit = defineEmits(["delete", "moveUp", "moveDown"])
 .field-select {
   @apply bg-[#dffee6];
 }
-.field-checkbox {
-  @apply bg-slate-50;
+.field-checkboxes {
+  @apply bg-[#f2f5da];
+}
+.field-switch {
+  @apply bg-[#ffe9e6];
 }
 .field-textarea {
   @apply bg-slate-50;
 }
 .field-radio {
-  @apply bg-slate-50;
+  @apply bg-[#f7ebfa];
 }
 .field-date {
   @apply bg-slate-50;
