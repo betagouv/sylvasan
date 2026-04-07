@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref } from "vue"
+import type { DsfrButtonProps } from "@gouvminint/vue-dsfr"
 import type { SurveyField } from "@shared-types/survey"
 import { typeWidgetMapping } from "./mappings"
 import type { WidgetData } from "./mappings"
@@ -14,6 +15,24 @@ const label = computed(() => widgetData.value?.label)
 
 const { field } = defineProps<{ field: SurveyField }>()
 const emit = defineEmits(["delete", "moveUp", "moveDown"])
+
+const confirmDeleteOpened = ref(false)
+const confirmDeleteActions: DsfrButtonProps[] = [
+  {
+    label: "Supprimer",
+    onClick() {
+      emit("delete")
+      confirmDeleteOpened.value = false
+    },
+  },
+  {
+    label: "Annuler",
+    secondary: true,
+    onClick() {
+      confirmDeleteOpened.value = false
+    },
+  },
+]
 
 const formatDate = (isoString: string): string => {
   return new Date(isoString).toLocaleDateString("fr-FR", {
@@ -120,11 +139,23 @@ const formatDate = (isoString: string): string => {
     <div class="self-center end">
       <DsfrButton
         icon="ri-delete-bin-line"
-        @click="emit('delete')"
+        @click="confirmDeleteOpened = true"
         secondary
         icon-only
       />
     </div>
+    <DsfrModal
+      :opened="confirmDeleteOpened"
+      title="Supprimer le champ ?"
+      :is-alert="true"
+      :actions="confirmDeleteActions"
+      @close="confirmDeleteOpened = false"
+    >
+      <p>
+        Êtes-vous sûr de vouloir supprimer le champ «
+        <strong>{{ field.label }}</strong> » ?
+      </p>
+    </DsfrModal>
   </div>
 </template>
 
