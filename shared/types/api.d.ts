@@ -37,16 +37,6 @@ type UserDisplay = {
   lastName: string
 }
 
-type ResponseStatus = "draft" | "submitted" | "exported"
-
-type Response = {
-  id: number
-  survey: SurveyDisplay
-  respondant: UserDisplay | null
-  status: ResponseStatus
-  creationDate: string
-}
-
 export {
   LoggedUser,
   Membership,

@@ -5,7 +5,7 @@ import { useAuthStore } from "../stores/auth"
 import AppShell from "../pages/AppShell.vue"
 
 import PositionPage from "../pages/PositionPage.vue"
-import ObservationsPage from "../pages/ObservationsPage.vue"
+import ResponseListPage from "../pages/ResponseListPage/index.vue"
 import SurveyPage from "../pages/SurveyPage.vue"
 import MapsPage from "../pages/MapsPage/index.vue"
 import ProfilePage from "../pages/ProfilePage.vue"
@@ -27,8 +27,8 @@ const routes: Array<RouteRecordRaw> = [
       },
       {
         path: "observations",
-        name: "ObservationsPage",
-        component: ObservationsPage,
+        name: "ResponseListPage",
+        component: ResponseListPage,
       },
       {
         path: "cartes",

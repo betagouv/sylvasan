@@ -242,3 +242,100 @@ class TestGetResponses(APITestCase):
 
         # Non visible : la réponse d'un·e autre dans org A (rôle RESPONDER uniquement)
         self.assertNotIn(survey_response_autre_org_a.id, ids)
+
+
+class TestResponseFullList(APITestCase):
+    def test_unauthenticated_cannot_list_full_responses(self):
+        """
+        Un·e utilisateur·ice non authentifié·e reçoit une 401
+        """
+        response = self.client.get(reverse("response_responder_retrieve"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @authenticate
+    def test_no_membership_returns_empty_list(self):
+        """
+        Un·e utilisateur·ice sans rôle ne voit aucune réponse
+        """
+        ResponseFactory()
+        response = self.client.get(reverse("response_responder_retrieve"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), [])
+
+    @authenticate
+    def test_responder_sees_their_own_responses(self):
+        """
+        Un·e RESPONDER voit ses propres réponses avec la représentation complète
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        own_response = ResponseFactory(survey=SurveyFactory(organisation=org), respondant=authenticate.user)
+
+        response = self.client.get(reverse("response_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        json_response = response.json()
+        self.assertEqual(len(json_response), 1)
+        self.assertEqual(json_response[0]["id"], own_response.id)
+
+    @authenticate
+    def test_responder_cannot_see_other_users_responses(self):
+        """
+        Un·e RESPONDER ne voit pas les réponses d'un·e autre utilisateur·ice
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        ResponseFactory(survey=SurveyFactory(organisation=org))  # répondant différent
+
+        response = self.client.get(reverse("response_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()), 0)
+
+    @authenticate
+    def test_manager_gets_empty_list(self):
+        """
+        Un·e MANAGER sans rôle RESPONDER ne voit aucune réponse
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        ResponseFactory(survey=SurveyFactory(organisation=org), respondant=authenticate.user)
+
+        response = self.client.get(reverse("response_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()), 0)
+
+    @authenticate
+    def test_admin_gets_empty_list(self):
+        """
+        Un·e ADMIN sans rôle RESPONDER ne voit aucune réponse
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        ResponseFactory(survey=SurveyFactory(organisation=org), respondant=authenticate.user)
+
+        response = self.client.get(reverse("response_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json()), 0)
+
+    @authenticate
+    def test_user_with_both_responder_and_manager_roles_sees_only_own_responses(self):
+        """
+        Un·e utilisateur·ice avec les rôles RESPONDER et MANAGER ne voit que ses propres réponses
+        (pas toutes les réponses de l'organisation comme le ferait le rôle MANAGER)
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        own_response = ResponseFactory(survey=SurveyFactory(organisation=org), respondant=authenticate.user)
+        other_response = ResponseFactory(survey=SurveyFactory(organisation=org))
+
+        response = self.client.get(reverse("response_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [r["id"] for r in response.json()]
+        self.assertIn(own_response.id, ids)
+        # Les réponses des autres ne sont pas visibles, même si MANAGER dans la même org
+        self.assertNotIn(other_response.id, ids)
