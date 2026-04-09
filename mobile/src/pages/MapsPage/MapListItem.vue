@@ -11,57 +11,46 @@ const emit = defineEmits(["open-actions"])
 
 <template>
   <div>
-    <DsfrCard :title="map.name">
-      <template #end-details>
-        <p>
-          {{ formatDate(map.createdAt) }}
-          &nbsp;·&nbsp;
-          {{ formatBytes(map.bytes) }}
-          &nbsp;·&nbsp;
-          {{ map.tiles.toLocaleString("fr-FR") }} tuiles
-          <br />
-          Zoom {{ map.zoomLevels[0] }}–{{
-            map.zoomLevels[map.zoomLevels.length - 1]
-          }}
-        </p>
-        <div class="flex gap-4">
-          <DsfrButton label="Visualiser" icon="ri-map-2-line" />
-          <DsfrButton
-            secondary
-            label="Options"
-            icon="ri-edit-line"
-            @click="() => emit('open-actions')"
-          />
+    <div class="border border-slate-200 p-4 bg-white">
+      <h2 class="fr-h6 mb-3!">{{ map.name }}</h2>
+      <div>
+        <div class="flex">
+          <v-icon icon="ri-calendar-line" scale="0.9" class="mt-[3px] mr-2" />
+          <p class="mb-0! fr-text--sm text-stone-600">
+            {{ formatDate(map.createdAt) }}
+          </p>
         </div>
-      </template>
-    </DsfrCard>
-
-    <!-- <div class="map-card__icon" aria-hidden="true">
-      <span class="fr-icon-map-2-line" />
+        <div class="flex">
+          <v-icon icon="ri-calendar-line" scale="0.9" class="mt-[3px] mr-2" />
+          <p class="mb-0! fr-text--sm text-stone-600">
+            Zoom {{ map.zoomLevels[0] }}–{{
+              map.zoomLevels[map.zoomLevels.length - 1]
+            }}, {{ formatBytes(map.bytes) }}
+          </p>
+        </div>
+        <div class="flex">
+          <v-icon icon="ri-calendar-line" scale="0.9" class="mt-[3px] mr-2" />
+          <p class="mb-0! fr-text--sm text-stone-600">
+            {{ map.tiles.toLocaleString("fr-FR") }} tuiles
+          </p>
+        </div>
+      </div>
+      <div class="flex gap-4 justify-end">
+        <DsfrButton
+          secondary
+          size="sm"
+          label="Aperçu"
+          icon="ri-eye-line"
+          @click="() => emit('open-actions')"
+        />
+        <DsfrButton
+          secondary
+          size="sm"
+          label="Modifier"
+          icon="ri-pencil-line"
+          @click="() => emit('open-actions')"
+        />
+      </div>
     </div>
-
-    <div class="map-card__body">
-      <p class="map-card__name">{{ map.name }}</p>
-      <p class="map-card__meta">
-        {{ formatDate(map.createdAt) }}
-        &nbsp;·&nbsp;
-        {{ formatBytes(map.bytes) }}
-        &nbsp;·&nbsp;
-        {{ map.tiles.toLocaleString("fr-FR") }} tuiles
-      </p>
-      <p class="map-card__zoom">
-        Zoom {{ map.zoomLevels[0] }}–{{
-          map.zoomLevels[map.zoomLevels.length - 1]
-        }}
-      </p>
-    </div>
-
-    <button
-      class="map-card__menu"
-      :aria-label="`Options pour ${map.name}`"
-      @click="openActions(map)"
-    >
-      <span class="fr-icon-more-2-fill" aria-hidden="true" />
-    </button> -->
   </div>
 </template>

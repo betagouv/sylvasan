@@ -35,7 +35,7 @@ const formatDate = (isoString: string): string => {
 </script>
 
 <template>
-  <div class="border border-slate-200 p-4">
+  <div class="border border-slate-200 p-4 bg-white">
     <div class="mb-1">
       <DsfrBadge :small="true" :label="displayStatus" />
     </div>

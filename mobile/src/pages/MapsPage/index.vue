@@ -127,7 +127,7 @@ onIonViewDidEnter(loadMaps)
 
       <MapListEmpty v-else-if="maps.length === 0" />
 
-      <div v-else class="grid grid-cols-1 gap-3 p-2">
+      <div v-else class="grid grid-cols-1 gap-3">
         <div v-for="map in maps" :key="map.id">
           <MapListItem :map="map" @open-actions="openActions(map)" />
         </div>
@@ -145,6 +145,6 @@ onIonViewDidEnter(loadMaps)
 
 <style scoped>
 ion-content::part(background) {
-  background: #ececfe;
+  background: #f4f4ff;
 }
 </style>
