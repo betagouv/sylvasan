@@ -10,6 +10,7 @@ import SurveyPage from "../pages/SurveyPage.vue"
 import MapsPage from "../pages/MapsPage/index.vue"
 import ProfilePage from "../pages/ProfilePage.vue"
 import MapDownloadPage from "../pages/MapDownloadPage.vue"
+import MapPreviewPage from "../pages/MapPreviewPage.vue"
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -51,6 +52,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/telecharger-une-carte",
     name: "MapDownloadPage",
     component: MapDownloadPage,
+  },
+  {
+    path: "/apercu-carte/:id",
+    name: "MapPreviewPage",
+    component: MapPreviewPage,
   },
   {
     path: "/enquete/:id",

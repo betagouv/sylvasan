@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useIonRouter } from "@ionic/vue"
 import { formatBytes, formatDate } from "../../composables/offlineMapMetadata"
 import type { OfflineMapRecord } from "@shared-types/maps"
 
@@ -7,6 +8,11 @@ const { map } = defineProps<{
 }>()
 
 const emit = defineEmits(["open-actions"])
+const router = useIonRouter()
+
+const previewMap = () => {
+  router.push({ name: "MapPreviewPage", params: { id: map.id } })
+}
 </script>
 
 <template>
@@ -21,7 +27,7 @@ const emit = defineEmits(["open-actions"])
           </p>
         </div>
         <div class="flex">
-          <v-icon icon="ri-calendar-line" scale="0.9" class="mt-[3px] mr-2" />
+          <v-icon icon="ri-zoom-in-line" scale="0.9" class="mt-[3px] mr-2" />
           <p class="mb-0! fr-text--sm text-stone-600">
             Zoom {{ map.zoomLevels[0] }}–{{
               map.zoomLevels[map.zoomLevels.length - 1]
@@ -29,7 +35,7 @@ const emit = defineEmits(["open-actions"])
           </p>
         </div>
         <div class="flex">
-          <v-icon icon="ri-calendar-line" scale="0.9" class="mt-[3px] mr-2" />
+          <v-icon icon="ri-map-2-line" scale="0.9" class="mt-[3px] mr-2" />
           <p class="mb-0! fr-text--sm text-stone-600">
             {{ map.tiles.toLocaleString("fr-FR") }} tuiles
           </p>
@@ -41,7 +47,7 @@ const emit = defineEmits(["open-actions"])
           size="sm"
           label="Aperçu"
           icon="ri-eye-line"
-          @click="() => emit('open-actions')"
+          @click="previewMap"
         />
         <DsfrButton
           secondary

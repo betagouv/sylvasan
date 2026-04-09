@@ -15,7 +15,7 @@ import {
   onIonViewDidEnter,
 } from "@ionic/vue"
 import { useOfflineMaps } from "../../composables/useOfflineMaps"
-import MapListItem from "./MapListItem.vue"
+import MapCard from "./MapCard.vue"
 import MapListLoading from "./MapListLoading.vue"
 import MapListError from "./MapListError.vue"
 import MapListEmpty from "./MapListEmpty.vue"
@@ -129,7 +129,7 @@ onIonViewDidEnter(loadMaps)
 
       <div v-else class="grid grid-cols-1 gap-3">
         <div v-for="map in maps" :key="map.id">
-          <MapListItem :map="map" @open-actions="openActions(map)" />
+          <MapCard :map="map" @open-actions="openActions(map)" />
         </div>
       </div>
     </ion-content>
