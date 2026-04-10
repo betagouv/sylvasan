@@ -36,7 +36,7 @@ const formatDate = (isoString: string): string => {
 
 <template>
   <div class="border border-slate-200 p-4 bg-white">
-    <div class="mb-1">
+    <div class="mb-2">
       <DsfrBadge :small="true" :label="displayStatus" />
     </div>
     <h2 class="fr-h6 mb-3!">{{ response.survey.title }}</h2>

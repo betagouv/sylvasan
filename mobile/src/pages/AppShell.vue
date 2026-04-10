@@ -17,7 +17,7 @@ import {
   personOutline,
 } from "ionicons/icons"
 import { ref } from "vue"
-import SurveyListPage from "./SurveyListPage.vue"
+import SurveyListPage from "./SurveyListPage/index.vue"
 import SurveyPage from "./SurveyPage.vue"
 
 const surveyListOpen = ref(false)

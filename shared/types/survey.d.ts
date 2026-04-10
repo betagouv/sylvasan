@@ -65,3 +65,10 @@ export interface SurveySchema {
   fields: SurveyField[]
   pages?: SurveyPage[]
 }
+
+export interface Survey {
+  id: number
+  title: string
+  jsonSchema: SurveySchema
+  surveyType: string
+}

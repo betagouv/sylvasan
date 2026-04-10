@@ -1,17 +1,10 @@
 import { defineStore } from "pinia"
 import { Preferences } from "@capacitor/preferences"
 import { useApiFetch } from "../utils/data-fetching"
-import type { SurveySchema } from "@shared-types/survey"
+import type { Survey } from "@shared-types/survey"
 
 const SURVEYS_KEY = "surveys_cache"
 const SURVEYS_SYNCED_AT_KEY = "surveys_synced_at"
-
-export interface Survey {
-  id: number
-  title: string
-  jsonSchema: SurveySchema
-  surveyType: string
-}
 
 export const useSurveysStore = defineStore("surveys", {
   state: () => ({
