@@ -8,7 +8,6 @@ import {
   IonTitle,
   IonContent,
   IonButtons,
-  IonMenuButton,
   IonActionSheet,
   alertController,
   IonIcon,
@@ -16,7 +15,7 @@ import {
   onIonViewDidEnter,
 } from "@ionic/vue"
 import { useOfflineMaps } from "../../composables/useOfflineMaps"
-import MapListItem from "./MapListItem.vue"
+import MapCard from "./MapCard.vue"
 import MapListLoading from "./MapListLoading.vue"
 import MapListError from "./MapListError.vue"
 import MapListEmpty from "./MapListEmpty.vue"
@@ -111,9 +110,6 @@ onIonViewDidEnter(loadMaps)
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-buttons slot="start">
-          <ion-menu-button />
-        </ion-buttons>
         <ion-title>Mes cartes</ion-title>
         <ion-buttons slot="end">
           <ion-button @click="router.push({ name: 'MapDownloadPage' })">
@@ -131,9 +127,9 @@ onIonViewDidEnter(loadMaps)
 
       <MapListEmpty v-else-if="maps.length === 0" />
 
-      <div v-else class="grid grid-cols-1 gap-3 p-2">
+      <div v-else class="grid grid-cols-1 gap-3">
         <div v-for="map in maps" :key="map.id">
-          <MapListItem :map="map" @open-actions="openActions(map)" />
+          <MapCard :map="map" @open-actions="openActions(map)" />
         </div>
       </div>
     </ion-content>
@@ -149,6 +145,6 @@ onIonViewDidEnter(loadMaps)
 
 <style scoped>
 ion-content::part(background) {
-  background: #ececfe;
+  background: #f4f4ff;
 }
 </style>

@@ -12,6 +12,7 @@
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../../utils/data-fetching"
 import { computed } from "vue"
+import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 
 const route = useRoute()
 
@@ -21,7 +22,7 @@ const rows = computed(() => {
   if (!response) return {}
 
   return Object.entries(response.value.data).map((x: any) => ({
-    rowData: [x[0], x[1]],
+    rowData: [x[0], `${x[1]}`],
   }))
 })
 
@@ -46,7 +47,25 @@ const headers = [
         <v-icon name="ri-user-line" scale="0.8" class="mr-2" />
         {{ response.respondant?.firstName }} {{ response.respondant?.lastName }}
       </p>
-      <DsfrTable :rows="rows" :headers="headers" />
+      <div class="grid grid-cols-12 gap-4">
+        <div class="col-span-12 sm:col-span-6 md:col-span-7 lg:col-span-8">
+          <DsfrTable :rows="rows" :headers="headers" />
+        </div>
+        <!-- Preview -->
+        <div class="col-span-12 sm:col-span-6 md:col-span-5 lg:col-span-4">
+          <div
+            v-if="response.survey.jsonSchema"
+            class="border rounded border-slate-300 p-4"
+          >
+            <SurveyRenderer
+              :schema="response.survey.jsonSchema"
+              :allowSubmit="false"
+              :readonly="true"
+              :prefillData="response.data"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>

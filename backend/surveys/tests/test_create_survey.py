@@ -29,7 +29,7 @@ class TestCreateSurvey(APITestCase):
             {"title": "Test", "organisation": org.id},
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)  # TODO : c'est p-e un 403?
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     @authenticate
     def test_no_membership_cannot_create_survey(self):

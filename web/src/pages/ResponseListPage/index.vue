@@ -11,12 +11,12 @@
 <script setup lang="ts">
 import { useApiFetch } from "../../utils/data-fetching"
 import { computed } from "vue"
-import type { Response } from "@shared-types/api"
+import type { ResponseDisplay } from "@shared-types/response"
 
 const { data: responses } = useApiFetch("/responses/").get().json()
 
 const rows = computed(() =>
-  responses.value?.map((response: Response) => ({
+  responses.value?.map((response: ResponseDisplay) => ({
     rowData: [
       response.id,
       {

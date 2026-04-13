@@ -48,5 +48,6 @@ class FullResponseSerializer(serializers.ModelSerializer):
             "data",
             "context",
             "status",
+            "creation_date",
         )
         read_only_fields = fields

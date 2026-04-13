@@ -4,37 +4,40 @@ import type { RouteRecordRaw } from "vue-router"
 import { useAuthStore } from "../stores/auth"
 import AppShell from "../pages/AppShell.vue"
 
-import SurveyListPage from "../pages/SurveyListPage.vue"
+import PositionPage from "../pages/PositionPage.vue"
+import ResponseListPage from "../pages/ResponseListPage/index.vue"
 import SurveyPage from "../pages/SurveyPage.vue"
 import MapsPage from "../pages/MapsPage/index.vue"
 import ProfilePage from "../pages/ProfilePage.vue"
 import MapDownloadPage from "../pages/MapDownloadPage.vue"
+import MapPreviewPage from "../pages/MapPreviewPage.vue"
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    redirect: "/projets",
+    redirect: "/carte",
   },
   {
     path: "/",
     component: AppShell,
     children: [
       {
-        path: "",
-        redirect: "/projets",
+        path: "carte",
+        name: "PositionPage",
+        component: PositionPage,
       },
       {
-        path: "projets",
-        name: "SurveyListPage",
-        component: SurveyListPage,
+        path: "observations",
+        name: "ResponseListPage",
+        component: ResponseListPage,
       },
       {
-        path: "gestion-des-cartes",
+        path: "cartes",
         name: "MapsPage",
         component: MapsPage,
       },
       {
-        path: "mon-profil",
+        path: "profil",
         name: "ProfilePage",
         component: ProfilePage,
       },
@@ -49,6 +52,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/telecharger-une-carte",
     name: "MapDownloadPage",
     component: MapDownloadPage,
+  },
+  {
+    path: "/apercu-carte/:id",
+    name: "MapPreviewPage",
+    component: MapPreviewPage,
   },
   {
     path: "/enquete/:id",
@@ -68,7 +76,7 @@ router.beforeEach(async (to) => {
   if (!authStore.isLoggedIn && to.name !== "LoginPage")
     return { name: "LoginPage" }
   if (authStore.isLoggedIn && to.name === "LoginPage")
-    return { name: "SurveyListPage" }
+    return { name: "CartePage" }
 })
 
 export default router

@@ -8,7 +8,9 @@ import type {
 
 const props = defineProps<{
   schema: SurveySchema
-  allowSubmit: boolean
+  allowSubmit?: boolean
+  prefillData?: Record<string, unknown>
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -31,10 +33,14 @@ const getEmptyValue = (field: SurveyField): any => {
 
 const formData = reactive<Record<string, string>>(
   Object.fromEntries(
-    props.schema.fields.map((field: SurveyField) => [
-      field.id,
-      getEmptyValue(field),
-    ])
+    props.schema.fields.map((field: SurveyField) => {
+      const hasPrefillValue = props.prefillData?.hasOwnProperty(field.id)
+      const value =
+        props.prefillData && hasPrefillValue
+          ? props.prefillData[field.id]
+          : getEmptyValue(field)
+      return [field.id, value]
+    })
   )
 )
 
@@ -58,6 +64,7 @@ function handleSubmit() {
             :hint="field.ui?.hint"
             :placeholder="field.ui?.placeholder"
             :isTextarea="field.ui?.textarea"
+            :disabled="props.readonly"
           />
         </DsfrInputGroup>
 
@@ -73,6 +80,7 @@ function handleSubmit() {
             :placeholder="field.ui?.placeholder"
             :min="field.validation?.min"
             :max="field.validation?.max"
+            :disabled="props.readonly"
           />
         </DsfrInputGroup>
 
@@ -83,6 +91,7 @@ function handleSubmit() {
             :label="field.label"
             :required="field.required ?? false"
             v-model="formData[field.id]"
+            :disabled="props.readonly"
           />
         </DsfrInputGroup>
 
@@ -93,6 +102,7 @@ function handleSubmit() {
             :legend="field.label"
             :required="field.required ?? false"
             v-model="formData[field.id]"
+            :disabled="props.readonly"
           />
         </DsfrInputGroup>
 
@@ -105,6 +115,7 @@ function handleSubmit() {
             :activeText="field.ui?.activeText"
             :inactiveText="field.ui?.inactiveText"
             v-model="formData[field.id]"
+            :disabled="props.readonly"
           />
         </DsfrInputGroup>
         <hr v-if="field.ui?.widget === 'switch'" />
@@ -117,6 +128,7 @@ function handleSubmit() {
             :legend="field.label"
             :required="field.required ?? false"
             v-model="formData[field.id]"
+            :disabled="props.readonly"
           />
         </DsfrInputGroup>
 
@@ -131,6 +143,7 @@ function handleSubmit() {
             type="date"
             :min="field.validation?.min"
             :max="field.validation?.max"
+            :disabled="props.readonly"
           />
         </DsfrInputGroup>
       </div>

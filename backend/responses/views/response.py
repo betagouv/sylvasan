@@ -1,7 +1,7 @@
 from django.db.models import Q
 
 from organisations.models import Membership, MembershipType
-from rest_framework.generics import ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from responses.models import Response
@@ -44,3 +44,22 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
 class ResponseRetrieveAPIView(ResponseQuerySetMixin, RetrieveAPIView):
     serializer_class = FullResponseSerializer
     permission_classes = [IsAuthenticated]
+
+
+class ResponseFullListAPIView(ListAPIView):
+    """
+    Retourne la liste complète des réponses de l'utilisateur·ice connecté·e.
+    Seuls les rôles RESPONDER sont pris en compte — les ADMIN et MANAGER obtiennent une liste vide.
+    """
+
+    serializer_class = FullResponseSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        has_responder_membership = Membership.objects.filter(
+            user=user, membership_type=MembershipType.RESPONDER
+        ).exists()
+        if not has_responder_membership:
+            return Response.objects.none()
+        return Response.objects.filter(respondant=user)

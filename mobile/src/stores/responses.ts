@@ -1,31 +1,31 @@
 import { defineStore } from "pinia"
 import { Preferences } from "@capacitor/preferences"
 import { useApiFetch } from "../utils/data-fetching"
-import type { Survey } from "@shared-types/survey"
+import type { ResponseFull } from "@shared-types/response"
 
-const SURVEYS_KEY = "surveys_cache"
-const SURVEYS_SYNCED_AT_KEY = "surveys_synced_at"
+const RESPONSES_KEY = "responses_cache"
+const RESPONSES_SYNCED_AT_KEY = "responses_synced_at"
 
-export const useSurveysStore = defineStore("surveys", {
+export const useResponsesStore = defineStore("responses", {
   state: () => ({
-    surveys: [] as Survey[],
+    responses: [] as ResponseFull[],
     syncedAt: null as string | null,
     syncing: false,
   }),
 
   getters: {
-    getSurveyById: (s) => (id: number) =>
-      s.surveys.find((survey) => survey.id === id),
+    getResponseById: (s) => (id: number) =>
+      s.responses.find((response) => response.id === id),
   },
 
   actions: {
     async loadFromStorage() {
-      const [surveysRaw, syncedAt] = await Promise.all([
-        Preferences.get({ key: SURVEYS_KEY }),
-        Preferences.get({ key: SURVEYS_SYNCED_AT_KEY }),
+      const [responsesRaw, syncedAt] = await Promise.all([
+        Preferences.get({ key: RESPONSES_KEY }),
+        Preferences.get({ key: RESPONSES_SYNCED_AT_KEY }),
       ])
-      if (surveysRaw.value) {
-        this.surveys = JSON.parse(surveysRaw.value)
+      if (responsesRaw.value) {
+        this.responses = JSON.parse(responsesRaw.value)
       }
       this.syncedAt = syncedAt.value
     },
@@ -33,11 +33,11 @@ export const useSurveysStore = defineStore("surveys", {
     async persist() {
       await Promise.all([
         Preferences.set({
-          key: SURVEYS_KEY,
-          value: JSON.stringify(this.surveys),
+          key: RESPONSES_KEY,
+          value: JSON.stringify(this.responses),
         }),
         Preferences.set({
-          key: SURVEYS_SYNCED_AT_KEY,
+          key: RESPONSES_SYNCED_AT_KEY,
           value: new Date().toISOString(),
         }),
       ])
@@ -47,11 +47,11 @@ export const useSurveysStore = defineStore("surveys", {
       // À utiliser lors d'un pull to refresh par exemple
       this.syncing = true
       try {
-        const { data, response } = await useApiFetch("/mobile/surveys/")
+        const { data, response } = await useApiFetch("/mobile/responses/")
           .get()
           .json()
         if (response.value?.ok) {
-          this.surveys = data.value
+          this.responses = data.value
           this.syncedAt = new Date().toISOString()
           await this.persist()
         }
