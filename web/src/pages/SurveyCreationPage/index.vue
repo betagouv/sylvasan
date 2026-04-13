@@ -68,6 +68,7 @@ function clearFieldError(field: string) {
 const schema = ref<SurveySchema>({
   version: "1.0",
   fields: [],
+  pages: [{ id: "page_1", title: "Page 1", fields: [] }],
 })
 
 const payload = computed(() => ({
