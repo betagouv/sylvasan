@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from "vue"
+import { ref, computed, nextTick } from "vue"
 import type {
   SurveySchema,
   SurveyField,
@@ -204,7 +204,7 @@ const tabsKey = computed(() =>
               </button>
             </span>
           </DsfrTabItem>
-          <!-- Add page button as a pseudo-tab -->
+
           <button
             class="fr-tabs__tab text-sm text-blue-700 hover:underline px-3"
             @click="addPage"
@@ -250,7 +250,7 @@ const tabsKey = computed(() =>
       />
     </div>
 
-    <!-- Preview -->
+    <!-- Aperçu -->
     <div class="col-span-12 sm:col-span-6 md:col-span-5 lg:col-span-4">
       <div
         v-if="activePageFields.length"
