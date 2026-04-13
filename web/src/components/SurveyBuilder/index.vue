@@ -8,6 +8,7 @@ import type {
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import NewFieldModal from "./NewFieldModal.vue"
 import FieldCard from "./FieldCard.vue"
+import { DsfrInput } from "@gouvminint/vue-dsfr"
 
 const schema = defineModel<SurveySchema>({ required: true })
 
@@ -174,6 +175,15 @@ const closeModal = () => (modalOpened.value = false)
 const tabsKey = computed(() =>
   (schema.value.pages ?? []).map((p) => p.id).join(",")
 )
+
+const updatePageTitle = (title: any, index: number) => {
+  schema.value = {
+    ...schema.value,
+    pages: schema.value.pages?.map((page, idx) =>
+      idx === index ? { ...page, title } : page
+    ),
+  }
+}
 </script>
 
 <template>
@@ -219,6 +229,15 @@ const tabsKey = computed(() =>
           :panel-id="tab.panelId"
           :tab-id="tab.tabId"
         >
+          <DsfrInputGroup>
+            <DsfrInput
+              label="Titre de la page"
+              label-visible
+              class="max-w-sm"
+              :model-value="schema.pages?.[index]?.title ?? ''"
+              @update:model-value="(x) => updatePageTitle(x, index)"
+            />
+          </DsfrInputGroup>
           <div class="bg-slate-100 rounded p-4">
             <TransitionGroup tag="div" name="field-list" class="mb-4">
               <FieldCard

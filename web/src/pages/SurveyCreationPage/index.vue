@@ -71,6 +71,8 @@ const schema = ref<SurveySchema>({
   pages: [{ id: "page_1", title: "Page 1", fields: [] }],
 })
 
+const pageTitleModalOpened = ref(false)
+
 const payload = computed(() => ({
   organisation: organisation.value,
   pole: null,
@@ -81,6 +83,14 @@ const payload = computed(() => ({
 }))
 
 const createSurvey = async () => {
+  const hasPageWithoutTitle = schema.value.pages?.some(
+    (p) => !p.title || p.title.trim() === ""
+  )
+  if (hasPageWithoutTitle) {
+    pageTitleModalOpened.value = true
+    return
+  }
+
   // TODO : add schema validation with Json schema
   try {
     validator.parse({
@@ -156,4 +166,17 @@ const createSurvey = async () => {
       />
     </div>
   </div>
+
+  <DsfrModal
+    :opened="pageTitleModalOpened"
+    title="Titre de page manquant"
+    @close="pageTitleModalOpened = false"
+  >
+    <p>Toutes les pages doivent avoir un titre. Veuillez renseigner le titre de chaque page avant de sauvegarder.</p>
+    <template #footer>
+      <div class="flex justify-end w-full">
+        <DsfrButton label="OK" @click="pageTitleModalOpened = false" />
+      </div>
+    </template>
+  </DsfrModal>
 </template>
