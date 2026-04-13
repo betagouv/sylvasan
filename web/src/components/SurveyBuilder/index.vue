@@ -65,21 +65,23 @@ const previewSchema = computed<SurveySchema>(() => ({
   pages: undefined,
 }))
 
-const addPage = () => {
-  const newIndex = (schema.value.pages?.length ?? 0) + 1
+const addPage = async () => {
   const newPage: SurveyPage = {
-    id: `page_${Date.now()}`,
-    title: `Page ${newIndex}`,
+    id: `page_${Date.now()}`, // ID unique même pour éviter de réutiliser des pages supprimées
+    title: `Page ${(schema.value.pages?.length ?? 0) + 1}`,
     fields: [],
   }
   schema.value = {
     ...schema.value,
     pages: [...(schema.value.pages ?? []), newPage],
   }
-  activeTab.value = newIndex - 1
+
+  await nextTick()
+
+  activeTab.value = (schema.value.pages?.length ?? 1) - 1
 }
 
-const deletePage = (pageId: string) => {
+const deletePage = async (pageId: string) => {
   const pages = schema.value.pages ?? []
   if (pages.length <= 1) return
 
@@ -93,8 +95,12 @@ const deletePage = (pageId: string) => {
     pages: pages.filter((p) => p.id !== pageId),
   }
 
-  if (activeTab.value >= (schema.value.pages?.length ?? 1))
+  await nextTick()
+
+  // Si on a supprimé la dernière page, on change l'active page à la précédente
+  if (activeTab.value >= (schema.value.pages?.length ?? 1)) {
     activeTab.value = (schema.value.pages?.length ?? 1) - 1
+  }
 }
 
 const addField = async (field: SurveyField) => {
@@ -162,16 +168,26 @@ const moveFieldDown = (fieldId: string) => {
 }
 
 const closeModal = () => (modalOpened.value = false)
+
+// Ceci sert à re-render le composant DsfrTabs pour éviter des bugs liés à
+// l'ajout et suppression programmatique des tabs
+const tabsKey = computed(() =>
+  (schema.value.pages ?? []).map((p) => p.id).join(",")
+)
 </script>
 
 <template>
   <div class="grid grid-cols-12 gap-4" ref="tabsRef">
     <div class="col-span-12 sm:col-span-6 md:col-span-7 lg:col-span-8">
-      <DsfrTabs v-model="activeTab" tab-list-name="Pages de l'enquête">
+      <DsfrTabs
+        v-model="activeTab"
+        tab-list-name="Pages de l'enquête"
+        :key="tabsKey"
+      >
         <template #tab-items>
           <DsfrTabItem
             v-for="(tab, index) in tabTitles"
-            :key="tab.tabId"
+            :key="`dsfrtabitem-${tab.tabId}`"
             :tab-id="tab.tabId"
             :panel-id="tab.panelId"
             @click="activeTab = index"
@@ -199,7 +215,7 @@ const closeModal = () => (modalOpened.value = false)
 
         <DsfrTabContent
           v-for="(tab, index) in tabTitles"
-          :key="tab.panelId"
+          :key="`dsfrtabcontent-${tab.tabId}`"
           :panel-id="tab.panelId"
           :tab-id="tab.tabId"
         >
