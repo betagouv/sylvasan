@@ -1,7 +1,20 @@
 import type { SurveyDisplay, SurveySchema } from "./survey"
 import type { UserDisplay } from "./user"
 
-export type ResponseStatus = "draft" | "submitted" | "exported"
+export type LocalResponseStatus = "draft" | "pending" | "synced"
+export type BackendResponseStatus = "draft" | "submitted" | "exported"
+
+export interface LocalResponse {
+  localId: string
+  surveyId: number
+  surveyTitle: string
+  backendId?: number // mis une fois que le backend confirme la sauvegarde
+  status: LocalResponseStatus
+  data: Record<string, unknown>
+  context: Record<string, unknown>
+  createdAt: string
+  updatedAt: string
+}
 
 // Correspond à ResponseSerializer
 export interface ResponseWrite {
@@ -16,7 +29,7 @@ export interface ResponseDisplay {
   id: number
   survey: SurveyDisplay
   respondant: UserDisplay | null
-  status: ResponseStatus
+  status: BackendResponseStatus
   creationDate: string
 }
 
@@ -27,6 +40,6 @@ export interface ResponseFull {
   respondant: UserDisplay | null
   data: Record<string, unknown>
   context: Record<string, unknown> | null
-  status: ResponseStatus
+  status: BackendResponseStatus
   creationDate: string
 }
