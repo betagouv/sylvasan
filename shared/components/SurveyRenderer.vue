@@ -209,12 +209,14 @@ function handleSubmit() {
         v-if="!isLastStep"
         label="Suivant"
         type="button"
+        icon="ri-arrow-right-s-line"
         @click="goNext"
       />
       <DsfrButton
         v-if="isLastStep && allowSubmit"
         label="Soumettre"
         @click="handleSubmit"
+        icon="ri-check-line"
       />
     </div>
 
@@ -223,6 +225,7 @@ function handleSubmit() {
       v-if="!hasPages && allowSubmit"
       @click="handleSubmit"
       label="Soumettre"
+      icon="ri-check-line"
     />
   </div>
 </template>
