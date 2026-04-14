@@ -7,16 +7,20 @@ import {
   IonTitle,
   IonRefresher,
   IonRefresherContent,
+  IonModal,
 } from "@ionic/vue"
 import { useResponsesStore } from "../../stores/responses"
 import { useSurveysStore } from "../../stores/surveys"
 import ResponseCard from "./ResponseCard.vue"
-import { computed } from "vue"
+import SurveyPage from "../SurveyPage.vue"
+import { computed, ref } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 
 const responsesStore = useResponsesStore()
 const surveysStore = useSurveysStore()
 const allResponses = computed(() => responsesStore.allResponses)
+
+const selectedDraftSurveyId = ref<number | null>(null)
 
 const handleRefresh = async (event: CustomEvent) => {
   await surveysStore.sync()
@@ -44,9 +48,22 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
           v-for="response in allResponses"
           :key="isLocal(response) ? response.localId : response.id"
           :response="response"
+          @open-draft="selectedDraftSurveyId = $event.surveyId"
         />
       </div>
     </ion-content>
+
+    <ion-modal
+      :is-open="selectedDraftSurveyId !== null"
+      @did-dismiss="selectedDraftSurveyId = null"
+    >
+      <SurveyPage
+        v-if="selectedDraftSurveyId !== null"
+        :id="selectedDraftSurveyId"
+        :is-modal="true"
+        @close="selectedDraftSurveyId = null"
+      />
+    </ion-modal>
   </ion-page>
 </template>
 

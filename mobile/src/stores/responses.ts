@@ -2,6 +2,8 @@ import { defineStore } from "pinia"
 import { Preferences } from "@capacitor/preferences"
 import { useApiFetch } from "../utils/data-fetching"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
+import { useAuthStore } from "../stores/auth"
+import { storeToRefs } from "pinia"
 
 const LOCAL_RESPONSES_KEY = "local_responses" // Draft et pending
 const RESPONSES_KEY = "responses_cache"
@@ -87,7 +89,7 @@ export const useResponsesStore = defineStore("responses", {
 
       if (existing) {
         existing.data = data
-        existing.updatedAt = now
+        existing.modificationDate = now
       } else {
         this.localResponses.push({
           localId: crypto.randomUUID(),
@@ -96,14 +98,17 @@ export const useResponsesStore = defineStore("responses", {
           status: "draft",
           data,
           context: {},
-          createdAt: now,
-          updatedAt: now,
+          creationDate: now,
+          modificationDate: now,
         })
       }
       await this.persistLocal()
     },
 
     async submitResponse(localId: string) {
+      const authStore = useAuthStore()
+      const { loggedUser } = storeToRefs(authStore)
+
       const localResponse = this.localResponses.find(
         (r) => r.localId === localId
       )
@@ -114,26 +119,26 @@ export const useResponsesStore = defineStore("responses", {
           .post({
             survey: localResponse.surveyId,
             data: localResponse.data,
-            context: localResponse.context,
+            respondant: loggedUser.value?.id,
           })
           .json()
 
         if (response.value?.ok) {
           localResponse.status = "synced"
           localResponse.backendId = data.value.id
-          localResponse.updatedAt = new Date().toISOString()
+          localResponse.modificationDate = new Date().toISOString()
           await this.persistLocal()
           return true
         } else {
           localResponse.status = "pending"
-          localResponse.updatedAt = new Date().toISOString()
+          localResponse.modificationDate = new Date().toISOString()
           await this.persistLocal()
           return false
         }
       } catch {
         // Pas de connexion
         localResponse.status = "pending"
-        localResponse.updatedAt = new Date().toISOString()
+        localResponse.modificationDate = new Date().toISOString()
         await this.persistLocal()
         return false
       }

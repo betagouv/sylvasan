@@ -11,6 +11,8 @@ const { response } = defineProps<{
   response: ResponseFull | LocalResponse
 }>()
 
+const emit = defineEmits<{ openDraft: [response: LocalResponse] }>()
+
 const displayStatus = computed(() => {
   const mapping: Record<LocalResponseStatus | BackendResponseStatus, string> = {
     draft: "en cours",
@@ -22,17 +24,24 @@ const displayStatus = computed(() => {
   return mapping[response.status]
 })
 
-// import { useIonRouter } from "@ionic/vue"
-
-// const router = useIonRouter()
+const badgeType = computed(() => {
+  const mapping: Record<LocalResponseStatus | BackendResponseStatus, string> = {
+    draft: "warning",
+    pending: "none",
+    synced: "info",
+    submitted: "info",
+    exported: "success",
+  }
+  return mapping[response.status]
+})
 
 const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
   (<LocalResponse>res).localId !== undefined
 
 const openResponse = () => {
-  // TODO : ouvrir la page avec la réponse
-  console.log(`Ouvrir ${isLocal(response) ? response.localId : response.id}`)
-  // router.push({ name: "ResponsePage", params: { id } })
+  if (isLocal(response) && response.status === "draft") {
+    emit("openDraft", response)
+  }
 }
 
 const surveyTitle = () => {
@@ -52,9 +61,14 @@ const formatDate = (isoString: string): string => {
 <template>
   <div class="border border-slate-200 p-4 bg-white">
     <div class="mb-2">
-      <DsfrBadge :small="true" :label="displayStatus" />
+      <DsfrBadge
+        :small="true"
+        :label="displayStatus"
+        :no-icon="true"
+        :type="badgeType"
+      />
     </div>
-    <h2 class="fr-h6 mb-3!">{{ surveyTitle }}</h2>
+    <h2 class="fr-h6 mb-3!">{{ surveyTitle() }}</h2>
     <div>
       <div class="flex">
         <v-icon icon="ri-calendar-line" scale="0.9" class="mt-[3px] mr-2" />
