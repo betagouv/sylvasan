@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import type { ResponseFull, ResponseStatus } from "@shared-types/response"
+import type {
+  ResponseFull,
+  LocalResponseStatus,
+  BackendResponseStatus,
+  LocalResponse,
+} from "@shared-types/response"
 import { computed } from "vue"
 
 const { response } = defineProps<{
-  response: ResponseFull
+  response: ResponseFull | LocalResponse
 }>()
 
 const displayStatus = computed(() => {
-  const mapping: Record<ResponseStatus, string> = {
-    draft: "envoyée", //  TODO change once the state management is ready
+  const mapping: Record<LocalResponseStatus | BackendResponseStatus, string> = {
+    draft: "en cours",
+    pending: "en attente de sync.",
+    synced: "envoyée",
     submitted: "envoyée",
     exported: "exportée",
   }
@@ -19,10 +26,18 @@ const displayStatus = computed(() => {
 
 // const router = useIonRouter()
 
+const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
+  (<LocalResponse>res).localId !== undefined
+
 const openResponse = () => {
   // TODO : ouvrir la page avec la réponse
-  console.log(`Ouvrir ${response.id}`)
+  console.log(`Ouvrir ${isLocal(response) ? response.localId : response.id}`)
   // router.push({ name: "ResponsePage", params: { id } })
+}
+
+const surveyTitle = () => {
+  if (isLocal(response)) return response.surveyTitle
+  else return response.survey.title
 }
 
 const formatDate = (isoString: string): string => {
@@ -39,7 +54,7 @@ const formatDate = (isoString: string): string => {
     <div class="mb-2">
       <DsfrBadge :small="true" :label="displayStatus" />
     </div>
-    <h2 class="fr-h6 mb-3!">{{ response.survey.title }}</h2>
+    <h2 class="fr-h6 mb-3!">{{ surveyTitle }}</h2>
     <div>
       <div class="flex">
         <v-icon icon="ri-calendar-line" scale="0.9" class="mt-[3px] mr-2" />

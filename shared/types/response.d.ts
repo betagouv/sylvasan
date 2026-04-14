@@ -12,8 +12,8 @@ export interface LocalResponse {
   status: LocalResponseStatus
   data: Record<string, unknown>
   context: Record<string, unknown>
-  createdAt: string
-  updatedAt: string
+  creationDate: string
+  modificationDate: string
 }
 
 // Correspond à ResponseSerializer
