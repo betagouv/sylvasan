@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive } from "vue"
+import { reactive, ref, computed } from "vue"
 import type {
   SurveySchema,
   SurveyField,
@@ -16,6 +16,37 @@ const props = defineProps<{
 const emit = defineEmits<{
   submit: [data: Record<string, unknown>]
 }>()
+
+const hasPages = computed(
+  () => props.schema.pages && props.schema.pages.length > 0
+)
+
+const currentStep = ref(1)
+
+const stepTitles = computed(
+  () => props.schema.pages?.map((p) => p.title ?? `Page ${p.id}`) ?? []
+)
+
+const currentPageFields = computed(() => {
+  if (!hasPages.value) return props.schema.fields
+  const page = props.schema.pages?.[currentStep.value - 1]
+  if (!page) return []
+  return page.fields
+    .map((fid) => props.schema.fields.find((f) => f.id === fid))
+    .filter((f): f is SurveyField => f !== undefined)
+})
+
+const isLastStep = computed(
+  () => !hasPages.value || currentStep.value === stepTitles.value.length
+)
+
+const goNext = () => {
+  if (currentStep.value < stepTitles.value.length) currentStep.value++
+}
+
+const goPrev = () => {
+  if (currentStep.value > 1) currentStep.value--
+}
 
 const getEmptyValue = (field: SurveyField): any => {
   if (!field.ui?.widget) return ""
@@ -51,9 +82,25 @@ function handleSubmit() {
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit">
-    <TransitionGroup tag="div" name="field-area" v-if="schema.fields?.length">
-      <div v-for="(field, index) in schema.fields" :key="`render-${field.id}`">
+  <div>
+    <!-- Le Stepper est rendu seulement lors qu'il y a des pages -->
+    <DsfrStepper
+      v-if="hasPages"
+      :steps="stepTitles"
+      :current-step="currentStep"
+      class="mb-6"
+    />
+
+    <!-- Champs pour la page actuelle (ou tous les champs s'il n'y a pas de pages) -->
+    <TransitionGroup
+      tag="div"
+      name="field-area"
+      v-if="currentPageFields.length"
+    >
+      <div
+        v-for="(field, index) in currentPageFields"
+        :key="`render-${field.id}`"
+      >
         <DsfrInputGroup v-if="field.ui?.widget === 'input'">
           <!-- Champ texte -->
           <DsfrInput
@@ -149,21 +196,43 @@ function handleSubmit() {
       </div>
     </TransitionGroup>
 
+    <!-- Boutons de navigation -->
+    <div class="flex justify-between mt-6" v-if="hasPages">
+      <DsfrButton
+        label="Précédent"
+        secondary
+        type="button"
+        :disabled="currentStep === 1"
+        @click="goPrev"
+      />
+      <DsfrButton
+        v-if="!isLastStep"
+        label="Suivant"
+        type="button"
+        icon="ri-arrow-right-s-line"
+        @click="goNext"
+      />
+      <DsfrButton
+        v-if="isLastStep && allowSubmit"
+        label="Soumettre"
+        @click="handleSubmit"
+        icon="ri-check-line"
+      />
+    </div>
+
+    <!-- S'il n'y a pas de pages, un seul bouton pour soumettre -->
     <DsfrButton
-      v-if="allowSubmit"
-      type="submit"
+      v-if="!hasPages && allowSubmit"
+      @click="handleSubmit"
       label="Soumettre"
-      id="submit-button"
+      icon="ri-check-line"
     />
-  </form>
+  </div>
 </template>
 
 <style scoped>
 .field-area-move {
   transition: transform 0.25s ease;
-}
-#submit-button {
-  margin-top: 16px;
 }
 div :deep(.fr-input-group) {
   margin-bottom: 24px;
