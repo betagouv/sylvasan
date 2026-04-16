@@ -8,6 +8,7 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonModal,
+  useIonRouter,
 } from "@ionic/vue"
 import { useResponsesStore } from "../../stores/responses"
 import { useSurveysStore } from "../../stores/surveys"
@@ -26,6 +27,20 @@ const nondraftResponses = computed(() =>
 )
 
 const selectedDraftSurveyId = ref<number | null>(null)
+const ionRouter = useIonRouter()
+
+const onOpen = (response: LocalResponse | ResponseFull) => {
+  if (isLocal(response) && response.status === "draft") {
+    selectedDraftSurveyId.value = response.surveyId
+  } else {
+    const responseId = isLocal(response) ? response.localId : String(response.id)
+    ionRouter.navigate(
+      { name: "ResponseSummaryPage", params: { responseId } },
+      "forward",
+      "push"
+    )
+  }
+}
 
 const handleRefresh = async (event: CustomEvent) => {
   await surveysStore.sync()
@@ -60,7 +75,7 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
           >
             <ResponseCard
               :response="response"
-              @open-draft="selectedDraftSurveyId = $event.surveyId"
+              @open="onOpen($event)"
             />
           </div>
         </div>
@@ -70,7 +85,7 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
           v-for="response in nondraftResponses"
           :key="isLocal(response) ? response.localId : response.id"
           :response="response"
-          @open-draft="selectedDraftSurveyId = $event.surveyId"
+          @open="onOpen($event)"
         />
       </div>
     </ion-content>

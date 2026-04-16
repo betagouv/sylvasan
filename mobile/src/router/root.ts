@@ -11,6 +11,7 @@ import MapsPage from "../pages/MapsPage/index.vue"
 import ProfilePage from "../pages/ProfilePage.vue"
 import MapDownloadPage from "../pages/MapDownloadPage.vue"
 import MapPreviewPage from "../pages/MapPreviewPage.vue"
+import ResponseSummaryPage from "../pages/ResponseSummaryPage.vue"
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -62,6 +63,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/enquete/:id",
     name: "SurveyPage",
     component: SurveyPage,
+  },
+  {
+    path: "/observations/:responseId",
+    name: "ResponseSummaryPage",
+    component: ResponseSummaryPage,
   },
 ]
 
