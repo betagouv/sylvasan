@@ -1,12 +1,16 @@
 <script setup lang="ts">
+import { computed } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 import type { Survey } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
 
-const { response, survey } = defineProps<{
-  response: ResponseFull | LocalResponse
+const { response, data, survey } = defineProps<{
+  response?: ResponseFull | LocalResponse
+  data?: Record<string, unknown>
   survey: Survey
 }>()
+
+const resolvedData = computed(() => response?.data ?? data ?? {})
 
 const fieldLabel = (fieldId: string): string =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.label ?? fieldId
@@ -48,12 +52,12 @@ const resolveValue = (fieldId: string, raw: unknown): string => {
 <template>
   <div>
     <div class="p-4 bg-blue-france-975">
-      <ResponseBadge :response="response" />
+      <ResponseBadge v-if="response" :response="response" />
       <h1 class="fr-h3">{{ survey.title }}</h1>
     </div>
 
     <div class="p-4">
-      <div v-for="entry in Object.entries(response.data)" :key="entry[0]">
+      <div v-for="entry in Object.entries(resolvedData)" :key="entry[0]">
         <p class="fr-text--sm font-bold text-stone-500 mb-0!">
           {{ fieldLabel(entry[0]) }}
         </p>

@@ -18,6 +18,7 @@ import {
 } from "@ionic/vue"
 import { closeOutline } from "ionicons/icons"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
+import SurveySummary from "../components/SurveySummary.vue"
 import { useResponsesStore } from "../stores/responses"
 
 const props = defineProps<{ id?: number; isModal?: boolean }>()
@@ -28,6 +29,8 @@ const currentLocalId = ref<string | undefined>(undefined)
 const currentFormData = ref<Record<string, unknown>>({})
 const prefillData = ref<Record<string, unknown> | undefined>(undefined)
 const dataReady = ref(false)
+const showSummary = ref(false)
+const summaryData = ref<Record<string, unknown>>({})
 
 const router = useIonRouter()
 const route = useRoute()
@@ -62,6 +65,12 @@ onIonViewWillLeave(saveDraftIfNeeded)
 
 const handleFormChange = (data: Record<string, unknown>) => {
   currentFormData.value = data
+}
+
+const onSurveyDone = (data: Record<string, unknown>) => {
+  currentFormData.value = data
+  summaryData.value = data
+  showSummary.value = true
 }
 
 const saveResponse = async (data: Record<string, unknown>) => {
@@ -121,17 +130,44 @@ const saveResponse = async (data: Record<string, unknown>) => {
         <ion-buttons slot="end" />
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
+    <ion-content>
       <div v-if="!survey">Enquête introuvable.</div>
-      <div v-else-if="dataReady" class="box-border! p-4!">
-        <SurveyRenderer
-          :allowSubmit="true"
-          :schema="survey.jsonSchema"
-          :prefillData="prefillData"
-          @submit="saveResponse"
-          @change="handleFormChange"
-        />
-      </div>
+      <template v-else-if="dataReady">
+        <div v-show="!showSummary" class="box-border! p-4!">
+          <SurveyRenderer
+            :allowSubmit="true"
+            :schema="survey.jsonSchema"
+            :prefillData="prefillData"
+            @done="onSurveyDone"
+            @change="handleFormChange"
+          />
+        </div>
+        <template v-if="showSummary">
+          <SurveySummary :survey="survey" :data="summaryData" />
+          <div class="flex justify-between p-4">
+            <DsfrButton
+              label="Modifier"
+              secondary
+              icon="ri-edit-line"
+              @click="showSummary = false"
+            />
+            <DsfrButton
+              label="Sauvegarder"
+              icon="ri-cloud-line"
+              @click="saveResponse(summaryData)"
+            />
+          </div>
+        </template>
+      </template>
     </ion-content>
   </ion-page>
 </template>
+
+<style scoped>
+ion-content {
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+</style>
