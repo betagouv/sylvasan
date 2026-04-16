@@ -1,28 +1,52 @@
 <script setup lang="ts">
-import type { ResponseFull, ResponseStatus } from "@shared-types/response"
+import type {
+  ResponseFull,
+  LocalResponseStatus,
+  BackendResponseStatus,
+  LocalResponse,
+} from "@shared-types/response"
 import { computed } from "vue"
 
 const { response } = defineProps<{
-  response: ResponseFull
+  response: ResponseFull | LocalResponse
 }>()
 
+const emit = defineEmits<{ openDraft: [response: LocalResponse] }>()
+
 const displayStatus = computed(() => {
-  const mapping: Record<ResponseStatus, string> = {
-    draft: "envoyée", //  TODO change once the state management is ready
+  const mapping: Record<LocalResponseStatus | BackendResponseStatus, string> = {
+    draft: "en cours",
+    pending: "Envoi en cours",
+    synced: "envoyée",
     submitted: "envoyée",
     exported: "exportée",
   }
   return mapping[response.status]
 })
 
-// import { useIonRouter } from "@ionic/vue"
+const badgeType = computed(() => {
+  const mapping: Record<LocalResponseStatus | BackendResponseStatus, string> = {
+    draft: "warning",
+    pending: "none",
+    synced: "info",
+    submitted: "info",
+    exported: "success",
+  }
+  return mapping[response.status]
+})
 
-// const router = useIonRouter()
+const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
+  (<LocalResponse>res).localId !== undefined
 
 const openResponse = () => {
-  // TODO : ouvrir la page avec la réponse
-  console.log(`Ouvrir ${response.id}`)
-  // router.push({ name: "ResponsePage", params: { id } })
+  if (isLocal(response) && response.status === "draft") {
+    emit("openDraft", response)
+  }
+}
+
+const surveyTitle = () => {
+  if (isLocal(response)) return response.surveyTitle
+  else return response.survey.title
 }
 
 const formatDate = (isoString: string): string => {
@@ -37,9 +61,14 @@ const formatDate = (isoString: string): string => {
 <template>
   <div class="border border-slate-200 p-4 bg-white">
     <div class="mb-2">
-      <DsfrBadge :small="true" :label="displayStatus" />
+      <DsfrBadge
+        :small="true"
+        :label="displayStatus"
+        :no-icon="true"
+        :type="badgeType"
+      />
     </div>
-    <h2 class="fr-h6 mb-3!">{{ response.survey.title }}</h2>
+    <h2 class="fr-h6 mb-3!">{{ surveyTitle() }}</h2>
     <div>
       <div class="flex">
         <v-icon icon="ri-calendar-line" scale="0.9" class="mt-[3px] mr-2" />

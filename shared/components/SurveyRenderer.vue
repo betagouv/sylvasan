@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref, computed } from "vue"
+import { reactive, ref, computed, watch } from "vue"
 import type {
   SurveySchema,
   SurveyField,
@@ -15,6 +15,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   submit: [data: Record<string, unknown>]
+  change: [data: Record<string, unknown>]
 }>()
 
 const hasPages = computed(
@@ -79,6 +80,8 @@ function handleSubmit() {
   if (!props.allowSubmit) return
   emit("submit", { ...formData })
 }
+
+watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
 </script>
 
 <template>
