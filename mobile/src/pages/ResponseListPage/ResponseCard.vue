@@ -16,7 +16,7 @@ const emit = defineEmits<{ openDraft: [response: LocalResponse] }>()
 const displayStatus = computed(() => {
   const mapping: Record<LocalResponseStatus | BackendResponseStatus, string> = {
     draft: "en cours",
-    pending: "en attente de sync.",
+    pending: "Envoi en cours",
     synced: "envoyée",
     submitted: "envoyée",
     exported: "exportée",
