@@ -25,13 +25,7 @@ export const useResponsesStore = defineStore("responses", {
     getResponseById: (state) => (id: number) =>
       state.responses.find((response) => response.id === id),
 
-    allResponses: (state) => {
-      const syncedNotLocal = state.responses.filter(
-        (response) =>
-          !state.localResponses.some((lr) => lr.backendId === response.id)
-      )
-      return [...state.localResponses, ...syncedNotLocal]
-    },
+    allResponses: (state) => [...state.localResponses, ...state.responses],
 
     getByLocalId: (state) => (localId: string) =>
       state.localResponses.find((r) => r.localId === localId),
@@ -126,10 +120,9 @@ export const useResponsesStore = defineStore("responses", {
           .json()
 
         if (response.value?.ok) {
-          localResponse.status = "synced"
-          localResponse.backendId = data.value.id
-          localResponse.modificationDate = new Date().toISOString()
-          await this.persistLocal()
+          // On enleve la réponse locale car elle a bien été sauvegardé dans le backend
+          this.deleteDraft(localResponse.localId)
+          await this.sync()
           return true
         } else {
           localResponse.status = "pending"
@@ -144,6 +137,13 @@ export const useResponsesStore = defineStore("responses", {
         await this.persistLocal()
         return false
       }
+    },
+
+    async deleteDraft(localId: string) {
+      this.localResponses = this.localResponses.filter(
+        (r) => r.localId !== localId
+      )
+      await this.persistLocal()
     },
 
     async retryPending() {

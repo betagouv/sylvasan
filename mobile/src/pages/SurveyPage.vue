@@ -14,8 +14,9 @@ import {
   IonIcon,
   IonTitle,
   useIonRouter,
+  alertController,
 } from "@ionic/vue"
-import { closeOutline } from "ionicons/icons"
+import { closeOutline, trashOutline } from "ionicons/icons"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import SurveySummary from "../components/SurveySummary.vue"
 import { useResponsesStore } from "../stores/responses"
@@ -79,6 +80,26 @@ const onSurveyDone = (data: Record<string, unknown>) => {
   showSummary.value = true
 }
 
+const confirmDelete = async () => {
+  if (!currentLocalId.value) return
+  const alert = await alertController.create({
+    header: "Supprimer l'observation en cours ?",
+    message: "Cette observation sera définitivement supprimée.",
+    buttons: [
+      { text: "Annuler", role: "cancel" },
+      {
+        text: "Supprimer",
+        role: "destructive",
+        handler: async () => {
+          await responsesStore.deleteDraft(currentLocalId.value!)
+          emit("close")
+        },
+      },
+    ],
+  })
+  await alert.present()
+}
+
 const saveResponse = async (data: Record<string, unknown>) => {
   currentFormData.value = data
 
@@ -126,7 +147,16 @@ const saveResponse = async (data: Record<string, unknown>) => {
             Enregistrer et quitter
           </ion-button>
         </ion-buttons>
-        <ion-buttons slot="end" />
+        <ion-buttons slot="end">
+          <ion-button
+            v-if="currentLocalId"
+            color="danger"
+            @click="confirmDelete"
+            class="pr-2"
+          >
+            <ion-icon slot="icon-only" :icon="trashOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content>

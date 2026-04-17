@@ -87,6 +87,17 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
           @open="onOpen($event)"
         />
       </div>
+      <div
+        v-if="allResponses.length === 0"
+        class="flex flex-col items-center justify-center h-full gap-3 text-center px-8 text-stone-400"
+      >
+        <v-icon icon="ri-clipboard-line" scale="3" />
+        <p class="fr-text--lg font-semibold mb-0!">Aucune observation</p>
+        <p class="fr-text--sm mb-0!">
+          Vos observations apparaîtront ici une fois que vous aurez répondu à
+          une enquête.
+        </p>
+      </div>
     </ion-content>
 
     <ion-modal

@@ -21,7 +21,7 @@ class Response(TimeStampable, Historisable):
         null=True,
         blank=True,
     )
-    status = models.CharField(choices=ResponseStatus, verbose_name="statut", default=ResponseStatus.DRAFT)
+    status = models.CharField(choices=ResponseStatus, verbose_name="statut", default=ResponseStatus.SUBMITTED)
     data = models.JSONField(verbose_name="données")
     submission_date = models.DateTimeField(null=True, blank=True, verbose_name="date de soumission")
 

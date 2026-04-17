@@ -87,7 +87,7 @@ router.beforeEach(async (to) => {
   if (!authStore.isLoggedIn && to.name !== "LoginPage")
     return { name: "LoginPage" }
   if (authStore.isLoggedIn && to.name === "LoginPage")
-    return { name: "CartePage" }
+    return { name: "PositionPage" }
 })
 
 export default router

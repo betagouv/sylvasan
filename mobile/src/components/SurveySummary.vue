@@ -3,12 +3,16 @@ import { computed } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 import type { Survey } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
+import { formatDate } from "../composables/offlineMapMetadata"
 
 const { response, data, survey } = defineProps<{
   response?: ResponseFull | LocalResponse
   data?: Record<string, unknown>
   survey: Survey
 }>()
+
+const isRemote = (res: LocalResponse | ResponseFull): res is ResponseFull =>
+  (<ResponseFull>res).id !== undefined
 
 const resolvedData = computed(() => response?.data ?? data ?? {})
 
@@ -53,7 +57,15 @@ const resolveValue = (fieldId: string, raw: unknown): string => {
   <div>
     <div class="p-4 bg-blue-france-975">
       <ResponseBadge v-if="response" :response="response" />
-      <h1 class="fr-h3">{{ survey.title }}</h1>
+      <h1 class="fr-h3 mb-3!">{{ survey.title }}</h1>
+      <p
+        v-if="response && isRemote(response) && response.creationDate"
+        class="mb-0! fr-text--sm font-bold text-stone-600"
+      >
+        <v-icon scale="0.8" icon="ri-calendar-line" class="mr-1"></v-icon
+        >Envoyée le
+        {{ formatDate(response.creationDate) }}
+      </p>
     </div>
 
     <div class="p-4">
