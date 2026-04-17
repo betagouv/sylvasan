@@ -14,7 +14,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  submit: [data: Record<string, unknown>]
+  done: [data: Record<string, unknown>]
   change: [data: Record<string, unknown>]
 }>()
 
@@ -76,9 +76,9 @@ const formData = reactive<Record<string, string>>(
   )
 )
 
-function handleSubmit() {
+function handleDone() {
   if (!props.allowSubmit) return
-  emit("submit", { ...formData })
+  emit("done", { ...formData })
 }
 
 watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
@@ -207,6 +207,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
         type="button"
         :disabled="currentStep === 1"
         @click="goPrev"
+        size="lg"
       />
       <DsfrButton
         v-if="!isLastStep"
@@ -214,22 +215,26 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
         type="button"
         icon="ri-arrow-right-s-line"
         @click="goNext"
+        size="lg"
       />
       <DsfrButton
         v-if="isLastStep && allowSubmit"
-        label="Soumettre"
-        @click="handleSubmit"
-        icon="ri-check-line"
+        icon="ri-arrow-right-s-line"
+        label="Suivant"
+        @click="handleDone"
+        size="lg"
       />
     </div>
 
     <!-- S'il n'y a pas de pages, un seul bouton pour soumettre -->
-    <DsfrButton
-      v-if="!hasPages && allowSubmit"
-      @click="handleSubmit"
-      label="Soumettre"
-      icon="ri-check-line"
-    />
+    <div class="flex justify-end" v-if="!hasPages && allowSubmit">
+      <DsfrButton
+        @click="handleDone"
+        icon="ri-arrow-right-s-line"
+        label="Suivant"
+        size="lg"
+      />
+    </div>
   </div>
 </template>
 

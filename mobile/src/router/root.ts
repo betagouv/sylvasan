@@ -11,6 +11,7 @@ import MapsPage from "../pages/MapsPage/index.vue"
 import ProfilePage from "../pages/ProfilePage.vue"
 import MapDownloadPage from "../pages/MapDownloadPage.vue"
 import MapPreviewPage from "../pages/MapPreviewPage.vue"
+import ResponseSummaryPage from "../pages/ResponseSummaryPage.vue"
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -63,6 +64,16 @@ const routes: Array<RouteRecordRaw> = [
     name: "SurveyPage",
     component: SurveyPage,
   },
+  {
+    path: "/enquete/:id/draft/:localId",
+    name: "SurveyDraft",
+    component: SurveyPage,
+  },
+  {
+    path: "/observations/:responseId",
+    name: "ResponseSummaryPage",
+    component: ResponseSummaryPage,
+  },
 ]
 
 const router = createRouter({
@@ -76,7 +87,7 @@ router.beforeEach(async (to) => {
   if (!authStore.isLoggedIn && to.name !== "LoginPage")
     return { name: "LoginPage" }
   if (authStore.isLoggedIn && to.name === "LoginPage")
-    return { name: "CartePage" }
+    return { name: "PositionPage" }
 })
 
 export default router

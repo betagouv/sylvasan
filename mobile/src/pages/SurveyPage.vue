@@ -14,13 +14,18 @@ import {
   IonIcon,
   IonTitle,
   useIonRouter,
-  onIonViewWillLeave,
+  alertController,
 } from "@ionic/vue"
-import { closeOutline } from "ionicons/icons"
+import { closeOutline, trashOutline } from "ionicons/icons"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
+import SurveySummary from "../components/SurveySummary.vue"
 import { useResponsesStore } from "../stores/responses"
 
-const props = defineProps<{ id?: number; isModal?: boolean }>()
+const props = defineProps<{
+  id?: number
+  isModal?: boolean
+  localId?: string
+}>()
 const emit = defineEmits<{ close: [] }>()
 
 const responsesStore = useResponsesStore()
@@ -28,6 +33,8 @@ const currentLocalId = ref<string | undefined>(undefined)
 const currentFormData = ref<Record<string, unknown>>({})
 const prefillData = ref<Record<string, unknown> | undefined>(undefined)
 const dataReady = ref(false)
+const showSummary = ref(false)
+const summaryData = ref<Record<string, unknown>>({})
 
 const router = useIonRouter()
 const route = useRoute()
@@ -39,50 +46,72 @@ const survey = computed(() => store.getSurveyById(surveyId.value))
 // s'il y a un draft avec cet ID on pre-rempli le formulaire
 onMounted(async () => {
   await responsesStore.loadFromStorage()
-  const existingDraft = responsesStore.getDraftBySurveyId(surveyId.value)
-  if (existingDraft) {
-    currentLocalId.value = existingDraft.localId
-    prefillData.value = existingDraft.data
+  const draftLocalId =
+    props.localId ?? (route.params.localId as string | undefined)
+
+  if (draftLocalId) {
+    const existingDraft = responsesStore.getByLocalId(draftLocalId)
+    if (existingDraft) {
+      currentLocalId.value = existingDraft.localId
+      prefillData.value = existingDraft.data
+    }
   }
   dataReady.value = true
 })
 
 const saveDraftIfNeeded = async () => {
   if (Object.keys(currentFormData.value).length === 0) return
-  await responsesStore.upsertDraft(
+  const localId = await responsesStore.upsertDraft(
     surveyId.value,
     survey.value?.title ?? "",
     currentFormData.value,
     currentLocalId.value
   )
+  currentLocalId.value = localId
 }
-
-// Sauvegarde lors qu'on sort de la page (navigation Ionic)
-onIonViewWillLeave(saveDraftIfNeeded)
 
 const handleFormChange = (data: Record<string, unknown>) => {
   currentFormData.value = data
 }
 
+const onSurveyDone = (data: Record<string, unknown>) => {
+  currentFormData.value = data
+  summaryData.value = data
+  showSummary.value = true
+}
+
+const confirmDelete = async () => {
+  if (!currentLocalId.value) return
+  const alert = await alertController.create({
+    header: "Supprimer l'observation en cours ?",
+    message: "Cette observation sera définitivement supprimée.",
+    buttons: [
+      { text: "Annuler", role: "cancel" },
+      {
+        text: "Supprimer",
+        role: "destructive",
+        handler: async () => {
+          await responsesStore.deleteDraft(currentLocalId.value!)
+          emit("close")
+        },
+      },
+    ],
+  })
+  await alert.present()
+}
+
 const saveResponse = async (data: Record<string, unknown>) => {
   currentFormData.value = data
 
-  await responsesStore.upsertDraft(
+  const localId = await responsesStore.upsertDraft(
     surveyId.value,
     survey.value?.title ?? "",
     data,
     currentLocalId.value
   )
 
-  // Trouver la réponse locale (soit déjà existante soit à peine créée)
-  const localResponse = currentLocalId.value
-    ? responsesStore.getByLocalId(currentLocalId.value)
-    : responsesStore.getDraftBySurveyId(surveyId.value)
-
-  if (!localResponse) return
-
-  currentLocalId.value = localResponse.localId
-  const success = await responsesStore.submitResponse(localResponse.localId)
+  currentLocalId.value = localId
+  const success = await responsesStore.submitResponse(localId)
 
   if (success) {
     alert("Votre réponse a été envoyée")
@@ -118,20 +147,56 @@ const saveResponse = async (data: Record<string, unknown>) => {
             Enregistrer et quitter
           </ion-button>
         </ion-buttons>
-        <ion-buttons slot="end" />
+        <ion-buttons slot="end">
+          <ion-button
+            v-if="currentLocalId"
+            color="danger"
+            @click="confirmDelete"
+            class="pr-2"
+          >
+            <ion-icon slot="icon-only" :icon="trashOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
-    <ion-content class="ion-padding">
+    <ion-content>
       <div v-if="!survey">Enquête introuvable.</div>
-      <div v-else-if="dataReady" class="box-border! p-4!">
-        <SurveyRenderer
-          :allowSubmit="true"
-          :schema="survey.jsonSchema"
-          :prefillData="prefillData"
-          @submit="saveResponse"
-          @change="handleFormChange"
-        />
-      </div>
+      <template v-else-if="dataReady">
+        <div v-show="!showSummary" class="box-border! p-4!">
+          <SurveyRenderer
+            :allowSubmit="true"
+            :schema="survey.jsonSchema"
+            :prefillData="prefillData"
+            @done="onSurveyDone"
+            @change="handleFormChange"
+          />
+        </div>
+        <template v-if="showSummary">
+          <SurveySummary :survey="survey" :data="summaryData" />
+          <div class="flex justify-between p-4">
+            <DsfrButton
+              label="Modifier"
+              secondary
+              icon="ri-edit-line"
+              @click="showSummary = false"
+            />
+            <DsfrButton
+              label="Sauvegarder"
+              icon="ri-cloud-line"
+              @click="saveResponse(summaryData)"
+            />
+          </div>
+        </template>
+      </template>
     </ion-content>
   </ion-page>
 </template>
+
+<style scoped>
+ion-content {
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+</style>

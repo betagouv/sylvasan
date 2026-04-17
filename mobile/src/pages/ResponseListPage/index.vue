@@ -8,6 +8,7 @@ import {
   IonRefresher,
   IonRefresherContent,
   IonModal,
+  useIonRouter,
 } from "@ionic/vue"
 import { useResponsesStore } from "../../stores/responses"
 import { useSurveysStore } from "../../stores/surveys"
@@ -25,7 +26,23 @@ const nondraftResponses = computed(() =>
   allResponses.value.filter((x) => x.status !== "draft")
 )
 
-const selectedDraftSurveyId = ref<number | null>(null)
+const selectedDraft = ref<LocalResponse | null>(null)
+const ionRouter = useIonRouter()
+
+const onOpen = (response: LocalResponse | ResponseFull) => {
+  if (isLocal(response) && response.status === "draft") {
+    selectedDraft.value = response
+  } else {
+    const responseId = isLocal(response)
+      ? response.localId
+      : String(response.id)
+    ionRouter.navigate(
+      { name: "ResponseSummaryPage", params: { responseId } },
+      "forward",
+      "push"
+    )
+  }
+}
 
 const handleRefresh = async (event: CustomEvent) => {
   await surveysStore.sync()
@@ -58,10 +75,7 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
             :key="response.localId"
             class="w-72 shrink-0"
           >
-            <ResponseCard
-              :response="response"
-              @open-draft="selectedDraftSurveyId = $event.surveyId"
-            />
+            <ResponseCard :response="response" @open="onOpen($event)" />
           </div>
         </div>
       </div>
@@ -70,20 +84,32 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
           v-for="response in nondraftResponses"
           :key="isLocal(response) ? response.localId : response.id"
           :response="response"
-          @open-draft="selectedDraftSurveyId = $event.surveyId"
+          @open="onOpen($event)"
         />
+      </div>
+      <div
+        v-if="allResponses.length === 0"
+        class="flex flex-col items-center justify-center h-full gap-3 text-center px-8 text-stone-400"
+      >
+        <v-icon icon="ri-clipboard-line" scale="3" />
+        <p class="fr-text--lg font-semibold mb-0!">Aucune observation</p>
+        <p class="fr-text--sm mb-0!">
+          Vos observations apparaîtront ici une fois que vous aurez répondu à
+          une enquête.
+        </p>
       </div>
     </ion-content>
 
     <ion-modal
-      :is-open="selectedDraftSurveyId !== null"
-      @did-dismiss="selectedDraftSurveyId = null"
+      :is-open="selectedDraft !== null"
+      @did-dismiss="selectedDraft = null"
     >
       <SurveyPage
-        v-if="selectedDraftSurveyId !== null"
-        :id="selectedDraftSurveyId"
+        v-if="selectedDraft !== null"
+        :id="selectedDraft.surveyId"
+        :local-id="selectedDraft.localId"
         :is-modal="true"
-        @close="selectedDraftSurveyId = null"
+        @close="selectedDraft = null"
       />
     </ion-modal>
   </ion-page>

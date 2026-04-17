@@ -25,19 +25,13 @@ export const useResponsesStore = defineStore("responses", {
     getResponseById: (state) => (id: number) =>
       state.responses.find((response) => response.id === id),
 
-    allResponses: (state) => {
-      const syncedNotLocal = state.responses.filter(
-        (response) =>
-          !state.localResponses.some((lr) => lr.backendId === response.id)
-      )
-      return [...state.localResponses, ...syncedNotLocal]
-    },
+    allResponses: (state) => [...state.localResponses, ...state.responses],
 
     getByLocalId: (state) => (localId: string) =>
       state.localResponses.find((r) => r.localId === localId),
 
-    getDraftBySurveyId: (state) => (surveyId: number) =>
-      state.localResponses.find(
+    getDraftsBySurveyId: (state) => (surveyId: number) =>
+      state.localResponses.filter(
         (r) => r.surveyId === surveyId && r.status === "draft"
       ),
   },
@@ -79,20 +73,21 @@ export const useResponsesStore = defineStore("responses", {
       surveyTitle: string,
       data: Record<string, unknown>,
       localId?: string
-    ) {
+    ): Promise<string> {
       const now = new Date().toISOString()
       const existing = localId
         ? this.localResponses.find((r) => r.localId === localId)
-        : this.localResponses.find(
-            (r) => r.surveyId === surveyId && r.status === "draft"
-          )
+        : null
 
       if (existing) {
         existing.data = data
         existing.modificationDate = now
+        await this.persistLocal()
+        return existing.localId
       } else {
+        const newLocalId = crypto.randomUUID()
         this.localResponses.push({
-          localId: crypto.randomUUID(),
+          localId: newLocalId,
           surveyId,
           surveyTitle,
           status: "draft",
@@ -101,8 +96,9 @@ export const useResponsesStore = defineStore("responses", {
           creationDate: now,
           modificationDate: now,
         })
+        await this.persistLocal()
+        return newLocalId
       }
-      await this.persistLocal()
     },
 
     async submitResponse(localId: string) {
@@ -115,7 +111,7 @@ export const useResponsesStore = defineStore("responses", {
       if (!localResponse) return false
 
       try {
-        const { response, data } = await useApiFetch("/responses/")
+        const { response } = await useApiFetch("/responses/")
           .post({
             survey: localResponse.surveyId,
             data: localResponse.data,
@@ -124,10 +120,9 @@ export const useResponsesStore = defineStore("responses", {
           .json()
 
         if (response.value?.ok) {
-          localResponse.status = "synced"
-          localResponse.backendId = data.value.id
-          localResponse.modificationDate = new Date().toISOString()
-          await this.persistLocal()
+          // On enleve la réponse locale car elle a bien été sauvegardé dans le backend
+          this.deleteDraft(localResponse.localId)
+          await this.sync()
           return true
         } else {
           localResponse.status = "pending"
@@ -142,6 +137,13 @@ export const useResponsesStore = defineStore("responses", {
         await this.persistLocal()
         return false
       }
+    },
+
+    async deleteDraft(localId: string) {
+      this.localResponses = this.localResponses.filter(
+        (r) => r.localId !== localId
+      )
+      await this.persistLocal()
     },
 
     async retryPending() {
