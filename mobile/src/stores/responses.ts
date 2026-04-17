@@ -111,7 +111,7 @@ export const useResponsesStore = defineStore("responses", {
       if (!localResponse) return false
 
       try {
-        const { response, data } = await useApiFetch("/responses/")
+        const { response } = await useApiFetch("/responses/")
           .post({
             survey: localResponse.surveyId,
             data: localResponse.data,

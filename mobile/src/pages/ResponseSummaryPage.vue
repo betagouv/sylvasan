@@ -7,7 +7,6 @@ import {
   IonContent,
   IonButtons,
   IonBackButton,
-  IonTitle,
 } from "@ionic/vue"
 import { useRoute } from "vue-router"
 import { useResponsesStore } from "../stores/responses"
