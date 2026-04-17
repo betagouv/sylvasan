@@ -65,6 +65,11 @@ const routes: Array<RouteRecordRaw> = [
     component: SurveyPage,
   },
   {
+    path: "/enquete/:id/draft/:localId",
+    name: "SurveyDraft",
+    component: SurveyPage,
+  },
+  {
     path: "/observations/:responseId",
     name: "ResponseSummaryPage",
     component: ResponseSummaryPage,

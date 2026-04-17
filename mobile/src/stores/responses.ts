@@ -36,8 +36,8 @@ export const useResponsesStore = defineStore("responses", {
     getByLocalId: (state) => (localId: string) =>
       state.localResponses.find((r) => r.localId === localId),
 
-    getDraftBySurveyId: (state) => (surveyId: number) =>
-      state.localResponses.find(
+    getDraftsBySurveyId: (state) => (surveyId: number) =>
+      state.localResponses.filter(
         (r) => r.surveyId === surveyId && r.status === "draft"
       ),
   },
@@ -79,20 +79,21 @@ export const useResponsesStore = defineStore("responses", {
       surveyTitle: string,
       data: Record<string, unknown>,
       localId?: string
-    ) {
+    ): Promise<string> {
       const now = new Date().toISOString()
       const existing = localId
         ? this.localResponses.find((r) => r.localId === localId)
-        : this.localResponses.find(
-            (r) => r.surveyId === surveyId && r.status === "draft"
-          )
+        : null
 
       if (existing) {
         existing.data = data
         existing.modificationDate = now
+        await this.persistLocal()
+        return existing.localId
       } else {
+        const newLocalId = crypto.randomUUID()
         this.localResponses.push({
-          localId: crypto.randomUUID(),
+          localId: newLocalId,
           surveyId,
           surveyTitle,
           status: "draft",
@@ -101,8 +102,9 @@ export const useResponsesStore = defineStore("responses", {
           creationDate: now,
           modificationDate: now,
         })
+        await this.persistLocal()
+        return newLocalId
       }
-      await this.persistLocal()
     },
 
     async submitResponse(localId: string) {

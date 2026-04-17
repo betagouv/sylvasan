@@ -14,14 +14,17 @@ import {
   IonIcon,
   IonTitle,
   useIonRouter,
-  onIonViewWillLeave,
 } from "@ionic/vue"
 import { closeOutline } from "ionicons/icons"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import SurveySummary from "../components/SurveySummary.vue"
 import { useResponsesStore } from "../stores/responses"
 
-const props = defineProps<{ id?: number; isModal?: boolean }>()
+const props = defineProps<{
+  id?: number
+  isModal?: boolean
+  localId?: string
+}>()
 const emit = defineEmits<{ close: [] }>()
 
 const responsesStore = useResponsesStore()
@@ -42,26 +45,29 @@ const survey = computed(() => store.getSurveyById(surveyId.value))
 // s'il y a un draft avec cet ID on pre-rempli le formulaire
 onMounted(async () => {
   await responsesStore.loadFromStorage()
-  const existingDraft = responsesStore.getDraftBySurveyId(surveyId.value)
-  if (existingDraft) {
-    currentLocalId.value = existingDraft.localId
-    prefillData.value = existingDraft.data
+  const draftLocalId =
+    props.localId ?? (route.params.localId as string | undefined)
+
+  if (draftLocalId) {
+    const existingDraft = responsesStore.getByLocalId(draftLocalId)
+    if (existingDraft) {
+      currentLocalId.value = existingDraft.localId
+      prefillData.value = existingDraft.data
+    }
   }
   dataReady.value = true
 })
 
 const saveDraftIfNeeded = async () => {
   if (Object.keys(currentFormData.value).length === 0) return
-  await responsesStore.upsertDraft(
+  const localId = await responsesStore.upsertDraft(
     surveyId.value,
     survey.value?.title ?? "",
     currentFormData.value,
     currentLocalId.value
   )
+  currentLocalId.value = localId
 }
-
-// Sauvegarde lors qu'on sort de la page (navigation Ionic)
-onIonViewWillLeave(saveDraftIfNeeded)
 
 const handleFormChange = (data: Record<string, unknown>) => {
   currentFormData.value = data
@@ -76,22 +82,15 @@ const onSurveyDone = (data: Record<string, unknown>) => {
 const saveResponse = async (data: Record<string, unknown>) => {
   currentFormData.value = data
 
-  await responsesStore.upsertDraft(
+  const localId = await responsesStore.upsertDraft(
     surveyId.value,
     survey.value?.title ?? "",
     data,
     currentLocalId.value
   )
 
-  // Trouver la réponse locale (soit déjà existante soit à peine créée)
-  const localResponse = currentLocalId.value
-    ? responsesStore.getByLocalId(currentLocalId.value)
-    : responsesStore.getDraftBySurveyId(surveyId.value)
-
-  if (!localResponse) return
-
-  currentLocalId.value = localResponse.localId
-  const success = await responsesStore.submitResponse(localResponse.localId)
+  currentLocalId.value = localId
+  const success = await responsesStore.submitResponse(localId)
 
   if (success) {
     alert("Votre réponse a été envoyée")

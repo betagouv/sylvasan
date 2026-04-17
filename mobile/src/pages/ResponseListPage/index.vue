@@ -26,14 +26,16 @@ const nondraftResponses = computed(() =>
   allResponses.value.filter((x) => x.status !== "draft")
 )
 
-const selectedDraftSurveyId = ref<number | null>(null)
+const selectedDraft = ref<LocalResponse | null>(null)
 const ionRouter = useIonRouter()
 
 const onOpen = (response: LocalResponse | ResponseFull) => {
   if (isLocal(response) && response.status === "draft") {
-    selectedDraftSurveyId.value = response.surveyId
+    selectedDraft.value = response
   } else {
-    const responseId = isLocal(response) ? response.localId : String(response.id)
+    const responseId = isLocal(response)
+      ? response.localId
+      : String(response.id)
     ionRouter.navigate(
       { name: "ResponseSummaryPage", params: { responseId } },
       "forward",
@@ -73,10 +75,7 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
             :key="response.localId"
             class="w-72 shrink-0"
           >
-            <ResponseCard
-              :response="response"
-              @open="onOpen($event)"
-            />
+            <ResponseCard :response="response" @open="onOpen($event)" />
           </div>
         </div>
       </div>
@@ -91,14 +90,15 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
     </ion-content>
 
     <ion-modal
-      :is-open="selectedDraftSurveyId !== null"
-      @did-dismiss="selectedDraftSurveyId = null"
+      :is-open="selectedDraft !== null"
+      @did-dismiss="selectedDraft = null"
     >
       <SurveyPage
-        v-if="selectedDraftSurveyId !== null"
-        :id="selectedDraftSurveyId"
+        v-if="selectedDraft !== null"
+        :id="selectedDraft.surveyId"
+        :local-id="selectedDraft.localId"
         :is-modal="true"
-        @close="selectedDraftSurveyId = null"
+        @close="selectedDraft = null"
       />
     </ion-modal>
   </ion-page>
