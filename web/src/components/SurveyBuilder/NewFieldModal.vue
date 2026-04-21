@@ -312,6 +312,36 @@ const close = () => {
       </div>
     </div>
 
+    <div class="flex gap-6" v-else-if="payload.ui?.widget === 'array'">
+      <DsfrInputGroup>
+        <DsfrInput
+          label-visible
+          v-model="payload.ui.addLabel"
+          v-if="payload.ui"
+          placeholder="Ajouter un élément"
+          label="Titre du bouton pour l'ajout"
+        />
+      </DsfrInputGroup>
+      <DsfrInputGroup>
+        <DsfrInput
+          type="number"
+          v-model="payload.validation.minItems"
+          label="No. min d'éléments"
+          label-visible
+          v-if="payload.validation"
+        />
+      </DsfrInputGroup>
+      <DsfrInputGroup>
+        <DsfrInput
+          type="number"
+          v-model="payload.validation.maxItems"
+          label="No. max d'éléments"
+          label-visible
+          v-if="payload.validation"
+        />
+      </DsfrInputGroup>
+    </div>
+
     <!-- Pas encore gérés -->
     <div v-else>
       <DsfrNotice type="warning" title="Pas encore disponible" />

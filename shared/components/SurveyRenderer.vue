@@ -5,6 +5,7 @@ import type {
   SurveyField,
   FieldWidget,
 } from "@shared-types/survey"
+import FieldRenderer from "@shared-components/FieldRenderer.vue"
 
 const props = defineProps<{
   schema: SurveySchema
@@ -100,103 +101,13 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
       name="field-area"
       v-if="currentPageFields.length"
     >
-      <div
-        v-for="(field, index) in currentPageFields"
+      <FieldRenderer
+        v-for="field in currentPageFields"
         :key="`render-${field.id}`"
-      >
-        <DsfrInputGroup v-if="field.ui?.widget === 'input'">
-          <!-- Champ texte -->
-          <DsfrInput
-            v-model="formData[field.id]"
-            :label="field.label"
-            :required="field.required ?? false"
-            :label-visible="true"
-            :hint="field.ui?.hint"
-            :placeholder="field.ui?.placeholder"
-            :isTextarea="field.ui?.textarea"
-            :disabled="props.readonly"
-          />
-        </DsfrInputGroup>
-
-        <!-- Champ numérique -->
-        <DsfrInputGroup v-if="field.ui?.widget === 'number'">
-          <DsfrInput
-            v-model="formData[field.id]"
-            :label="field.label"
-            :required="field.required ?? false"
-            :label-visible="true"
-            :hint="field.ui?.hint"
-            type="number"
-            :placeholder="field.ui?.placeholder"
-            :min="field.validation?.min"
-            :max="field.validation?.max"
-            :disabled="props.readonly"
-          />
-        </DsfrInputGroup>
-
-        <!-- Champ select -->
-        <DsfrInputGroup v-if="field.ui?.widget === 'select'">
-          <DsfrSelect
-            :options="field.ui?.choices"
-            :label="field.label"
-            :required="field.required ?? false"
-            v-model="formData[field.id]"
-            :disabled="props.readonly"
-          />
-        </DsfrInputGroup>
-
-        <!-- Champ checkboxes -->
-        <DsfrInputGroup v-if="field.ui?.widget === 'checkboxes'">
-          <DsfrCheckboxSet
-            :options="field.ui?.choices"
-            :legend="field.label"
-            :required="field.required ?? false"
-            v-model="formData[field.id]"
-            :disabled="props.readonly"
-          />
-        </DsfrInputGroup>
-
-        <!-- Champ switch / interrupteur -->
-        <DsfrInputGroup v-if="field.ui?.widget === 'switch'">
-          <DsfrToggleSwitch
-            :label="field.label"
-            :required="field.required ?? false"
-            :hint="field.ui?.hint"
-            :activeText="field.ui?.activeText"
-            :inactiveText="field.ui?.inactiveText"
-            v-model="formData[field.id]"
-            :disabled="props.readonly"
-          />
-        </DsfrInputGroup>
-        <hr v-if="field.ui?.widget === 'switch'" />
-
-        <!-- Champ radio -->
-        <DsfrInputGroup v-if="field.ui?.widget === 'radio'">
-          <DsfrRadioButtonSet
-            :name="`radio-${index}`"
-            :options="field.ui?.choices"
-            :legend="field.label"
-            :required="field.required ?? false"
-            v-model="formData[field.id]"
-            :disabled="props.readonly"
-          />
-        </DsfrInputGroup>
-
-        <!-- Champ date -->
-        <DsfrInputGroup v-if="field.ui?.widget === 'date'">
-          <DsfrInput
-            v-model="formData[field.id]"
-            :label="field.label"
-            :required="field.required ?? false"
-            :label-visible="true"
-            :hint="field.ui?.hint"
-            type="date"
-            :min="field.validation?.min"
-            :max="field.validation?.max"
-            :disabled="props.readonly"
-          />
-        </DsfrInputGroup>
-      </div>
+        :field="field"
+        v-model="formData[field.id]"
+        :disabled="readonly"
+      />
     </TransitionGroup>
 
     <!-- Boutons de navigation -->

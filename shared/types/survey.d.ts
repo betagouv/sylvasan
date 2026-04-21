@@ -22,6 +22,9 @@ export interface FieldValidation {
   min?: number | string
   max?: number | string
   required_if?: Condition
+  // Pour le type array
+  minItems?: number
+  maxItems?: number
 }
 
 export interface FieldUI {
@@ -34,8 +37,6 @@ export interface FieldUI {
   inactiveText?: string
   // Pour le type array
   addLabel?: string
-  minItems?: number
-  maxItems?: number
 }
 
 export interface SurveyField {
