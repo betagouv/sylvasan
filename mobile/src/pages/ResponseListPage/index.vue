@@ -79,7 +79,10 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
           </div>
         </div>
       </div>
-      <div class="p-4 grid grid-cols-1 gap-3! text-left">
+      <div
+        v-if="allResponses.length > 0"
+        class="p-4 grid grid-cols-1 gap-3! text-left"
+      >
         <ResponseCard
           v-for="response in nondraftResponses"
           :key="isLocal(response) ? response.localId : response.id"
@@ -88,7 +91,7 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
         />
       </div>
       <div
-        v-if="allResponses.length === 0"
+        v-else
         class="flex flex-col items-center justify-center h-full gap-3 text-center px-8 text-stone-400"
       >
         <v-icon icon="ri-clipboard-line" scale="3" />

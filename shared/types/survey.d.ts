@@ -22,6 +22,9 @@ export interface FieldValidation {
   min?: number | string
   max?: number | string
   required_if?: Condition
+  // Pour le type array
+  minItems?: number
+  maxItems?: number
 }
 
 export interface FieldUI {
@@ -32,6 +35,8 @@ export interface FieldUI {
   textarea?: boolean
   activeText?: string
   inactiveText?: string
+  // Pour le type array
+  addLabel?: string
 }
 
 export interface SurveyField {
@@ -43,6 +48,7 @@ export interface SurveyField {
   condition?: Condition
   validation?: FieldValidation
   ui?: FieldUI
+  fields?: SurveyField[] // Pour le type array
 }
 
 export type FieldWidget =
@@ -53,6 +59,7 @@ export type FieldWidget =
   | "checkboxes"
   | "switch"
   | "date"
+  | "array"
 
 export interface SurveyPage {
   id: string

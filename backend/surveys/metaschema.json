@@ -40,6 +40,12 @@
         "condition": {
           "$ref": "#/$defs/condition"
         },
+        "fields": {
+          "items": {
+            "$ref": "#/$defs/field"
+          },
+          "type": "array"
+        },
         "id": {
           "pattern": "^[a-z][a-z0-9_]*$",
           "type": "string"

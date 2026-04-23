@@ -52,7 +52,13 @@ const headers = [
         { text: 'Mes enquêtes' },
       ]"
     />
-    <DsfrTable :rows="rows" :headers="headers" />
+    <div
+      v-if="surveys && !surveys.length"
+      class="border rounded border-slate-200 p-10 mb-10"
+    >
+      <p class="text-stone-500 italic mb-0!">Aucune enquête n'a été créée</p>
+    </div>
+    <DsfrTable v-else :rows="rows" :headers="headers" />
   </div>
 </template>
 

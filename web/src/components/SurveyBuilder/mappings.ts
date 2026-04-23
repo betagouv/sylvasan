@@ -50,4 +50,10 @@ export const typeWidgetMapping: Record<FieldWidget, WidgetData> = {
     label: "Date",
     icon: "ri-calendar-line",
   },
+  array: {
+    type: "array",
+    widget: "array",
+    label: "Liste d'objets",
+    icon: "ri-layout-horizontal-line",
+  },
 }

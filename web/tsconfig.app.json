@@ -15,6 +15,7 @@
     "baseUrl": ".",
     "paths": {
       "@shared-types/*": ["../shared/types/*"],
+      "@shared-utils/*": ["../shared/utils/*"],
       "@shared-components/*": ["../shared/components/*"],
       "vue": ["./node_modules/vue"]
     }

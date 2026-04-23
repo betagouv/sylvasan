@@ -1,9 +1,16 @@
+<script lang="ts">
+// On utilise ce composant de façon recursive, on a donc besoin d'un nom.
+// https://github.com/unplugin/unplugin-vue-components/issues/60
+export default { name: "FieldCard" }
+</script>
+
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import type { DsfrButtonProps } from "@gouvminint/vue-dsfr"
 import type { SurveyField } from "@shared-types/survey"
 import { typeWidgetMapping } from "./mappings"
 import type { WidgetData } from "./mappings"
+import NewFieldModal from "./NewFieldModal.vue"
 
 const widgetData = computed(() =>
   field.ui?.widget
@@ -13,10 +20,23 @@ const widgetData = computed(() =>
 const icon = computed(() => widgetData.value?.icon)
 const label = computed(() => widgetData.value?.label)
 
-const { field } = defineProps<{ field: SurveyField }>()
-const emit = defineEmits(["delete", "moveUp", "moveDown"])
+const { field } = defineProps<{
+  field: SurveyField
+  depth?: number
+}>()
+const emit = defineEmits([
+  "delete",
+  "moveUp",
+  "moveDown",
+  "addSubField",
+  "removeSubField",
+  "moveSubFieldUp",
+  "moveSubFieldDown",
+])
 
 const confirmDeleteOpened = ref(false)
+const subFieldModalOpened = ref(false)
+
 const confirmDeleteActions: DsfrButtonProps[] = [
   {
     label: "Supprimer",
@@ -34,6 +54,11 @@ const confirmDeleteActions: DsfrButtonProps[] = [
   },
 ]
 
+const handleAddSubField = (subField: SurveyField) => {
+  emit("addSubField", subField)
+  subFieldModalOpened.value = false
+}
+
 const formatDate = (isoString: string): string => {
   return new Date(isoString).toLocaleDateString("fr-FR", {
     day: "numeric",
@@ -50,12 +75,14 @@ const formatDate = (isoString: string): string => {
         icon-only
         @click="emit('moveUp')"
         tertiary
+        :size="depth && depth > 0 ? 'sm' : ''"
         icon="ri-arrow-up-line"
       />
       <DsfrButton
         icon-only
         @click="emit('moveDown')"
         tertiary
+        :size="depth && depth > 0 ? 'sm' : ''"
         icon="ri-arrow-down-line"
       />
     </div>
@@ -66,10 +93,7 @@ const formatDate = (isoString: string): string => {
         >
           <v-icon :icon="icon" />
         </div>
-        <h3 :class="`fr-text--sm mb-0! `">
-          {{ field.label }}
-        </h3>
-
+        <h3 class="fr-text--sm mb-0!">{{ field.label }}</h3>
         <p class="fr-text--sm mb-0! text-gray-500">{{ label }}</p>
         <p class="mb-0! fr-text--sm italic text-gray-500" v-if="field.required">
           *Champ requis
@@ -79,7 +103,6 @@ const formatDate = (isoString: string): string => {
       </div>
 
       <!-- Champ text / numérique -->
-
       <div v-if="field.ui?.widget === 'input' || field.ui?.widget === 'number'">
         <div class="flex gap-2" v-if="field.ui?.placeholder">
           <div class="text-gray-500 text-medium">Placeholder</div>
@@ -94,7 +117,6 @@ const formatDate = (isoString: string): string => {
             <div class="text-gray-500 text-medium">Valeur min.</div>
             <div>{{ field.validation.min }}</div>
           </div>
-
           <div class="flex gap-2" v-if="field.validation?.max">
             <div class="text-gray-500 text-medium">Valeur max.</div>
             <div>{{ field.validation.max }}</div>
@@ -108,6 +130,7 @@ const formatDate = (isoString: string): string => {
           <div>{{ field.ui.choices.length }} options</div>
         </div>
       </div>
+
       <!-- Champ Checkbox -->
       <div v-if="field.ui?.widget === 'checkboxes'">
         <div class="flex gap-2" v-if="field.ui?.choices">
@@ -134,6 +157,57 @@ const formatDate = (isoString: string): string => {
           </div>
         </div>
       </div>
+
+      <!-- Champ Liste d'objets -->
+      <div v-if="field.ui?.widget === 'array'">
+        <div class="flex gap-2 mb-1" v-if="field.ui?.addLabel">
+          <div class="text-gray-500 text-medium">Titre du bouton d'ajout</div>
+          <div>{{ field.ui.addLabel }}</div>
+        </div>
+        <div class="flex gap-2 mb-1" v-if="field.validation?.minItems">
+          <div class="text-gray-500 text-medium">No. min d'éléments</div>
+          <div>{{ field.validation.minItems }}</div>
+        </div>
+        <div class="flex gap-2 mb-1" v-if="field.validation?.maxItems">
+          <div class="text-gray-500 text-medium">No. max d'éléments</div>
+          <div>{{ field.validation.maxItems }}</div>
+        </div>
+
+        <!-- Sub-fields list -->
+        <div class="bg-slate-50 rounded border border-slate-200 p-3 mt-2">
+          <p class="fr-text--sm text-gray-500 mb-2!">
+            Sous-champs ({{ field.fields?.length ?? 0 }})
+          </p>
+
+          <div v-if="field.fields?.length" class="flex flex-col gap-2 mb-3">
+            <FieldCard
+              v-for="subField in field.fields"
+              :key="`subfield-${field.id}-${subField.id}`"
+              :field="subField"
+              :depth="(depth ?? 0) + 1"
+              @delete="emit('removeSubField', subField.id)"
+              @move-up="emit('moveSubFieldUp', subField.id)"
+              @move-down="emit('moveSubFieldDown', subField.id)"
+            />
+          </div>
+
+          <DsfrButton
+            label="Ajouter un sous-champ"
+            icon="ri-add-circle-line"
+            secondary
+            size="sm"
+            @click="subFieldModalOpened = true"
+          />
+        </div>
+
+        <!-- NewFieldModal restricted to non-array types -->
+        <NewFieldModal
+          :opened="subFieldModalOpened"
+          :exclude-widgets="['array']"
+          @add="handleAddSubField"
+          @close="subFieldModalOpened = false"
+        />
+      </div>
     </div>
 
     <div class="self-center end">
@@ -144,6 +218,7 @@ const formatDate = (isoString: string): string => {
         icon-only
       />
     </div>
+
     <DsfrModal
       :opened="confirmDeleteOpened"
       title="Supprimer le champ ?"
@@ -185,5 +260,8 @@ const formatDate = (isoString: string): string => {
 }
 .field-date {
   @apply bg-slate-50;
+}
+.field-array {
+  @apply bg-purple-100;
 }
 </style>

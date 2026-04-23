@@ -131,6 +131,65 @@ const removeField = async (fieldId: string) => {
   await forceTabsHeightRecalc()
 }
 
+const addSubField = async (parentFieldId: string, subField: SurveyField) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((f) =>
+      f.id === parentFieldId
+        ? { ...f, fields: [...(f.fields ?? []), subField] }
+        : f
+    ),
+  }
+}
+
+const removeSubField = async (parentFieldId: string, subFieldId: string) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((f) =>
+      f.id === parentFieldId
+        ? {
+            ...f,
+            fields: (f.fields ?? []).filter((sf) => sf.id !== subFieldId),
+          }
+        : f
+    ),
+  }
+}
+
+const moveSubFieldUp = (parentFieldId: string, subFieldId: string) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((f) => {
+      if (f.id !== parentFieldId) return f
+      const subFields = [...(f.fields ?? [])]
+      const index = subFields.findIndex((sf) => sf.id === subFieldId)
+      if (index <= 0) return f
+      ;[subFields[index - 1], subFields[index]] = [
+        subFields[index],
+        subFields[index - 1],
+      ]
+      return { ...f, fields: subFields }
+    }),
+  }
+}
+
+const moveSubFieldDown = (parentFieldId: string, subFieldId: string) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((f) => {
+      if (f.id !== parentFieldId) return f
+      const subFields = [...(f.fields ?? [])]
+      const index = subFields.findIndex((sf) => sf.id === subFieldId)
+      if (index === -1 || index >= subFields.length - 1) return f
+      ;[subFields[index], subFields[index + 1]] = [
+        subFields[index + 1],
+        subFields[index],
+      ]
+      return { ...f, fields: subFields }
+    }),
+  }
+}
+
 const moveFieldUp = (fieldId: string) => {
   const page = schema.value.pages?.find((p) => p.id === activePageId.value)
   if (!page) return
@@ -247,6 +306,16 @@ const updatePageTitle = (title: any, index: number) => {
                 @move-up="moveFieldUp(field.id)"
                 @move-down="moveFieldDown(field.id)"
                 @delete="removeField(field.id)"
+                @add-sub-field="(subField) => addSubField(field.id, subField)"
+                @remove-sub-field="
+                  (subFieldId) => removeSubField(field.id, subFieldId)
+                "
+                @move-sub-field-up="
+                  (subFieldId) => moveSubFieldUp(field.id, subFieldId)
+                "
+                @move-sub-field-down="
+                  (subFieldId) => moveSubFieldDown(field.id, subFieldId)
+                "
                 class="mb-1"
               />
             </TransitionGroup>
