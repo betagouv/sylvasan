@@ -5,7 +5,7 @@ import type {
   SurveyField,
   FieldWidget,
 } from "@shared-types/survey"
-import FieldRenderer from "@shared-components/FieldRenderer.vue"
+import FieldRenderer from "./FieldRenderer.vue"
 
 const props = defineProps<{
   schema: SurveySchema

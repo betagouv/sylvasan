@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SurveyField } from "@shared-types/survey"
+import FieldRenderer from "./FieldRenderer.vue"
 
 const props = defineProps<{
   field: SurveyField
@@ -17,8 +18,8 @@ const createEmptyItem = () =>
 
 const addItem = () => {
   if (
-    props.field.ui?.maxItems &&
-    modelValue.value.length >= props.field.ui.maxItems
+    props.field.validation?.maxItems &&
+    modelValue.value.length >= props.field.validation.maxItems
   )
     return
   modelValue.value = [...modelValue.value, createEmptyItem()]
@@ -70,16 +71,20 @@ const updateItem = (index: number, fieldId: string, value: unknown) => {
       icon="ri-add-circle-line"
       :disabled="
         disabled ||
-        (!!field.ui?.maxItems && modelValue.length >= field.ui.maxItems)
+        (!!field.validation?.maxItems &&
+          modelValue.length >= field.validation.maxItems)
       "
       @click="addItem"
     />
 
     <p
-      v-if="field.ui?.minItems && modelValue.length < field.ui.minItems"
+      v-if="
+        field.validation?.minItems &&
+        modelValue.length < field.validation.minItems
+      "
       class="fr-error-text"
     >
-      Minimum {{ field.ui.minItems }} élément(s) requis
+      Minimum {{ field.validation.minItems }} élément(s) requis
     </p>
   </fieldset>
 </template>

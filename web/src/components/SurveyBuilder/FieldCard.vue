@@ -1,3 +1,9 @@
+<script lang="ts">
+// On utilise ce composant de façon recursive, on a donc besoin d'un nom.
+// https://github.com/unplugin/unplugin-vue-components/issues/60
+export default { name: "FieldCard" }
+</script>
+
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import type { DsfrButtonProps } from "@gouvminint/vue-dsfr"
@@ -14,13 +20,18 @@ const widgetData = computed(() =>
 const icon = computed(() => widgetData.value?.icon)
 const label = computed(() => widgetData.value?.label)
 
-const { field } = defineProps<{ field: SurveyField }>()
+const { field } = defineProps<{
+  field: SurveyField
+  depth?: number
+}>()
 const emit = defineEmits([
   "delete",
   "moveUp",
   "moveDown",
   "addSubField",
   "removeSubField",
+  "moveSubFieldUp",
+  "moveSubFieldDown",
 ])
 
 const confirmDeleteOpened = ref(false)
@@ -64,12 +75,14 @@ const formatDate = (isoString: string): string => {
         icon-only
         @click="emit('moveUp')"
         tertiary
+        :size="depth && depth > 0 ? 'sm' : ''"
         icon="ri-arrow-up-line"
       />
       <DsfrButton
         icon-only
         @click="emit('moveDown')"
         tertiary
+        :size="depth && depth > 0 ? 'sm' : ''"
         icon="ri-arrow-down-line"
       />
     </div>
@@ -167,39 +180,15 @@ const formatDate = (isoString: string): string => {
           </p>
 
           <div v-if="field.fields?.length" class="flex flex-col gap-2 mb-3">
-            <div
+            <FieldCard
               v-for="subField in field.fields"
-              :key="subField.id"
-              class="flex items-center justify-between bg-white border border-slate-100 rounded px-3 py-2"
-            >
-              <div class="flex items-center gap-2">
-                <div
-                  :class="`border border-slate-100 px-1 rounded-full pt-1 field-${subField.ui?.widget}`"
-                >
-                  <v-icon
-                    :icon="
-                      typeWidgetMapping[subField.ui?.widget ?? 'input']?.icon
-                    "
-                  />
-                </div>
-                <span class="fr-text--sm font-medium">{{
-                  subField.label
-                }}</span>
-                <span class="fr-text--sm text-gray-400">
-                  {{ typeWidgetMapping[subField.ui?.widget ?? "input"]?.label }}
-                </span>
-                <span class="font-mono text-xs text-gray-400">{{
-                  subField.id
-                }}</span>
-              </div>
-              <DsfrButton
-                icon="ri-delete-bin-line"
-                tertiary
-                icon-only
-                size="sm"
-                @click="emit('removeSubField', subField.id)"
-              />
-            </div>
+              :key="`subfield-${field.id}-${subField.id}`"
+              :field="subField"
+              :depth="(depth ?? 0) + 1"
+              @delete="emit('removeSubField', subField.id)"
+              @move-up="emit('moveSubFieldUp', subField.id)"
+              @move-down="emit('moveSubFieldDown', subField.id)"
+            />
           </div>
 
           <DsfrButton
@@ -244,3 +233,35 @@ const formatDate = (isoString: string): string => {
     </DsfrModal>
   </div>
 </template>
+
+<style scoped>
+@reference "../../styles.css";
+
+.field-input {
+  @apply bg-[#ececfe];
+}
+.field-number {
+  @apply bg-[#fee9e9];
+}
+.field-select {
+  @apply bg-[#dffee6];
+}
+.field-checkboxes {
+  @apply bg-[#f2f5da];
+}
+.field-switch {
+  @apply bg-[#ffe9e6];
+}
+.field-textarea {
+  @apply bg-slate-50;
+}
+.field-radio {
+  @apply bg-[#f7ebfa];
+}
+.field-date {
+  @apply bg-slate-50;
+}
+.field-array {
+  @apply bg-purple-100;
+}
+</style>
