@@ -2,6 +2,9 @@
 import { computed, ref, onMounted } from "vue"
 import { useRoute } from "vue-router"
 import { useSurveysStore } from "../stores/surveys"
+import { useToastStore } from "../stores/toast"
+
+const toast = useToastStore()
 
 import {
   IonPage,
@@ -114,11 +117,11 @@ const saveResponse = async (data: Record<string, unknown>) => {
   const success = await responsesStore.submitResponse(localId)
 
   if (success) {
-    alert("Votre réponse a été envoyée")
+    toast.show("Votre réponse a été envoyée", "success")
     if (props.isModal) emit("close")
     else router.navigate({ name: "SurveyListPage" }, "back", "replace")
   } else {
-    alert(
+    toast.show(
       "Votre réponse a été sauvegardée localement et sera envoyée dès que possible"
     )
     if (props.isModal) emit("close")
