@@ -47,7 +47,15 @@ const headers = [
     <DsfrBreadcrumb
       :links="[{ to: '/dashboard', text: 'Dashboard' }, { text: 'Réponses' }]"
     />
-    <DsfrTable :rows="rows" :headers="headers"> </DsfrTable>
+    <div
+      v-if="responses && !responses.length"
+      class="border rounded border-slate-200 p-10 mb-10"
+    >
+      <p class="text-stone-500 italic mb-0!">
+        Aucune réponse reçue pour le moment.
+      </p>
+    </div>
+    <DsfrTable v-else :rows="rows" :headers="headers" />
   </div>
 </template>
 
