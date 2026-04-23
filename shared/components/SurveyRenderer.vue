@@ -60,6 +60,7 @@ const getEmptyValue = (field: SurveyField): any => {
     switch: false,
     radio: Array(),
     date: "",
+    array: Array(),
   }
   return mapping[field.ui.widget]
 }
