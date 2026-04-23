@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
-import type { Survey } from "@shared-types/survey"
+import type { Survey, SurveyField } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
+import { resolveFieldValue } from "@shared-utils/survey"
 
 const { response, data, survey } = defineProps<{
   response?: ResponseFull | LocalResponse
@@ -21,36 +22,14 @@ const fieldLabel = (fieldId: string): string =>
 
 const resolveValue = (fieldId: string, raw: unknown): string => {
   const field = survey.jsonSchema.fields.find((f) => f.id === fieldId)
-
-  if (field?.ui?.widget === "switch") {
-    if (raw === true) return field.ui.activeText ?? "Oui"
-    if (raw === false) return field.ui.inactiveText ?? "Non"
-    return ""
-  }
-
-  const choices = field?.ui?.choices
-  if (!choices || !choices.length) return String(raw)
-
-  if (field?.ui?.widget === "select") {
-    const match = choices.find((c: any) => c.value === raw)
-    return match ? (match as any).text ?? String(raw) : String(raw)
-  }
-
-  if (field?.ui?.widget === "radio") {
-    const match = choices.find((c: any) => c.value === raw)
-    return match ? (match as any).label ?? String(raw) : String(raw)
-  }
-
-  if (field?.ui?.widget === "checkboxes" && Array.isArray(raw)) {
-    const labels = raw.map((v) => {
-      const match = choices.find((c: any) => c.value === v)
-      return match ? (match as any).label ?? String(v) : String(v)
-    })
-    return labels.join(", ") || ""
-  }
-
-  return String(raw)
+  return resolveFieldValue(field, raw)
 }
+
+const isArrayField = (fieldId: string): boolean =>
+  survey.jsonSchema.fields.find((f) => f.id === fieldId)?.ui?.widget === "array"
+
+const getSubFields = (fieldId: string): SurveyField[] =>
+  survey.jsonSchema.fields.find((f) => f.id === fieldId)?.fields ?? []
 </script>
 
 <template>
@@ -73,10 +52,47 @@ const resolveValue = (fieldId: string, raw: unknown): string => {
         <p class="fr-text--sm font-bold text-stone-500 mb-0!">
           {{ fieldLabel(entry[0]) }}
         </p>
-        <p class="font-medium mb-0!" v-if="resolveValue(entry[0], entry[1])">
-          {{ resolveValue(entry[0], entry[1]) }}
-        </p>
-        <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+
+        <!-- Array field -->
+        <template v-if="isArrayField(entry[0]) && Array.isArray(entry[1])">
+          <p v-if="!entry[1].length" class="italic mb-0! text-stone-500">
+            Non renseigné
+          </p>
+          <p v-else class="font-medium mb-2! text-stone-500">
+            {{ entry[1].length }} entrée(s) :
+          </p>
+          <div
+            v-for="(item, idx) in (entry[1] as Record<string, unknown>[])"
+            :key="`${entry[0]}-${idx}`"
+            class="border border-slate-200 rounded p-3 mb-2 bg-slate-50"
+          >
+            <div
+              v-for="subField in getSubFields(entry[0])"
+              :key="subField.id"
+              class="flex gap-4"
+            >
+              <p class="fr-text--sm text-stone-400 mb-0!">
+                {{ subField.label }}
+              </p>
+              <p
+                class="font-medium mb-0!"
+                v-if="resolveFieldValue(subField, item[subField.id])"
+              >
+                {{ resolveFieldValue(subField, item[subField.id]) }}
+              </p>
+              <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+            </div>
+          </div>
+        </template>
+
+        <!-- All other fields -->
+        <template v-else>
+          <p class="font-medium mb-0!" v-if="resolveValue(entry[0], entry[1])">
+            {{ resolveValue(entry[0], entry[1]) }}
+          </p>
+          <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+        </template>
+
         <hr class="p-1! mt-2!" />
       </div>
     </div>

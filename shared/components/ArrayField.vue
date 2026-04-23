@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import type { SurveyField } from "@shared-types/survey"
+import type { SurveyField } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
+import { getEmptyValue } from "../utils/survey"
+
+const createEmptyItem = () =>
+  Object.fromEntries(
+    (props.field.fields ?? []).map((f) => [f.id, getEmptyValue(f)])
+  )
 
 const props = defineProps<{
   field: SurveyField
   disabled?: boolean
 }>()
 
-const emit = defineEmits<{
-  "update:modelValue": [value: Record<string, unknown>[]]
-}>()
-
 const modelValue = defineModel<Record<string, unknown>[]>({ default: () => [] })
-
-const createEmptyItem = () =>
-  Object.fromEntries((props.field.fields ?? []).map((f) => [f.id, ""]))
 
 const addItem = () => {
   if (
@@ -50,17 +49,18 @@ const updateItem = (index: number, fieldId: string, value: unknown) => {
 
     <div
       v-for="(item, index) in modelValue"
-      :key="index"
+      :key="`item ${index}`"
       class="border border-slate-200 rounded p-3 mb-3 relative bg-white"
     >
       <div class="flex justify-end">
         <DsfrButton
-          icon="ri-delete-bin-line"
           @click="removeItem(index)"
-          secondary
+          tertiary
           icon-only
           :disabled="disabled"
           size="sm"
+          no-outline
+          :icon="{ name: 'ri-close-circle-fill' }"
         />
       </div>
 

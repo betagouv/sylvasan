@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { reactive, ref, computed, watch } from "vue"
-import type {
-  SurveySchema,
-  SurveyField,
-  FieldWidget,
-} from "@shared-types/survey"
+import type { SurveySchema, SurveyField, FieldWidget } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
+import { getEmptyValue } from "../utils/survey"
 
 const props = defineProps<{
   schema: SurveySchema
@@ -49,22 +46,6 @@ const goNext = () => {
 const goPrev = () => {
   if (currentStep.value > 1) currentStep.value--
 }
-
-const getEmptyValue = (field: SurveyField): any => {
-  if (!field.ui?.widget) return ""
-  const mapping: Record<FieldWidget, any> = {
-    input: "",
-    number: "",
-    select: "",
-    checkboxes: Array(),
-    switch: false,
-    radio: Array(),
-    date: "",
-    array: Array(),
-  }
-  return mapping[field.ui.widget]
-}
-
 const formData = reactive<Record<string, string>>(
   Object.fromEntries(
     props.schema.fields.map((field: SurveyField) => {

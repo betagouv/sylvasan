@@ -22,7 +22,7 @@ const arrayModelValue = computed({
   <DsfrInputGroup v-if="field.ui?.widget === 'input'">
     <!-- Champ texte -->
     <DsfrInput
-      v-model="field.id"
+      v-model="modelValue"
       :label="field.label"
       :required="field.required ?? false"
       :label-visible="true"
@@ -34,9 +34,9 @@ const arrayModelValue = computed({
   </DsfrInputGroup>
 
   <!-- Champ numérique -->
-  <DsfrInputGroup v-if="field.ui?.widget === 'number'">
+  <DsfrInputGroup v-else-if="field.ui?.widget === 'number'">
     <DsfrInput
-      v-model="field.id"
+      v-model="modelValue"
       :label="field.label"
       :required="field.required ?? false"
       :label-visible="true"
@@ -50,57 +50,56 @@ const arrayModelValue = computed({
   </DsfrInputGroup>
 
   <!-- Champ select -->
-  <DsfrInputGroup v-if="field.ui?.widget === 'select'">
+  <DsfrInputGroup v-else-if="field.ui?.widget === 'select'">
     <DsfrSelect
       :options="field.ui?.choices"
       :label="field.label"
       :required="field.required ?? false"
-      v-model="field.id"
+      v-model="modelValue"
       :disabled="disabled"
     />
   </DsfrInputGroup>
 
   <!-- Champ checkboxes -->
-  <DsfrInputGroup v-if="field.ui?.widget === 'checkboxes'">
+  <DsfrInputGroup v-else-if="field.ui?.widget === 'checkboxes'">
     <DsfrCheckboxSet
       :options="field.ui?.choices"
       :legend="field.label"
       :required="field.required ?? false"
-      v-model="field.id"
+      v-model="modelValue"
       :disabled="disabled"
     />
   </DsfrInputGroup>
 
   <!-- Champ switch / interrupteur -->
-  <DsfrInputGroup v-if="field.ui?.widget === 'switch'">
+  <DsfrInputGroup v-else-if="field.ui?.widget === 'switch'">
     <DsfrToggleSwitch
       :label="field.label"
       :required="field.required ?? false"
       :hint="field.ui?.hint"
       :activeText="field.ui?.activeText"
       :inactiveText="field.ui?.inactiveText"
-      v-model="field.id"
+      v-model="modelValue"
       :disabled="disabled"
     />
   </DsfrInputGroup>
-  <hr v-if="field.ui?.widget === 'switch'" />
 
   <!-- Champ radio -->
-  <DsfrInputGroup v-if="field.ui?.widget === 'radio'">
+  <DsfrInputGroup v-else-if="field.ui?.widget === 'radio'">
     <DsfrRadioButtonSet
       :name="`radio-${field.id}`"
       :options="field.ui?.choices"
       :legend="field.label"
       :required="field.required ?? false"
-      v-model="field.id"
+      v-model="modelValue"
       :disabled="disabled"
     />
   </DsfrInputGroup>
 
   <!-- Champ date -->
-  <DsfrInputGroup v-if="field.ui?.widget === 'date'">
+  <DsfrInputGroup v-else-if="field.ui?.widget === 'date'">
     <DsfrInput
-      v-model="field.id"
+      v-model="modelValue"
       :label="field.label"
       :required="field.required ?? false"
       :label-visible="true"
@@ -118,4 +117,6 @@ const arrayModelValue = computed({
     v-model="arrayModelValue"
     :disabled="disabled"
   />
+
+  <hr v-if="field.ui?.widget === 'switch'" />
 </template>
