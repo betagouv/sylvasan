@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref, computed, watch } from "vue"
-import type { SurveySchema, SurveyField, FieldWidget } from "../types/survey"
+import type { SurveySchema, SurveyField } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
 import { getEmptyValue } from "../utils/survey"
 
