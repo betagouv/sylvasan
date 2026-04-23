@@ -43,8 +43,7 @@ const updateItem = (index: number, fieldId: string, value: unknown) => {
       v-if="!modelValue || !modelValue.length"
       class="font-medium fr-text--sm text-gray-500"
     >
-      Aucun élément ajouté. Pour ajouter des éléments cliquez sur le bouton
-      ci-dessous.
+      Aucun élément ajouté. Pour en ajouter cliquez sur le bouton ci-dessous.
     </p>
 
     <div

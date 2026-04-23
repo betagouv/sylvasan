@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, useId } from "vue"
 import type { SurveyField } from "@shared-types/survey"
 import ArrayField from "./ArrayField.vue"
 
@@ -7,6 +7,8 @@ const props = defineProps<{
   field: SurveyField
   disabled?: boolean
 }>()
+
+const localId = useId()
 
 const modelValue = defineModel<unknown>()
 
@@ -87,7 +89,7 @@ const arrayModelValue = computed({
   <!-- Champ radio -->
   <DsfrInputGroup v-else-if="field.ui?.widget === 'radio'">
     <DsfrRadioButtonSet
-      :name="`radio-${field.id}`"
+      :name="`radio-${field.id}-${localId}`"
       :options="field.ui?.choices"
       :legend="field.label"
       :required="field.required ?? false"
