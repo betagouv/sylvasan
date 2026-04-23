@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "tailwindcss" layer(utilities);
+@source "../../shared/**/*.vue";
 
 @theme {
   --color-blue-france-main-525: #6a6af4;

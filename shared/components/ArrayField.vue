@@ -37,22 +37,32 @@ const updateItem = (index: number, fieldId: string, value: unknown) => {
 </script>
 
 <template>
-  <fieldset class="border border-slate-300 rounded p-4 mb-4">
+  <fieldset class="border border-slate-200 rounded p-3 mb-4 bg-[#f8fafc]">
     <legend class="fr-label px-2">{{ field.label }}</legend>
+
+    <p
+      v-if="!modelValue || !modelValue.length"
+      class="font-medium fr-text--sm text-gray-500"
+    >
+      Aucun élément ajouté. Pour ajouter des éléments cliquez sur le bouton
+      ci-dessous.
+    </p>
 
     <div
       v-for="(item, index) in modelValue"
       :key="index"
-      class="border border-slate-200 rounded p-3 mb-3 relative"
+      class="border border-slate-200 rounded p-3 mb-3 relative bg-white"
     >
-      <button
-        type="button"
-        class="absolute top-2 right-2 text-red-500 text-xs"
-        @click="removeItem(index)"
-        :disabled="disabled"
-      >
-        Supprimer
-      </button>
+      <div class="flex justify-end">
+        <DsfrButton
+          icon="ri-delete-bin-line"
+          @click="removeItem(index)"
+          secondary
+          icon-only
+          :disabled="disabled"
+          size="sm"
+        />
+      </div>
 
       <FieldRenderer
         v-for="subField in field.fields"
@@ -82,9 +92,19 @@ const updateItem = (index: number, fieldId: string, value: unknown) => {
         field.validation?.minItems &&
         modelValue.length < field.validation.minItems
       "
-      class="fr-error-text"
+      class="fr-info-text"
     >
       Minimum {{ field.validation.minItems }} élément(s) requis
+    </p>
+
+    <p
+      v-if="
+        field.validation?.maxItems &&
+        modelValue.length >= field.validation.maxItems
+      "
+      class="fr-info-text"
+    >
+      Maximum de {{ field.validation.maxItems }} éléments atteint
     </p>
   </fieldset>
 </template>

@@ -20,7 +20,7 @@ const emit = defineEmits<{
 }>()
 
 const hasPages = computed(
-  () => props.schema.pages && props.schema.pages.length > 0
+  () => props.schema.pages && props.schema.pages.length > 1
 )
 
 const currentStep = ref(1)
@@ -111,7 +111,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
     </TransitionGroup>
 
     <!-- Boutons de navigation -->
-    <div class="flex justify-between mt-6" v-if="hasPages">
+    <div class="flex justify-between nav-buttons" v-if="hasPages">
       <DsfrButton
         label="Précédent"
         secondary
@@ -138,7 +138,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
     </div>
 
     <!-- S'il n'y a pas de pages, un seul bouton pour soumettre -->
-    <div class="flex justify-end" v-if="!hasPages && allowSubmit">
+    <div class="flex justify-end nav-buttons" v-if="!hasPages && allowSubmit">
       <DsfrButton
         @click="handleDone"
         icon="ri-arrow-right-s-line"
@@ -155,5 +155,8 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
 }
 div :deep(.fr-input-group) {
   margin-bottom: 24px;
+}
+.nav-buttons {
+  margin-top: 16px;
 }
 </style>
