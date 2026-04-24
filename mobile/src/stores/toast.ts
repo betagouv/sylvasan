@@ -1,4 +1,5 @@
 import { defineStore } from "pinia"
+
 import type { ToastType, Toast } from "@shared-types/toast"
 
 export const useToastStore = defineStore("toast", {
