@@ -284,6 +284,12 @@ CSRF_TRUSTED_ORIGINS = DEV_CORS_ORIGINS + ANDROID_CORS_ORIGINS
 CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SAMESITE = "Lax"
 
+# Authentication
+AUTHENTICATION_BACKENDS = [
+    "organisation_specific.dsf.auth_backend.DsfpAuthBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
 # Configuration CSP avec nonces
 SECURE_CSP = {
     "default-src": [
