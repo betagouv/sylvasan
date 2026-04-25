@@ -13,5 +13,7 @@ class VocabularyEntry(models.Model):
     label = models.CharField()
     position = models.IntegerField(null=True, blank=True)
 
+    is_active = models.BooleanField(default=True)
+
     def __str__(self):
-        return f"{self.name} ({self.code})"
+        return f"{self.label} ({self.code})"

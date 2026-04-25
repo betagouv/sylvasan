@@ -95,7 +95,16 @@ DATABASES = {
         "HOST": env("DB_HOST"),
         "PORT": env("DB_PORT"),
         "CONN_MAX_AGE": 60,
-    }
+    },
+    "dsf_ref": {
+        "ENGINE": "django.db.backends.postgresql",
+        "USER": env("DSF_REF_DB_USER"),
+        "NAME": env("DSF_REF_DB_NAME"),
+        "PASSWORD": env("DSF_REF_DB_PASSWORD"),
+        "HOST": env("DSF_REF_DB_HOST"),
+        "PORT": env("DSF_REF_DB_PORT"),
+        "CONN_MAX_AGE": 60,
+    },
 }
 
 
