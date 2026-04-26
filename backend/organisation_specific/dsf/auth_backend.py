@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import connections
 
 import bcrypt
+from users.models import UserSource
 
 User = get_user_model()
 
@@ -43,6 +44,8 @@ class DsfpAuthBackend:
                 "email": email or "",
                 "first_name": prenom or "",
                 "last_name": nom or "",
+                "source": UserSource.DSF,
+                "external_id": compte,
             },
         )
 

@@ -1,11 +1,8 @@
-from common.behaviours import TimeStampable
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
+
+from common.behaviours import TimeStampable
 
 
 class UserManager(BaseUserManager):
@@ -30,11 +27,30 @@ class UserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+class UserSource(models.TextChoices):
+    LOCAL = "local", "Local"
+    DSF = "dsf", "DSF (dsfp)"
+
+
 class User(PermissionsMixin, AbstractBaseUser, TimeStampable):
     class Meta:
         verbose_name = "utilisateur"
         ordering = ["-creation_date"]
         get_latest_by = "creation_date"
+
+    source = models.CharField(
+        max_length=20,
+        choices=UserSource.choices,
+        default=UserSource.LOCAL,
+        verbose_name="source d'authentification",
+    )
+
+    external_id = models.CharField(
+        blank=True,
+        null=True,
+        verbose_name="identifiant externe",
+        help_text="Identifiant dans le système source (ex: code CO dans dsfp)",
+    )
 
     username = models.CharField(
         max_length=150,
