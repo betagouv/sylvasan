@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connections
 
@@ -32,6 +33,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
         only_vocab = options.get("vocabulary")
+
+        if "dsf_ref" not in settings.DATABASES:
+            self.stderr.write(
+                self.style.ERROR("DSF_REF_DB_HOST non configuré — la base de référence DSF est indisponible.")
+            )
+            return
 
         try:
             dsf = Organisation.objects.get(name="DSF")

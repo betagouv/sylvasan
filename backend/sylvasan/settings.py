@@ -96,7 +96,11 @@ DATABASES = {
         "PORT": env("DB_PORT"),
         "CONN_MAX_AGE": 60,
     },
-    "dsf_ref": {
+}
+
+DSF_REF_DB_HOST = env("DSF_REF_DB_HOST", default=None)
+if DSF_REF_DB_HOST:
+    DATABASES["dsf_ref"] = {
         "ENGINE": "django.db.backends.postgresql",
         "USER": env("DSF_REF_DB_USER"),
         "NAME": env("DSF_REF_DB_NAME"),
@@ -104,8 +108,7 @@ DATABASES = {
         "HOST": env("DSF_REF_DB_HOST"),
         "PORT": env("DSF_REF_DB_PORT"),
         "CONN_MAX_AGE": 60,
-    },
-}
+    }
 
 
 # Password validation

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connections
 
@@ -9,6 +10,9 @@ User = get_user_model()
 
 class DsfpAuthBackend:
     def authenticate(self, request, username=None, password=None, **kwargs):
+        if "dsf_ref" not in settings.DATABASES:
+            return None
+
         if not username or not password:
             return None
 
