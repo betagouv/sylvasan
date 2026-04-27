@@ -37,6 +37,15 @@ class UserAdmin(UserAdmin):
             },
         ),
         (
+            _("Source"),
+            {
+                "fields": (
+                    "source",
+                    "external_id",
+                ),
+            },
+        ),
+        (
             _("Permissions"),
             {
                 "fields": (

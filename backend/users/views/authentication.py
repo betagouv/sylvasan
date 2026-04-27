@@ -52,10 +52,10 @@ class LoginView(APIView):
 
         try:
             user = get_user_model().objects.get(Q(username=username_or_email) | Q(email=username_or_email))
+            authenticated_user = authenticate(request, username=user.username, password=password)
         except get_user_model().DoesNotExist:
-            return Response({"error": unauthorized_msg}, status=status.HTTP_401_UNAUTHORIZED)
+            authenticated_user = authenticate(request, username=username_or_email, password=password)
 
-        authenticated_user = authenticate(request, username=user.username, password=password)
         if not authenticated_user:
             return Response({"error": unauthorized_msg}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -63,7 +63,7 @@ class LoginView(APIView):
         return Response(
             {
                 "csrf_token": get_token(request),  # todo: remove
-                "user": SimpleUserSerializer(user).data,
+                "user": SimpleUserSerializer(authenticated_user).data,
             }
         )
 

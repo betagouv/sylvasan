@@ -95,8 +95,20 @@ DATABASES = {
         "HOST": env("DB_HOST"),
         "PORT": env("DB_PORT"),
         "CONN_MAX_AGE": 60,
-    }
+    },
 }
+
+DSF_REF_DB_HOST = env("DSF_REF_DB_HOST", default=None)
+if DSF_REF_DB_HOST:
+    DATABASES["dsf_ref"] = {
+        "ENGINE": "django.db.backends.postgresql",
+        "USER": env("DSF_REF_DB_USER"),
+        "NAME": env("DSF_REF_DB_NAME"),
+        "PASSWORD": env("DSF_REF_DB_PASSWORD"),
+        "HOST": env("DSF_REF_DB_HOST"),
+        "PORT": env("DSF_REF_DB_PORT"),
+        "CONN_MAX_AGE": 60,
+    }
 
 
 # Password validation
@@ -274,6 +286,12 @@ CSRF_TRUSTED_ORIGINS = DEV_CORS_ORIGINS + ANDROID_CORS_ORIGINS
 
 CORS_ALLOW_CREDENTIALS = True
 SESSION_COOKIE_SAMESITE = "Lax"
+
+# Authentication
+AUTHENTICATION_BACKENDS = [
+    "organisation_specific.dsf.auth_backend.DsfpAuthBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
 
 # Configuration CSP avec nonces
 SECURE_CSP = {

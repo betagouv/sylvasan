@@ -35,7 +35,7 @@ const validator = z.object({
 
 const formErrors = ref<any>()
 
-const { execute, isFetching, data } = useApiFetch("/auth/login/", {
+const { execute, isFetching, data, statusCode } = useApiFetch("/auth/login/", {
   immediate: false,
 })
   .post(payload)
@@ -45,6 +45,10 @@ const submit = async () => {
   try {
     validator.parse(payload.value)
     await execute()
+    if (statusCode.value === 401) {
+      toast.show("Identifiant ou mot de passe incorrect.", "error")
+      return
+    }
     store.setLoggedUser(data.value.user)
     toast.show(`Bienvenue ${data.value.user.firstName}`, "success")
     router.push({ name: "/DashboardPage" })
