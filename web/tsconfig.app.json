@@ -12,7 +12,6 @@
     "noUncheckedSideEffectImports": true,
 
     // Shared items
-    "baseUrl": ".",
     "paths": {
       "@shared-types/*": ["../shared/types/*"],
       "@shared-utils/*": ["../shared/utils/*"],
