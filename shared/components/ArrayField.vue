@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SurveyField } from "../types/survey"
+import type { SurveyField, VocabularySet } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
 import { getEmptyValue } from "../utils/survey"
 
@@ -11,6 +11,7 @@ const createEmptyItem = () =>
 const props = defineProps<{
   field: SurveyField
   disabled?: boolean
+  vocabularies?: VocabularySet[]
 }>()
 
 const modelValue = defineModel<Record<string, unknown>[]>({ default: () => [] })
@@ -69,6 +70,7 @@ const updateItem = (index: number, fieldId: string, value: unknown) => {
         :field="subField"
         :model-value="item[subField.id]"
         :disabled="disabled"
+        :vocabularies="props.vocabularies"
         @update:model-value="updateItem(index, subField.id, $event)"
       />
     </div>

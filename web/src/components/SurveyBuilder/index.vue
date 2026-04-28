@@ -9,6 +9,10 @@ import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import NewFieldModal from "./NewFieldModal.vue"
 import FieldCard from "./FieldCard.vue"
 import { DsfrInput } from "@gouvminint/vue-dsfr"
+import { storeToRefs } from "pinia"
+import { useRootStore } from "../../stores/root"
+
+const { vocabularies } = storeToRefs(useRootStore())
 
 const schema = defineModel<SurveySchema>({ required: true })
 
@@ -347,7 +351,7 @@ const updatePageTitle = (title: any, index: number) => {
         <p class="text-sm text-gray-500 mb-2">
           Aperçu « {{ schema.pages?.[activeTab]?.title }} »
         </p>
-        <SurveyRenderer :schema="previewSchema" :allowSubmit="false" />
+        <SurveyRenderer :schema="previewSchema" :allowSubmit="false" :vocabularies="vocabularies" />
       </div>
     </div>
   </div>

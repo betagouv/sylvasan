@@ -14,8 +14,11 @@ import { useApiFetch } from "../../utils/data-fetching"
 import type { SurveyField } from "@shared-types/survey"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import { resolveFieldValue } from "@shared-utils/survey"
+import { storeToRefs } from "pinia"
+import { useRootStore } from "../../stores/root"
 
 const route = useRoute()
+const { vocabularies } = storeToRefs(useRootStore())
 
 const { data: response } = useApiFetch(`/responses/${route.params.id}`).json()
 
@@ -128,6 +131,7 @@ const getSubFields = (fieldId: string): SurveyField[] =>
               :allowSubmit="false"
               :readonly="true"
               :prefillData="response.data"
+              :vocabularies="vocabularies"
             />
           </div>
         </div>
