@@ -11,6 +11,9 @@ import type { SurveyField } from "@shared-types/survey"
 import { typeWidgetMapping } from "./mappings"
 import type { WidgetData } from "./mappings"
 import NewFieldModal from "./NewFieldModal.vue"
+import { useRootStore } from "../../stores/root"
+
+const rootStore = useRootStore()
 
 const widgetData = computed(() =>
   field.ui?.widget
@@ -19,6 +22,12 @@ const widgetData = computed(() =>
 )
 const icon = computed(() => widgetData.value?.icon)
 const label = computed(() => widgetData.value?.label)
+
+const resolvedVocabulary = computed(() =>
+  field.vocabulary
+    ? rootStore.vocabularies.find((v) => v.code === field.vocabulary)
+    : undefined
+)
 
 const { field } = defineProps<{
   field: SurveyField
@@ -125,9 +134,12 @@ const formatDate = (isoString: string): string => {
       </div>
 
       <!-- Champ select -->
-      <div v-if="field.ui?.widget === 'select'">
-        <div class="flex gap-2" v-if="field.ui?.choices">
-          <div>{{ field.ui.choices.length }} options</div>
+      <div v-if="field.ui?.widget === 'select' || field.ui?.widget === 'radio'">
+        <div v-if="resolvedVocabulary">
+          {{ resolvedVocabulary.code }} — {{ resolvedVocabulary.name }} ({{ resolvedVocabulary.entries.length }} options)
+        </div>
+        <div v-else-if="field.ui?.choices">
+          {{ field.ui.choices.length }} options
         </div>
       </div>
 

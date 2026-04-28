@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { reactive, ref, computed, watch } from "vue"
-import type { SurveySchema, SurveyField } from "../types/survey"
+import type { SurveySchema, SurveyField, VocabularySet } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
 import { getEmptyValue } from "../utils/survey"
 
-const props = defineProps<{
-  schema: SurveySchema
-  allowSubmit?: boolean
-  prefillData?: Record<string, unknown>
-  readonly?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    schema: SurveySchema
+    allowSubmit?: boolean
+    prefillData?: Record<string, unknown>
+    readonly?: boolean
+    vocabularies?: VocabularySet[]
+  }>(),
+  { vocabularies: () => [] }
+)
 
 const emit = defineEmits<{
   done: [data: Record<string, unknown>]
@@ -89,6 +93,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
         :field="field"
         v-model="formData[field.id]"
         :disabled="readonly"
+        :vocabularies="props.vocabularies"
       />
     </TransitionGroup>
 

@@ -1,10 +1,12 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
 import type { LoggedUser } from "@shared-types/api"
+import type { VocabularySet } from "@shared-types/survey"
 import { useApiFetch } from "../utils/data-fetching"
 
 export const useRootStore = defineStore("root", () => {
   const loggedUser = ref<LoggedUser | null>(null)
+  const vocabularies = ref<VocabularySet[]>([])
   const initialDataLoaded = ref<boolean>(false)
 
   const fetchCsrfToken = async () => {
@@ -20,15 +22,21 @@ export const useRootStore = defineStore("root", () => {
     setLoggedUser(data.value)
   }
 
+  const fetchVocabularies = async () => {
+    const { data } = await useApiFetch("/vocabulaires/").json()
+    vocabularies.value = data.value
+  }
+
   const fetchInitialData: () => Promise<undefined> = async () => {
     await fetchCsrfToken()
-    await fetchLoggedUser()
+    await Promise.all([fetchLoggedUser(), fetchVocabularies()])
     initialDataLoaded.value = true
   }
 
   return {
     setLoggedUser,
     loggedUser,
+    vocabularies,
     initialDataLoaded,
     fetchInitialData,
   }

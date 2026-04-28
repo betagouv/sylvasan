@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, useId } from "vue"
-import type { SurveyField } from "@shared-types/survey"
+import type { SurveyField, VocabularySet } from "@shared-types/survey"
 import ArrayField from "./ArrayField.vue"
 
 const props = defineProps<{
   field: SurveyField
   disabled?: boolean
+  vocabularies?: VocabularySet[]
 }>()
 
 const localId = useId()
@@ -18,6 +19,24 @@ const arrayModelValue = computed({
     modelValue.value = val
   },
 })
+
+const resolvedVocab = computed(() =>
+  props.field.vocabulary
+    ? props.vocabularies?.find((v) => v.code === props.field.vocabulary)
+    : undefined
+)
+
+const selectOptions = computed(() =>
+  resolvedVocab.value
+    ? resolvedVocab.value.entries.map((e) => ({ text: e.label, value: e.code }))
+    : props.field.ui?.choices
+)
+
+const radioOptions = computed(() =>
+  resolvedVocab.value
+    ? resolvedVocab.value.entries.map((e) => ({ label: e.label, value: e.code }))
+    : props.field.ui?.choices
+)
 </script>
 
 <template>
@@ -54,7 +73,7 @@ const arrayModelValue = computed({
   <!-- Champ select -->
   <DsfrInputGroup v-else-if="field.ui?.widget === 'select'">
     <DsfrSelect
-      :options="field.ui?.choices"
+      :options="selectOptions"
       :label="field.label"
       :required="field.required ?? false"
       v-model="modelValue"
@@ -90,7 +109,7 @@ const arrayModelValue = computed({
   <DsfrInputGroup v-else-if="field.ui?.widget === 'radio'">
     <DsfrRadioButtonSet
       :name="`radio-${field.id}-${localId}`"
-      :options="field.ui?.choices"
+      :options="radioOptions"
       :legend="field.label"
       :required="field.required ?? false"
       v-model="modelValue"
@@ -118,6 +137,7 @@ const arrayModelValue = computed({
     :field="field"
     v-model="arrayModelValue"
     :disabled="disabled"
+    :vocabularies="props.vocabularies"
   />
 
   <hr v-if="field.ui?.widget === 'switch'" />

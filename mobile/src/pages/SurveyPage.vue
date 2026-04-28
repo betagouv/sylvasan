@@ -23,6 +23,8 @@ import { closeOutline, trashOutline } from "ionicons/icons"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import SurveySummary from "../components/SurveySummary.vue"
 import { useResponsesStore } from "../stores/responses"
+import { storeToRefs } from "pinia"
+import { useVocabulariesStore } from "../stores/vocabularies"
 
 const props = defineProps<{
   id?: number
@@ -32,6 +34,7 @@ const props = defineProps<{
 const emit = defineEmits<{ close: [] }>()
 
 const responsesStore = useResponsesStore()
+const { vocabularySets } = storeToRefs(useVocabulariesStore())
 const currentLocalId = ref<string | undefined>(undefined)
 const currentFormData = ref<Record<string, unknown>>({})
 const prefillData = ref<Record<string, unknown> | undefined>(undefined)
@@ -170,6 +173,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
             :allowSubmit="true"
             :schema="survey.jsonSchema"
             :prefillData="prefillData"
+            :vocabularies="vocabularySets"
             @done="onSurveyDone"
             @change="handleFormChange"
           />
