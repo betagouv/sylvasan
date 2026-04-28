@@ -79,3 +79,16 @@ export interface Survey {
   jsonSchema: SurveySchema
   surveyType: string
 }
+
+export interface VocabularyEntry {
+  code: string
+  label: string
+  position: number | null
+}
+
+export interface VocabularySet {
+  id: number
+  code: string
+  name: string
+  entries: VocabularyEntry[]
+}

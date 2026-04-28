@@ -25,10 +25,16 @@ await auth.bootstrap()
 
 import { useSurveysStore } from "./stores/surveys"
 import { useResponsesStore } from "./stores/responses"
+import { useVocabulariesStore } from "./stores/vocabularies"
 const surveys = useSurveysStore()
 const responses = useResponsesStore()
+const vocabulaires = useVocabulariesStore()
 if (auth.isLoggedIn) {
-  await Promise.all([surveys.bootstrap(), responses.bootstrap()])
+  await Promise.all([
+    surveys.bootstrap(),
+    responses.bootstrap(),
+    vocabulaires.bootstrap(),
+  ])
 }
 
 import router from "./router/root"
