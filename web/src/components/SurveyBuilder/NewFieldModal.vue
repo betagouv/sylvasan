@@ -10,10 +10,13 @@ import type { DsfrSelectOption } from "@gouvminint/vue-dsfr"
 import CheckboxOption from "./CheckboxOption.vue"
 import { typeWidgetMapping } from "./mappings"
 import ChoiceCard from "./ChoiceCard.vue"
+import { useRootStore } from "../../stores/root"
 
 const emit = defineEmits(["add", "close"])
 
 const props = defineProps(["opened"])
+
+const rootStore = useRootStore()
 
 const makeEmptyPayload = (
   type: FieldType = "string",
@@ -34,6 +37,21 @@ const makeEmptyPayload = (
 })
 
 const payload = ref<SurveyField>(makeEmptyPayload())
+
+const optionsSource = ref<"manual" | "vocabulary">("manual")
+const selectedVocabularyCode = ref<string>("")
+
+const optionsSourceOptions = [
+  { label: "Saisie manuelle", value: "manual" },
+  { label: "Vocabulaire", value: "vocabulary" },
+]
+
+const vocabularySelectOptions = computed(() =>
+  rootStore.vocabularies.map((v) => ({
+    text: `${v.code} — ${v.name}`,
+    value: v.code,
+  }))
+)
 
 const validator = z
   .object({
@@ -70,8 +88,24 @@ const typeOptions = computed(() =>
 const assignWidgetAndType = (option: FieldWidget) => {
   const mapping = typeWidgetMapping[option]
   if (!mapping) return
-
+  optionsSource.value = "manual"
+  selectedVocabularyCode.value = ""
   payload.value = makeEmptyPayload(mapping.type, mapping.widget)
+}
+
+const onOptionsSourceChange = (source: string | number | boolean) => {
+  optionsSource.value = source as "manual" | "vocabulary"
+  if (source === "manual") {
+    payload.value.vocabulary = undefined
+    selectedVocabularyCode.value = ""
+  } else {
+    if (payload.value.ui) payload.value.ui.choices = []
+  }
+}
+
+const onVocabularyChange = (code: string) => {
+  selectedVocabularyCode.value = code
+  payload.value.vocabulary = code || undefined
 }
 
 const addField = () => {
@@ -79,6 +113,8 @@ const addField = () => {
     validator.parse(payload.value)
     const emitValue = { ...payload.value }
     payload.value = makeEmptyPayload()
+    optionsSource.value = "manual"
+    selectedVocabularyCode.value = ""
     emit("add", emitValue)
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
@@ -206,21 +242,40 @@ const close = () => {
     </div>
 
     <div v-else-if="payload.ui?.widget === 'select'">
-      <h6>Options</h6>
-      <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
-        <ChoiceCard
-          v-for="choice in payload.ui.choices"
-          :key="`choice-${choice.value}`"
-          class="col-span-1 p-2 border border-slate-300 flex items-center gap-4"
-          :choice="choice"
-          @delete="removeOption(choice)"
+      <h6 class="fr-text--md">Options</h6>
+      <DsfrRadioButtonSet
+        name="options-source-select"
+        :options="optionsSourceOptions"
+        :model-value="optionsSource"
+        :inline="true"
+        @update:model-value="onOptionsSourceChange"
+        class="mb-4"
+      />
+      <div v-if="optionsSource === 'vocabulary'">
+        <DsfrSelect
+          class="max-w-md"
+          label="Vocabulaire"
+          :options="vocabularySelectOptions"
+          :model-value="selectedVocabularyCode"
+          @update:model-value="onVocabularyChange"
         />
       </div>
-      <SelectOption class="mt-4" @add="addOption" />
+      <template v-else>
+        <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
+          <ChoiceCard
+            v-for="choice in payload.ui.choices"
+            :key="`choice-${choice.value}`"
+            class="col-span-1 p-2 border border-slate-300 flex items-center gap-4"
+            :choice="choice"
+            @delete="removeOption(choice)"
+          />
+        </div>
+        <SelectOption class="mt-4" @add="addOption" />
+      </template>
     </div>
 
     <div v-else-if="payload.ui?.widget === 'checkboxes'">
-      <h6>Options</h6>
+      <h6 class="fr-text--md">Options</h6>
       <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
         <ChoiceCard
           v-for="choice in payload.ui.choices"
@@ -266,23 +321,42 @@ const close = () => {
 
     <div v-else-if="payload.ui?.widget === 'radio'">
       <h6>Options</h6>
-      <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
-        <div
-          v-for="choice in payload.ui.choices"
-          :key="`choice-${choice.value}`"
-          class="col-span-1 p-2 border border-slate-300 flex items-center gap-4"
-        >
-          <DsfrButton
-            tertiary
-            size="sm"
-            icon-only
-            icon="ri-delete-bin-line"
-            @click="() => removeOption(choice)"
-          />
-          <p class="mb-0!">{{ choice.label }} ({{ choice.value }})</p>
-        </div>
+      <DsfrRadioButtonSet
+        name="options-source-radio"
+        :options="optionsSourceOptions"
+        :model-value="optionsSource"
+        :inline="true"
+        @update:model-value="onOptionsSourceChange"
+        class="mb-4"
+      />
+      <div v-if="optionsSource === 'vocabulary'">
+        <DsfrSelect
+          class="max-w-md"
+          label="Vocabulaire"
+          :options="vocabularySelectOptions"
+          :model-value="selectedVocabularyCode"
+          @update:model-value="onVocabularyChange"
+        />
       </div>
-      <RadioOption class="mt-4" @add="addOption" />
+      <template v-else>
+        <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
+          <div
+            v-for="choice in payload.ui.choices"
+            :key="`choice-${choice.value}`"
+            class="col-span-1 p-2 border border-slate-300 flex items-center gap-4"
+          >
+            <DsfrButton
+              tertiary
+              size="sm"
+              icon-only
+              icon="ri-delete-bin-line"
+              @click="() => removeOption(choice)"
+            />
+            <p class="mb-0!">{{ choice.label }} ({{ choice.value }})</p>
+          </div>
+        </div>
+        <RadioOption class="mt-4" @add="addOption" />
+      </template>
     </div>
 
     <div class="flex gap-6" v-else-if="payload.ui?.widget === 'date'">
