@@ -351,7 +351,11 @@ const updatePageTitle = (title: any, index: number) => {
         <p class="text-sm text-gray-500 mb-2">
           Aperçu « {{ schema.pages?.[activeTab]?.title }} »
         </p>
-        <SurveyRenderer :schema="previewSchema" :allowSubmit="false" :vocabularies="vocabularies" />
+        <SurveyRenderer
+          :schema="previewSchema"
+          :allowSubmit="false"
+          :vocabularies="vocabularies"
+        />
       </div>
     </div>
   </div>
