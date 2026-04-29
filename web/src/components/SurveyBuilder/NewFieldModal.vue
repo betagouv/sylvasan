@@ -43,11 +43,11 @@ const selectedVocabularyCode = ref<string>("")
 
 const optionsSourceOptions = [
   { label: "Saisie manuelle", value: "manual" },
-  { label: "Vocabulaire", value: "vocabulary" },
+  { label: "Référentiel", value: "vocabulary" },
 ]
 
 const vocabularySelectOptions = computed(() =>
-  rootStore.vocabularies.map((v) => ({
+  rootStore.vocabularies?.map((v) => ({
     text: `${v.code} — ${v.name}`,
     value: v.code,
   }))
@@ -253,8 +253,8 @@ const close = () => {
       />
       <div v-if="optionsSource === 'vocabulary'">
         <DsfrSelect
-          class="max-w-md"
-          label="Vocabulaire"
+          class="max-w-lg"
+          label="Référentiel"
           :options="vocabularySelectOptions"
           :model-value="selectedVocabularyCode"
           @update:model-value="onVocabularyChange"
@@ -331,8 +331,8 @@ const close = () => {
       />
       <div v-if="optionsSource === 'vocabulary'">
         <DsfrSelect
-          class="max-w-md"
-          label="Vocabulaire"
+          class="max-w-lg"
+          label="Référentiel"
           :options="vocabularySelectOptions"
           :model-value="selectedVocabularyCode"
           @update:model-value="onVocabularyChange"
