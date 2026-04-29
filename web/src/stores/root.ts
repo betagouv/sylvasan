@@ -23,7 +23,7 @@ export const useRootStore = defineStore("root", () => {
   }
 
   const fetchVocabularies = async () => {
-    const { data } = await useApiFetch("/vocabulaires/").json()
+    const { data } = await useApiFetch("/vocabularies/").json()
     vocabularies.value = data.value
   }
 

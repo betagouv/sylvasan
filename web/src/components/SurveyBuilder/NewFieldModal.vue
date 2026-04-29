@@ -10,6 +10,7 @@ import type { DsfrSelectOption } from "@gouvminint/vue-dsfr"
 import CheckboxOption from "./CheckboxOption.vue"
 import { typeWidgetMapping } from "./mappings"
 import ChoiceCard from "./ChoiceCard.vue"
+import VocabularyModal from "./VocabularyModal.vue"
 import { useRootStore } from "../../stores/root"
 
 const emit = defineEmits(["add", "close"])
@@ -43,14 +44,22 @@ const selectedVocabularyCode = ref<string>("")
 
 const optionsSourceOptions = [
   { label: "Saisie manuelle", value: "manual" },
-  { label: "Vocabulaire", value: "vocabulary" },
+  { label: "Référentiel", value: "vocabulary" },
 ]
 
 const vocabularySelectOptions = computed(() =>
-  rootStore.vocabularies.map((v) => ({
+  rootStore.vocabularies?.map((v) => ({
     text: `${v.code} — ${v.name}`,
     value: v.code,
   }))
+)
+
+const resolvedVocabulary = computed(() =>
+  selectedVocabularyCode.value
+    ? rootStore.vocabularies.find(
+        (v) => v.code === selectedVocabularyCode.value
+      )
+    : undefined
 )
 
 const validator = z
@@ -251,13 +260,21 @@ const close = () => {
         @update:model-value="onOptionsSourceChange"
         class="mb-4"
       />
-      <div v-if="optionsSource === 'vocabulary'">
+      <div
+        v-if="optionsSource === 'vocabulary'"
+        class="flex items-center gap-2"
+      >
         <DsfrSelect
-          class="max-w-md"
-          label="Vocabulaire"
+          class="max-w-lg grow"
+          label="Référentiel"
           :options="vocabularySelectOptions"
           :model-value="selectedVocabularyCode"
           @update:model-value="onVocabularyChange"
+        />
+        <VocabularyModal
+          v-if="resolvedVocabulary"
+          :vocabulary="resolvedVocabulary"
+          class="ml-4 mt-2"
         />
       </div>
       <template v-else>
@@ -329,13 +346,21 @@ const close = () => {
         @update:model-value="onOptionsSourceChange"
         class="mb-4"
       />
-      <div v-if="optionsSource === 'vocabulary'">
+      <div
+        v-if="optionsSource === 'vocabulary'"
+        class="flex items-center gap-2"
+      >
         <DsfrSelect
-          class="max-w-md"
-          label="Vocabulaire"
+          class="max-w-lg grow"
+          label="Référentiel"
           :options="vocabularySelectOptions"
           :model-value="selectedVocabularyCode"
           @update:model-value="onVocabularyChange"
+        />
+        <VocabularyModal
+          v-if="resolvedVocabulary"
+          :vocabulary="resolvedVocabulary"
+          class="ml-4 mt-2"
         />
       </div>
       <template v-else>

@@ -12,6 +12,7 @@ import { typeWidgetMapping } from "./mappings"
 import type { WidgetData } from "./mappings"
 import NewFieldModal from "./NewFieldModal.vue"
 import { useRootStore } from "../../stores/root"
+import VocabularyModal from "./VocabularyModal.vue"
 
 const rootStore = useRootStore()
 
@@ -135,8 +136,17 @@ const formatDate = (isoString: string): string => {
 
       <!-- Champ select -->
       <div v-if="field.ui?.widget === 'select' || field.ui?.widget === 'radio'">
-        <div v-if="resolvedVocabulary">
-          {{ resolvedVocabulary.code }} — {{ resolvedVocabulary.name }} ({{ resolvedVocabulary.entries.length }} options)
+        <div v-if="resolvedVocabulary" class="flex align-center">
+          <p>
+            {{ resolvedVocabulary.code }} — {{ resolvedVocabulary.name }} ({{
+              resolvedVocabulary.entries.length
+            }}
+            options)
+          </p>
+          <VocabularyModal
+            class="ml-3 -mt-2"
+            :vocabulary="resolvedVocabulary"
+          />
         </div>
         <div v-else-if="field.ui?.choices">
           {{ field.ui.choices.length }} options

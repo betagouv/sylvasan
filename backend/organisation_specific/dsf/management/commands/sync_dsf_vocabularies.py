@@ -11,12 +11,31 @@ VOCABULARIES = [
         "name": "Essence d'arbre",
         "unite": "ESS",
     },
-    # À rajouter d'autres par la suite
+    {
+        "code": "SEVERITE",
+        "name": "Sévérité",
+        "unite": "SEVERITE",
+    },
+    {
+        "code": "ORGICP",
+        "name": "Organe de la plante",
+        "unite": "ORGICP",
+    },
+    {
+        "code": "SYMPRE",
+        "name": "Critère de symptomatologie du réseau européen",
+        "unite": "SYMPRE",
+    },
+    {
+        "code": "PBV2026",
+        "name": "Codification des problèmes utilisés en 2026",
+        "unite": "PBV2026",
+    },
 ]
 
 
 class Command(BaseCommand):
-    help = "Synchronise les vocabulaires DSF depuis la base de référence metadsf"
+    help = "Synchronise les référentiels DSF depuis la base de référence metadsf"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -27,7 +46,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--vocabulary",
             type=str,
-            help="Synchronise uniquement un vocabulaire spécifique (par code)",
+            help="Synchronise uniquement un référentiel spécifique (par code)",
         )
 
     def handle(self, *args, **options):
