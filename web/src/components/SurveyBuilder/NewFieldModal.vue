@@ -291,6 +291,47 @@ const close = () => {
       </template>
     </div>
 
+    <div v-else-if="payload.ui?.widget === 'autocomplete'">
+      <h6 class="fr-text--md">Options</h6>
+      <DsfrRadioButtonSet
+        name="options-source-autocomplete"
+        :options="optionsSourceOptions"
+        :model-value="optionsSource"
+        :inline="true"
+        @update:model-value="onOptionsSourceChange"
+        class="mb-4"
+      />
+      <div
+        v-if="optionsSource === 'vocabulary'"
+        class="flex items-center gap-2"
+      >
+        <DsfrSelect
+          class="max-w-lg grow"
+          label="Référentiel"
+          :options="vocabularySelectOptions"
+          :model-value="selectedVocabularyCode"
+          @update:model-value="onVocabularyChange"
+        />
+        <VocabularyModal
+          v-if="resolvedVocabulary"
+          :vocabulary="resolvedVocabulary"
+          class="ml-4 mt-2"
+        />
+      </div>
+      <template v-else>
+        <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
+          <ChoiceCard
+            v-for="choice in payload.ui.choices"
+            :key="`choice-${choice.value}`"
+            class="col-span-1 p-2 border border-slate-300 flex items-center gap-4"
+            :choice="choice"
+            @delete="removeOption(choice)"
+          />
+        </div>
+        <SelectOption class="mt-4" @add="addOption" />
+      </template>
+    </div>
+
     <div v-else-if="payload.ui?.widget === 'checkboxes'">
       <h6 class="fr-text--md">Options</h6>
       <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">

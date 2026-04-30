@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, useId } from "vue"
-import type { SurveyField, VocabularySet } from "@shared-types/survey"
+import type { SurveyField, VocabularySet, VocabularyEntry } from "@shared-types/survey"
 import ArrayField from "./ArrayField.vue"
+import AutocompleteField from "./AutocompleteField.vue"
 
 const props = defineProps<{
   field: SurveyField
@@ -34,9 +35,29 @@ const selectOptions = computed(() =>
 
 const radioOptions = computed(() =>
   resolvedVocab.value
-    ? resolvedVocab.value.entries.map((e) => ({ label: e.label, value: e.code }))
+    ? resolvedVocab.value.entries.map((e) => ({
+        label: e.label,
+        value: e.code,
+      }))
     : props.field.ui?.choices
 )
+
+const autocompleteEntries = computed((): VocabularyEntry[] => {
+  if (resolvedVocab.value) return resolvedVocab.value.entries
+  if (props.field.ui?.choices) {
+    return (props.field.ui.choices as any[]).map((c) => ({
+      code: String(c.value ?? ""),
+      label: String(c.text ?? c.label ?? c.value ?? ""),
+      position: null,
+    }))
+  }
+  return []
+})
+
+const autocompleteValue = computed({
+  get: () => (modelValue.value as string | undefined) ?? "",
+  set: (val: string) => { modelValue.value = val },
+})
 </script>
 
 <template>
@@ -138,6 +159,16 @@ const radioOptions = computed(() =>
     v-model="arrayModelValue"
     :disabled="disabled"
     :vocabularies="props.vocabularies"
+  />
+
+  <AutocompleteField
+    v-else-if="field.ui?.widget === 'autocomplete'"
+    :entries="autocompleteEntries"
+    :label="field.label"
+    :required="field.required ?? false"
+    :hint="field.ui?.hint"
+    :disabled="disabled"
+    v-model="autocompleteValue"
   />
 
   <hr v-if="field.ui?.widget === 'switch'" />

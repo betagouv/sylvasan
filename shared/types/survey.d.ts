@@ -60,6 +60,7 @@ export type FieldWidget =
   | "switch"
   | "date"
   | "array"
+  | "autocomplete"
 
 export interface SurveyPage {
   id: string
