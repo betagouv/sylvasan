@@ -31,6 +31,16 @@ VOCABULARIES = [
         "name": "Codification des problèmes utilisés en 2026",
         "unite": "PBV2026",
     },
+    {
+        "code": "TFDSF19",
+        "name": "Type de peuplement (à partir de 2019)",
+        "unite": "TFDSF19",
+    },
+    {
+        "code": "PROPDSF",
+        "name": "Propriété forestière (au sens DSF)",
+        "unite": "PROPDSF",
+    },
 ]
 
 

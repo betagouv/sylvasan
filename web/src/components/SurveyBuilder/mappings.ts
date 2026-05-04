@@ -26,6 +26,12 @@ export const typeWidgetMapping: Record<FieldWidget, WidgetData> = {
     label: "Liste déroulante",
     icon: "ri-dropdown-list",
   },
+  autocomplete: {
+    type: "string",
+    widget: "autocomplete",
+    label: "Autocomplétion",
+    icon: "ri-search-line",
+  },
   checkboxes: {
     type: "array",
     widget: "checkboxes",

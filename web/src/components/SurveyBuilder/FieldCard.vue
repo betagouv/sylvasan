@@ -134,8 +134,14 @@ const formatDate = (isoString: string): string => {
         </div>
       </div>
 
-      <!-- Champ select -->
-      <div v-if="field.ui?.widget === 'select' || field.ui?.widget === 'radio'">
+      <!-- Champ select / radio / autocomplete -->
+      <div
+        v-if="
+          field.ui?.widget === 'select' ||
+          field.ui?.widget === 'radio' ||
+          field.ui?.widget === 'autocomplete'
+        "
+      >
         <div v-if="resolvedVocabulary" class="flex align-center">
           <p>
             {{ resolvedVocabulary.code }} — {{ resolvedVocabulary.name }} ({{
