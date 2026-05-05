@@ -7,19 +7,19 @@ from surveys.models import VocabularyEntry, VocabularySet
 
 VOCABULARIES = [
     {
-        "code": "ESS",
-        "name": "Essence d'arbre",
-        "unite": "ESS",
+        "code": "ESSDSF",
+        "name": "Codification des essences DSF",
+        "unite": "ESSDSF",
     },
     {
         "code": "SEVERITE",
-        "name": "Sévérité",
+        "name": "Sévérité des dommages",
         "unite": "SEVERITE",
     },
     {
-        "code": "ORGICP",
-        "name": "Organe de la plante",
-        "unite": "ORGICP",
+        "code": "PB",
+        "name": "Problèmes phytosanitaires",
+        "unite": "PB",
     },
     {
         "code": "SYMPRE",
@@ -27,9 +27,9 @@ VOCABULARIES = [
         "unite": "SYMPRE",
     },
     {
-        "code": "PBV2026",
-        "name": "Codification des problèmes utilisés en 2026",
-        "unite": "PBV2026",
+        "code": "ORGRE",
+        "name": "Organes de la plante",
+        "unite": "ORGRE",
     },
     {
         "code": "TFDSF19",
