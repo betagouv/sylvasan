@@ -77,125 +77,127 @@ const mapValue = computed({
 </script>
 
 <template>
-  <DsfrInputGroup v-if="field.ui?.widget === 'input'">
-    <!-- Champ texte -->
-    <DsfrInput
-      v-model="modelValue"
+  <div>
+    <DsfrInputGroup v-if="field.ui?.widget === 'input'">
+      <!-- Champ texte -->
+      <DsfrInput
+        v-model="modelValue"
+        :label="field.label"
+        :required="field.required ?? false"
+        :label-visible="true"
+        :hint="field.ui?.hint"
+        :placeholder="field.ui?.placeholder"
+        :isTextarea="field.ui?.textarea"
+        :disabled="disabled"
+      />
+    </DsfrInputGroup>
+
+    <!-- Champ numérique -->
+    <DsfrInputGroup v-else-if="field.ui?.widget === 'number'">
+      <DsfrInput
+        v-model="modelValue"
+        :label="field.label"
+        :required="field.required ?? false"
+        :label-visible="true"
+        :hint="field.ui?.hint"
+        type="number"
+        :placeholder="field.ui?.placeholder"
+        :min="field.validation?.min"
+        :max="field.validation?.max"
+        :disabled="disabled"
+      />
+    </DsfrInputGroup>
+
+    <!-- Champ select -->
+    <DsfrInputGroup v-else-if="field.ui?.widget === 'select'">
+      <DsfrSelect
+        :options="selectOptions"
+        :label="field.label"
+        :required="field.required ?? false"
+        v-model="modelValue"
+        :disabled="disabled"
+      />
+    </DsfrInputGroup>
+
+    <!-- Champ checkboxes -->
+    <DsfrInputGroup v-else-if="field.ui?.widget === 'checkboxes'">
+      <DsfrCheckboxSet
+        :options="field.ui?.choices"
+        :legend="field.label"
+        :required="field.required ?? false"
+        v-model="modelValue"
+        :disabled="disabled"
+      />
+    </DsfrInputGroup>
+
+    <!-- Champ switch / interrupteur -->
+    <DsfrInputGroup v-else-if="field.ui?.widget === 'switch'">
+      <DsfrToggleSwitch
+        :label="field.label"
+        :required="field.required ?? false"
+        :hint="field.ui?.hint"
+        :activeText="field.ui?.activeText"
+        :inactiveText="field.ui?.inactiveText"
+        v-model="modelValue"
+        :disabled="disabled"
+      />
+    </DsfrInputGroup>
+
+    <!-- Champ radio -->
+    <DsfrInputGroup v-else-if="field.ui?.widget === 'radio'">
+      <DsfrRadioButtonSet
+        :name="`radio-${field.id}-${localId}`"
+        :options="radioOptions"
+        :legend="field.label"
+        :required="field.required ?? false"
+        v-model="modelValue"
+        :disabled="disabled"
+      />
+    </DsfrInputGroup>
+
+    <!-- Champ date -->
+    <DsfrInputGroup v-else-if="field.ui?.widget === 'date'">
+      <DsfrInput
+        v-model="modelValue"
+        :label="field.label"
+        :required="field.required ?? false"
+        :label-visible="true"
+        :hint="field.ui?.hint"
+        type="date"
+        :min="field.validation?.min"
+        :max="field.validation?.max"
+        :disabled="disabled"
+      />
+    </DsfrInputGroup>
+
+    <ArrayField
+      v-else-if="field.ui?.widget === 'array'"
+      :field="field"
+      v-model="arrayModelValue"
+      :disabled="disabled"
+      :vocabularies="props.vocabularies"
+    />
+
+    <AutocompleteField
+      v-else-if="field.ui?.widget === 'autocomplete'"
+      :entries="autocompleteEntries"
       :label="field.label"
       :required="field.required ?? false"
-      :label-visible="true"
       :hint="field.ui?.hint"
-      :placeholder="field.ui?.placeholder"
-      :isTextarea="field.ui?.textarea"
       :disabled="disabled"
+      v-model="autocompleteValue"
     />
-  </DsfrInputGroup>
 
-  <!-- Champ numérique -->
-  <DsfrInputGroup v-else-if="field.ui?.widget === 'number'">
-    <DsfrInput
-      v-model="modelValue"
-      :label="field.label"
-      :required="field.required ?? false"
-      :label-visible="true"
-      :hint="field.ui?.hint"
-      type="number"
-      :placeholder="field.ui?.placeholder"
-      :min="field.validation?.min"
-      :max="field.validation?.max"
-      :disabled="disabled"
-    />
-  </DsfrInputGroup>
-
-  <!-- Champ select -->
-  <DsfrInputGroup v-else-if="field.ui?.widget === 'select'">
-    <DsfrSelect
-      :options="selectOptions"
-      :label="field.label"
-      :required="field.required ?? false"
-      v-model="modelValue"
-      :disabled="disabled"
-    />
-  </DsfrInputGroup>
-
-  <!-- Champ checkboxes -->
-  <DsfrInputGroup v-else-if="field.ui?.widget === 'checkboxes'">
-    <DsfrCheckboxSet
-      :options="field.ui?.choices"
-      :legend="field.label"
-      :required="field.required ?? false"
-      v-model="modelValue"
-      :disabled="disabled"
-    />
-  </DsfrInputGroup>
-
-  <!-- Champ switch / interrupteur -->
-  <DsfrInputGroup v-else-if="field.ui?.widget === 'switch'">
-    <DsfrToggleSwitch
+    <component
+      v-else-if="field.ui?.widget === 'map'"
+      :is="mapComponent ?? 'div'"
       :label="field.label"
       :required="field.required ?? false"
       :hint="field.ui?.hint"
-      :activeText="field.ui?.activeText"
-      :inactiveText="field.ui?.inactiveText"
-      v-model="modelValue"
       :disabled="disabled"
+      v-model="mapValue"
     />
-  </DsfrInputGroup>
 
-  <!-- Champ radio -->
-  <DsfrInputGroup v-else-if="field.ui?.widget === 'radio'">
-    <DsfrRadioButtonSet
-      :name="`radio-${field.id}-${localId}`"
-      :options="radioOptions"
-      :legend="field.label"
-      :required="field.required ?? false"
-      v-model="modelValue"
-      :disabled="disabled"
-    />
-  </DsfrInputGroup>
-
-  <!-- Champ date -->
-  <DsfrInputGroup v-else-if="field.ui?.widget === 'date'">
-    <DsfrInput
-      v-model="modelValue"
-      :label="field.label"
-      :required="field.required ?? false"
-      :label-visible="true"
-      :hint="field.ui?.hint"
-      type="date"
-      :min="field.validation?.min"
-      :max="field.validation?.max"
-      :disabled="disabled"
-    />
-  </DsfrInputGroup>
-
-  <ArrayField
-    v-else-if="field.ui?.widget === 'array'"
-    :field="field"
-    v-model="arrayModelValue"
-    :disabled="disabled"
-    :vocabularies="props.vocabularies"
-  />
-
-  <AutocompleteField
-    v-else-if="field.ui?.widget === 'autocomplete'"
-    :entries="autocompleteEntries"
-    :label="field.label"
-    :required="field.required ?? false"
-    :hint="field.ui?.hint"
-    :disabled="disabled"
-    v-model="autocompleteValue"
-  />
-
-  <component
-    v-else-if="field.ui?.widget === 'map'"
-    :is="mapComponent ?? 'div'"
-    :label="field.label"
-    :required="field.required ?? false"
-    :hint="field.ui?.hint"
-    :disabled="disabled"
-    v-model="mapValue"
-  />
-
-  <hr v-if="field.ui?.widget === 'switch'" />
+    <hr v-if="field.ui?.widget === 'switch'" />
+  </div>
 </template>
