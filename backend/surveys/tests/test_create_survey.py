@@ -117,6 +117,22 @@ class TestCreateSurvey(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @authenticate
+    def test_org_admin_cannot_create_survey_for_other_org_pole(self):
+        """
+        Un ADMIN d'organisation ne peut pas créer une enquête pour un pole d'une autre organisation
+        """
+        org = OrganisationFactory()
+        other_org = OrganisationFactory()
+        pole = PoleFactory(organisation=other_org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        response = self.client.post(
+            reverse("survey_list_create"),
+            survey_payload(org, authenticate.user, pole=pole),
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
     def test_pole_admin_can_create_survey_for_their_pole(self):
         """
         Un ADMIN de pôle peut créer une enquête pour son pôle
