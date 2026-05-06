@@ -5,13 +5,13 @@ from organisations.factories import MembershipFactory, OrganisationFactory, Pole
 from organisations.models import MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
+from users.factories import UserFactory
 
 
-def survey_payload(organisation, user, pole=None):
+def survey_payload(organisation, pole=None):
     payload = {
         "title": "Enquête test",
         "organisation": organisation.id,
-        "created_by": user.id,
     }
     if pole:
         payload["pole"] = pole.id
@@ -39,7 +39,7 @@ class TestCreateSurvey(APITestCase):
         org = OrganisationFactory()
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(org, authenticate.user),
+            survey_payload(org),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -53,7 +53,7 @@ class TestCreateSurvey(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(org, authenticate.user),
+            survey_payload(org),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -67,7 +67,7 @@ class TestCreateSurvey(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(org, authenticate.user),
+            survey_payload(org),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -81,7 +81,7 @@ class TestCreateSurvey(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(org, authenticate.user),
+            survey_payload(org),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -96,7 +96,7 @@ class TestCreateSurvey(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(org, authenticate.user, pole=pole),
+            survey_payload(org, pole=pole),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -111,7 +111,7 @@ class TestCreateSurvey(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(other_org, authenticate.user),
+            survey_payload(other_org),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -127,7 +127,7 @@ class TestCreateSurvey(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(org, authenticate.user, pole=pole),
+            survey_payload(org, pole=pole),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -142,7 +142,7 @@ class TestCreateSurvey(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(org, authenticate.user, pole=pole),
+            survey_payload(org, pole=pole),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -157,7 +157,7 @@ class TestCreateSurvey(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(org, authenticate.user),
+            survey_payload(org),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -173,7 +173,40 @@ class TestCreateSurvey(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
         response = self.client.post(
             reverse("survey_list_create"),
-            survey_payload(org, authenticate.user, pole=other_pole),
+            survey_payload(org, pole=other_pole),
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_created_by_is_set_to_authenticated_user(self):
+        """
+        Le champ created_by est automatiquement renseigné avec l'utilisateur authentifié
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        response = self.client.post(
+            reverse("survey_list_create"),
+            survey_payload(org),
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["created_by"], authenticate.user.id)
+
+    @authenticate
+    def test_created_by_ignores_frontend_value(self):
+        """
+        Une valeur de created_by fournie par le frontend est ignorée
+        """
+        org = OrganisationFactory()
+        other_user = UserFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        payload = survey_payload(org)
+        payload["created_by"] = other_user.id
+        response = self.client.post(
+            reverse("survey_list_create"),
+            payload,
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["created_by"], authenticate.user.id)

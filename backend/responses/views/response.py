@@ -40,6 +40,9 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
             return [IsAuthenticated(), CanCreateResponse()]
         return [IsAuthenticated()]
 
+    def perform_create(self, serializer):
+        serializer.save(respondant=self.request.user)
+
 
 class ResponseRetrieveAPIView(ResponseQuerySetMixin, RetrieveAPIView):
     serializer_class = FullResponseSerializer
