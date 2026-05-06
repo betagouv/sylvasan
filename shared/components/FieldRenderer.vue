@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, useId } from "vue"
-import type { SurveyField, VocabularySet, VocabularyEntry } from "@shared-types/survey"
+import type { Component } from "vue"
+import type {
+  SurveyField,
+  VocabularySet,
+  VocabularyEntry,
+  MapValue,
+} from "@shared-types/survey"
 import ArrayField from "./ArrayField.vue"
 import AutocompleteField from "./AutocompleteField.vue"
 
@@ -8,6 +14,7 @@ const props = defineProps<{
   field: SurveyField
   disabled?: boolean
   vocabularies?: VocabularySet[]
+  mapComponent?: Component
 }>()
 
 const localId = useId()
@@ -56,7 +63,16 @@ const autocompleteEntries = computed((): VocabularyEntry[] => {
 
 const autocompleteValue = computed({
   get: () => (modelValue.value as string | undefined) ?? "",
-  set: (val: string) => { modelValue.value = val },
+  set: (val: string) => {
+    modelValue.value = val
+  },
+})
+
+const mapValue = computed({
+  get: () => modelValue.value as MapValue | undefined,
+  set: (val: MapValue | undefined) => {
+    modelValue.value = val
+  },
 })
 </script>
 
@@ -169,6 +185,16 @@ const autocompleteValue = computed({
     :hint="field.ui?.hint"
     :disabled="disabled"
     v-model="autocompleteValue"
+  />
+
+  <component
+    v-else-if="field.ui?.widget === 'map'"
+    :is="mapComponent ?? 'div'"
+    :label="field.label"
+    :required="field.required ?? false"
+    :hint="field.ui?.hint"
+    :disabled="disabled"
+    v-model="mapValue"
   />
 
   <hr v-if="field.ui?.widget === 'switch'" />

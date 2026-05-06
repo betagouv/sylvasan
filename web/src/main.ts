@@ -9,6 +9,8 @@ import { createPinia } from "pinia"
 // @ts-ignore
 import VueMatomo from "vue-matomo"
 
+import "maplibre-gl/dist/maplibre-gl.css"
+
 const pinia = createPinia()
 
 const app = createApp(App)

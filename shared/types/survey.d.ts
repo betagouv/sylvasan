@@ -1,4 +1,4 @@
-export type FieldType = "string" | "number" | "boolean" | "array"
+export type FieldType = "string" | "number" | "boolean" | "array" | "object"
 
 export type ConditionOperator = "eq" | "neq" | "in" | "not_in"
 export type LogicalOperator = "and" | "or"
@@ -61,6 +61,7 @@ export type FieldWidget =
   | "date"
   | "array"
   | "autocomplete"
+  | "map"
 
 export interface SurveyPage {
   id: string
@@ -92,4 +93,9 @@ export interface VocabularySet {
   code: string
   name: string
   entries: VocabularyEntry[]
+}
+
+export interface MapValue {
+  lat: number
+  lon: number
 }

@@ -62,4 +62,10 @@ export const typeWidgetMapping: Record<FieldWidget, WidgetData> = {
     label: "Liste d'objets",
     icon: "ri-layout-horizontal-line",
   },
+  map: {
+    type: "object",
+    widget: "map",
+    label: "Carte / Localisation",
+    icon: "ri-map-pin-line",
+  },
 }

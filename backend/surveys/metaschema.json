@@ -62,7 +62,8 @@
             "string",
             "number",
             "boolean",
-            "array"
+            "array",
+            "object"
           ],
           "type": "string"
         },
@@ -110,7 +111,8 @@
                 "checkboxes",
                 "switch",
                 "date",
-                "autocomplete"
+                "autocomplete",
+                "map"
               ],
               "type": "string"
             }

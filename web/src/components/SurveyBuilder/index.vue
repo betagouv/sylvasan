@@ -11,6 +11,7 @@ import FieldCard from "./FieldCard.vue"
 import { DsfrInput } from "@gouvminint/vue-dsfr"
 import { storeToRefs } from "pinia"
 import { useRootStore } from "../../stores/root"
+import MapField from "../MapField.vue"
 
 const { vocabularies } = storeToRefs(useRootStore())
 
@@ -355,6 +356,7 @@ const updatePageTitle = (title: any, index: number) => {
           :schema="previewSchema"
           :allowSubmit="false"
           :vocabularies="vocabularies"
+          :mapComponent="MapField"
         />
       </div>
     </div>
