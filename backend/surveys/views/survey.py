@@ -30,6 +30,9 @@ class SurveyListCreateAPIView(SurveyQuerySetMixin, ListCreateAPIView):
             return [IsAuthenticated(), CanCreateSurvey()]
         return [IsAuthenticated()]
 
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
 
 class SurveyResponderListAPIView(ListAPIView):
     """

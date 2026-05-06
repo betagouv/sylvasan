@@ -33,9 +33,9 @@ class SurveySerializer(serializers.ModelSerializer):
             "json_schema",
             "survey_type",
             "campaign",
-            "created_by",  # TODO : ça devrait être peuplé automatiquement
+            "created_by",
         )
-        read_only_fields = ("id",)
+        read_only_fields = ("id", "created_by")
 
 
 class FullSurveySerializer(serializers.ModelSerializer):

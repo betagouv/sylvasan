@@ -1,4 +1,6 @@
-from organisations.models import Membership, MembershipType
+from django.core.exceptions import ObjectDoesNotExist
+
+from organisations.models import Membership, MembershipType, Organisation, Pole
 from rest_framework import permissions
 
 
@@ -9,6 +11,18 @@ class CanCreateSurvey(permissions.BasePermission):
     def has_permission(self, request, view):
         organisation_id = request.data.get("organisation")
         pole_id = request.data.get("pole")
+
+        if not organisation_id:
+            return False
+
+        if pole_id:
+            try:
+                pole = Pole.objects.get(pk=pole_id)
+                organisation = Organisation.objects.get(pk=organisation_id)
+                if pole.organisation != organisation:
+                    return False
+            except ObjectDoesNotExist as _:
+                return False
 
         qs = Membership.objects.filter(
             user=request.user,

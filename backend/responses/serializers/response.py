@@ -11,12 +11,12 @@ class ResponseSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "survey",
-            "respondant",  # TODO : devrait être peuplé automatiquement
+            "respondant",
             "data",
             "context",
             "status",
         )
-        read_only_fields = ("id", "status")
+        read_only_fields = ("id", "status", "respondant")
 
 
 class ResponseDisplaySerializer(serializers.ModelSerializer):
