@@ -73,6 +73,9 @@
             "activeText": {
               "type": "string"
             },
+            "addLabel": {
+              "type": "string"
+            },
             "choices": {
               "items": {
                 "properties": {
@@ -111,6 +114,7 @@
                 "checkboxes",
                 "switch",
                 "date",
+                "array",
                 "autocomplete",
                 "map"
               ],
@@ -128,6 +132,9 @@
                 "string"
               ]
             },
+            "maxItems": {
+              "type": "integer"
+            },
             "maxLength": {
               "type": "integer"
             },
@@ -136,6 +143,9 @@
                 "number",
                 "string"
               ]
+            },
+            "minItems": {
+              "type": "integer"
             },
             "minLength": {
               "type": "integer"
