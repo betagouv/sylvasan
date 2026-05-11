@@ -13,53 +13,19 @@ import {
 } from "@ionic/vue"
 import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
-import { Capacitor } from "@capacitor/core"
-import { Filesystem, Directory, Encoding } from "@capacitor/filesystem"
-import { openDB } from "idb"
 import { loadAllMapRecords } from "../composables/offlineMapMetadata"
+import {
+  registerOfflineProtocol,
+  deregisterOfflineProtocol,
+  loadOfflineStyle,
+} from "../composables/offlineProtocol"
 import type { OfflineMapRecord } from "@shared-types/maps"
-
-const IGN_STYLE_URL =
-  "https://data.geopf.fr/annexes/ressources/vectorTiles/styles/PLAN.IGN/standard.json"
-const OFFLINE_PROTOCOL = "offline"
 
 const route = useRoute()
 const mapContainer = ref<HTMLDivElement | null>(null)
 const record = ref<OfflineMapRecord | null>(null)
 const tilesLoading = ref(true)
 let map: maplibregl.Map | null = null
-
-// Conversion base64 → ArrayBuffer pour passer les tuiles à MapLibre
-const base64ToArrayBuffer = (b64: string): ArrayBuffer => {
-  const binary = atob(b64)
-  const bytes = new Uint8Array(binary.length)
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
-  return bytes.buffer
-}
-
-// Enregistre un protocole custom qui sert les tuiles depuis le stockage local
-const registerOfflineProtocol = () => {
-  maplibregl.addProtocol(OFFLINE_PROTOCOL, async (params) => {
-    const key = params.url.replace(`${OFFLINE_PROTOCOL}://`, "")
-    try {
-      if (Capacitor.isNativePlatform()) {
-        const result = await Filesystem.readFile({
-          path: `tiles/${key}.pbf`,
-          directory: Directory.Data,
-          encoding: Encoding.UTF8,
-        })
-        return { data: base64ToArrayBuffer(result.data as string) }
-      } else {
-        const db = await openDB("ign-tile-store", 1)
-        const b64 = await db.get("tiles", key)
-        if (!b64) return { data: new ArrayBuffer(0) }
-        return { data: base64ToArrayBuffer(b64) }
-      }
-    } catch {
-      return { data: new ArrayBuffer(0) }
-    }
-  })
-}
 
 onMounted(async () => {
   if (!mapContainer.value) return
@@ -77,21 +43,7 @@ onMounted(async () => {
 
   registerOfflineProtocol()
 
-  // TODO : cache pour le style IGN ? Le mettre directement dans les fichiers en local ?
-  // Télécharger le style IGN et remplacer les tuiles en ligne par le protocole offline
-  const styleResponse = await fetch(IGN_STYLE_URL)
-  const style = await styleResponse.json()
-
-  for (const source of Object.values(style.sources) as any[]) {
-    if (Array.isArray(source.tiles)) {
-      source.tiles = source.tiles.map((url: string) =>
-        url.replace(
-          "https://data.geopf.fr/tms/1.0.0/PLAN.IGN/{z}/{x}/{y}.pbf",
-          `${OFFLINE_PROTOCOL}://PLAN.IGN/{z}/{x}/{y}`
-        )
-      )
-    }
-  }
+  const style = loadOfflineStyle()
 
   map = new maplibregl.Map({
     container: mapContainer.value,
@@ -125,7 +77,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   map?.remove()
   map = null
-  maplibregl.removeProtocol(OFFLINE_PROTOCOL)
+  deregisterOfflineProtocol()
 })
 </script>
 

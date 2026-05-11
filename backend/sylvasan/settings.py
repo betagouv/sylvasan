@@ -300,6 +300,9 @@ SECURE_CSP = {
         "*.gouv.fr",
         "*.services.clever-cloud.com",
     ],
+    "font-src": [
+        "https://data.geopf.fr",
+    ],
     "script-src": [
         CSP.SELF,
         CSP.NONCE,
