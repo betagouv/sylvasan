@@ -77,10 +77,13 @@ const destroyMap = () => {
   mapInitialized.value = false
 }
 
+// Long / Lat et non pas Lat / Lon (https://maplibre.org/maplibre-gl-js/docs/API/classes/LngLat/)
+const centerOfFrance: [number, number] = [2.35, 46.8]
+
 const initOnlineMap = (container: HTMLDivElement) => {
   const initialCenter: [number, number] = modelValue.value
     ? [modelValue.value.lon, modelValue.value.lat]
-    : [2.35, 46.8]
+    : centerOfFrance
   const initialZoom = modelValue.value ? 17 : 5
 
   map = new maplibregl.Map({
@@ -111,7 +114,7 @@ const initOnlineMap = (container: HTMLDivElement) => {
   mapInitialized.value = true
 }
 
-const initOfflineMap = async (container: HTMLDivElement) => {
+const initOfflineMap = (container: HTMLDivElement) => {
   const record = offlineMaps.value.find((m) => m.id === selectedMapId.value)
   if (!record) {
     mapError.value = "Aucune carte téléchargée disponible."
@@ -175,7 +178,7 @@ const initMap = async () => {
   if (mapMode.value === "online") {
     initOnlineMap(mapContainer.value)
   } else {
-    await initOfflineMap(mapContainer.value)
+    initOfflineMap(mapContainer.value)
   }
 }
 
@@ -307,7 +310,7 @@ onBeforeUnmount(() => {
 
           <!-- La carte + crosshair -->
           <div class="relative flex-1">
-            <div ref="mapContainer" style="width: 100%; height: 100%" />
+            <div ref="mapContainer" class="w-full h-full bg-gray-100" />
 
             <div
               class="pointer-events-none absolute inset-0 flex items-center justify-center z-10"
