@@ -22,6 +22,7 @@ import {
 import { closeOutline, trashOutline } from "ionicons/icons"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import SurveySummary from "../components/SurveySummary.vue"
+import MapField from "../components/MapField.vue"
 import { useResponsesStore } from "../stores/responses"
 import { storeToRefs } from "pinia"
 import { useVocabulariesStore } from "../stores/vocabularies"
@@ -174,6 +175,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
             :schema="survey.jsonSchema"
             :prefillData="prefillData"
             :vocabularies="vocabularySets"
+            :mapComponent="MapField"
             @done="onSurveyDone"
             @change="handleFormChange"
           />

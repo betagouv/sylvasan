@@ -62,7 +62,8 @@
             "string",
             "number",
             "boolean",
-            "array"
+            "array",
+            "object"
           ],
           "type": "string"
         },
@@ -70,6 +71,9 @@
           "additionalProperties": false,
           "properties": {
             "activeText": {
+              "type": "string"
+            },
+            "addLabel": {
               "type": "string"
             },
             "choices": {
@@ -110,7 +114,9 @@
                 "checkboxes",
                 "switch",
                 "date",
-                "autocomplete"
+                "array",
+                "autocomplete",
+                "map"
               ],
               "type": "string"
             }
@@ -126,6 +132,9 @@
                 "string"
               ]
             },
+            "maxItems": {
+              "type": "integer"
+            },
             "maxLength": {
               "type": "integer"
             },
@@ -134,6 +143,9 @@
                 "number",
                 "string"
               ]
+            },
+            "minItems": {
+              "type": "integer"
             },
             "minLength": {
               "type": "integer"

@@ -488,6 +488,18 @@ const close = () => {
       />
     </div>
 
+    <div v-else-if="payload.ui?.widget === 'map'">
+      <DsfrInputGroup>
+        <DsfrInput
+          label-visible
+          v-model="payload.ui.hint"
+          v-if="payload.ui"
+          label="Aide"
+          class="max-w-xs"
+        />
+      </DsfrInputGroup>
+    </div>
+
     <!-- Pas encore gérés -->
     <div v-else>
       <DsfrNotice type="warning" title="Pas encore disponible" />

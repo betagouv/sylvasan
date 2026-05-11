@@ -16,6 +16,7 @@ import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import { resolveFieldValue } from "@shared-utils/survey"
 import { storeToRefs } from "pinia"
 import { useRootStore } from "../../stores/root"
+import MapField from "../../components/MapField.vue"
 
 const route = useRoute()
 const { vocabularies } = storeToRefs(useRootStore())
@@ -132,6 +133,7 @@ const getSubFields = (fieldId: string): SurveyField[] =>
               :readonly="true"
               :prefillData="response.data"
               :vocabularies="vocabularies"
+              :mapComponent="MapField"
             />
           </div>
         </div>

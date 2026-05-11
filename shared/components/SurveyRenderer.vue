@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { reactive, ref, computed, watch } from "vue"
+import type { Component } from "vue"
 import type { SurveySchema, SurveyField, VocabularySet } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
+
 import { getEmptyValue } from "../utils/survey"
 
 const props = withDefaults(
@@ -11,6 +13,7 @@ const props = withDefaults(
     prefillData?: Record<string, unknown>
     readonly?: boolean
     vocabularies?: VocabularySet[]
+    mapComponent?: Component
   }>(),
   { vocabularies: () => [] }
 )
@@ -94,6 +97,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
         v-model="formData[field.id]"
         :disabled="readonly"
         :vocabularies="props.vocabularies"
+        :mapComponent="mapComponent"
       />
     </TransitionGroup>
 
