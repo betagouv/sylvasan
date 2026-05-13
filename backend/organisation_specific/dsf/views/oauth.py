@@ -35,7 +35,7 @@ class DsfOAuthAppCallbackView(APIView):
     def post(self, request):
         code = request.data.get("code")
         nonce = request.data.get("nonce")
-        redirect_uri = settings.DSF_OAUTH2_REDIRECT_URI
+        redirect_uri = settings.DSF_OAUTH2_REDIRECT_APP_URI
 
         if not code or not nonce:
             logger.error("Oauth failed: missing parameters")
@@ -81,7 +81,7 @@ class DsfOAuthWebCallbackView(APIView):
         state = request.query_params.get("state")
         if not state or state != request.session.get("oauth_state"):
             logger.error("Oauth failed: state mismatch")
-            return redirect("/s-identifier?error=invalid_state")
+            return redirect(f"{settings.DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT}/s-identifier?error=invalid_state")
         request.session.pop("oauth_state", None)
 
         code = request.query_params.get("code")
@@ -89,21 +89,21 @@ class DsfOAuthWebCallbackView(APIView):
 
         if not code or not nonce:
             logger.error("Oauth failed: missing parameters")
-            return redirect("/s-identifier?error=missing_params")
+            return redirect(f"{settings.DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT}/s-identifier?error=missing_params")
 
         try:
             token = oauth.portail.fetch_access_token(
-                redirect_uri=settings.DSF_OAUTH2_WEB_REDIRECT_URI,
+                redirect_uri=settings.DSF_OAUTH2_REDIRECT_WEB_URI,
                 code=code,
             )
             claims = oauth.portail.parse_id_token(token, nonce=nonce)
         except Exception:
             logger.exception("DSF OAuth web callback failed")
-            return redirect("/s-identifier?error=oauth_failed")
+            return redirect(f"{settings.DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT}/s-identifier?error=oauth_failed")
 
         if not claims.get("sub"):
             logger.error("Sub missing in claims")
-            return redirect("/s-identifier?error=missing_sub")
+            return redirect(f"{settings.DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT}/s-identifier?error=missing_sub")
 
         user, _ = _upsert_user_from_claims(claims)
 
@@ -111,7 +111,7 @@ class DsfOAuthWebCallbackView(APIView):
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
         request.session.pop("oauth_nonce", None)
 
-        return redirect("/")
+        return redirect(settings.DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT)
 
 
 class DsfOAuthWebLoginView(APIView):
@@ -125,13 +125,12 @@ class DsfOAuthWebLoginView(APIView):
         request.session["oauth_state"] = state
 
         auth_url = oauth.portail.create_authorization_url(
-            settings.DSF_OAUTH2_AUTHORIZATION_URL,
-            redirect_uri=settings.DSF_OAUTH2_WEB_REDIRECT_URI,
+            redirect_uri=settings.DSF_OAUTH2_REDIRECT_WEB_URI,
             nonce=nonce,
             state=state,
         )
 
-        return redirect(auth_url[0])
+        return redirect(auth_url["url"])
 
 
 def _upsert_user_from_claims(claims: dict) -> tuple:
