@@ -147,6 +147,7 @@ def _upsert_user_from_claims(claims: dict) -> tuple:
             "email": user_info.get("email", ""),
             "first_name": user_info.get("prenom", ""),
             "last_name": user_info.get("nom", ""),
+            "dsf_last_claims": claims,
         },
     )
 
