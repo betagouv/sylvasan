@@ -1,5 +1,6 @@
 import { defineStore } from "pinia"
 import { Preferences } from "@capacitor/preferences"
+import { Browser } from "@capacitor/browser"
 import { useApiFetch } from "../utils/data-fetching"
 import type { LoggedUser } from "@shared-types/api"
 import { useSurveysStore } from "./surveys"
@@ -7,6 +8,8 @@ import { useSurveysStore } from "./surveys"
 const ACCESS_KEY = "auth_access"
 const REFRESH_KEY = "auth_refresh"
 const USER_KEY = "auth_user"
+const DSF_NONCE_KEY = "dsf_oauth_nonce"
+const DSF_REDIRECT_URI = "sylvasan://oauth/callback"
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -102,6 +105,46 @@ export const useAuthStore = defineStore("auth", {
       await this.persist()
 
       return true
+    },
+
+    async loginWithDsf() {
+      const nonce = crypto.randomUUID()
+      await Preferences.set({ key: DSF_NONCE_KEY, value: nonce })
+
+      const authUrl = new URL(import.meta.env.VITE_DSF_AUTHORIZATION_URL)
+      authUrl.searchParams.set("client_id", import.meta.env.VITE_DSF_CLIENT_ID)
+      authUrl.searchParams.set("redirect_uri", DSF_REDIRECT_URI)
+      authUrl.searchParams.set("response_type", "code")
+      authUrl.searchParams.set("scope", "openid")
+      authUrl.searchParams.set("nonce", nonce)
+
+      await Browser.open({ url: authUrl.toString() })
+    },
+
+    async handleDsfCallback(callbackUrl: string) {
+      const code = new URL(callbackUrl).searchParams.get("code")
+      const { value: nonce } = await Preferences.get({ key: DSF_NONCE_KEY })
+      await Preferences.remove({ key: DSF_NONCE_KEY })
+
+      if (!code || !nonce) throw new Error("Missing code or nonce")
+
+      const platformBase = import.meta.env.VITE_API_ROOT.replace(/\/api$/, "")
+      const res = await fetch(`${platformBase}/dsf/oauth/app/callback/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, nonce }),
+      })
+
+      if (!res.ok) throw new Error("DSF OAuth exchange failed")
+
+      const data = await res.json()
+      this.access = data.access
+      this.refresh = data.refresh
+
+      await Promise.all([this.persist(), this.fetchUser()])
+
+      const surveyStore = useSurveysStore()
+      await surveyStore.sync()
     },
 
     async logout() {

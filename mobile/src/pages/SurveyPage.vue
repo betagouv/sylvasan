@@ -123,13 +123,13 @@ const saveResponse = async (data: Record<string, unknown>) => {
   if (success) {
     toast.show("Votre réponse a été envoyée", "success")
     if (props.isModal) emit("close")
-    else router.navigate({ name: "SurveyListPage" }, "back", "replace")
+    else router.navigate({ name: "ResponseListPage" }, "back", "replace")
   } else {
     toast.show(
       "Votre réponse a été sauvegardée localement et sera envoyée dès que possible"
     )
     if (props.isModal) emit("close")
-    else router.navigate({ name: "SurveyListPage" }, "back", "replace")
+    else router.navigate({ name: "ResponseListPage" }, "back", "replace")
   }
 }
 </script>
