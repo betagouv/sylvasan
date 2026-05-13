@@ -1,9 +1,12 @@
 asgiref==3.11.1
+Authlib==1.7.2
 bcrypt==5.0.0
 boto3==1.42.97
 botocore==1.42.97
 certifi==2026.4.22
+cffi==2.0.0
 charset-normalizer==3.4.7
+cryptography==48.0.0
 Django==6.0.4
 django-anymail==15.0
 django-cors-headers==4.9.0
@@ -16,9 +19,11 @@ factory_boy==3.3.3
 Faker==40.15.0
 idna==3.13
 jmespath==1.1.0
+joserfc==1.6.5
 packaging==26.1
 pipdeptree==2.35.1
 psycopg2==2.9.11
+pycparser==3.0
 PyJWT==2.12.1
 python-dateutil==2.9.0.post0
 requests==2.33.1

@@ -8,4 +8,5 @@ urlpatterns = [
     path("platform/", include("users.urls")),
     path("platform/", include("surveys.urls")),
     path("platform/", include("responses.urls")),
+    path("platform/", include("organisation_specific.dsf.urls")),
 ]
