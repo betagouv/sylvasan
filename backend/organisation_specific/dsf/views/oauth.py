@@ -38,6 +38,7 @@ class DsfOAuthAppCallbackView(APIView):
         redirect_uri = settings.DSF_OAUTH2_REDIRECT_URI
 
         if not code or not nonce:
+            logger.error("Oauth failed: missing parameters")
             return Response({"error": "Code ou nonce manquant"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -50,7 +51,11 @@ class DsfOAuthAppCallbackView(APIView):
             logger.exception("DSF OAuth token exchange failed")
             return Response({"error": "Échec OAuth2"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        user, echelon, codes_da = _upsert_user_from_claims(claims)
+        if not claims.get("sub"):
+            logger.error("Sub missing in claims")
+            return Response({"error": "Identifiant manquant dans le token DSF"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        user, echelon = _upsert_user_from_claims(claims)
 
         refresh = RefreshToken.for_user(user)
         return Response(
@@ -73,11 +78,18 @@ class DsfOAuthWebCallbackView(APIView):
     permission_classes = []
 
     def get(self, request):
+        state = request.query_params.get("state")
+        if not state or state != request.session.get("oauth_state"):
+            logger.error("Oauth failed: state mismatch")
+            return redirect("/s-identifier?error=invalid_state")
+        request.session.pop("oauth_state", None)
+
         code = request.query_params.get("code")
         nonce = request.session.get("oauth_nonce")
 
         if not code or not nonce:
-            return redirect(f"{settings.FRONTEND_URL}/login?error=missing_params")
+            logger.error("Oauth failed: missing parameters")
+            return redirect("/s-identifier?error=missing_params")
 
         try:
             token = oauth.portail.fetch_access_token(
@@ -87,9 +99,13 @@ class DsfOAuthWebCallbackView(APIView):
             claims = oauth.portail.parse_id_token(token, nonce=nonce)
         except Exception:
             logger.exception("DSF OAuth web callback failed")
-            return redirect(f"{settings.FRONTEND_URL}/login?error=oauth_failed")
+            return redirect("/s-identifier?error=oauth_failed")
 
-        user, echelon, codes_da = _upsert_user_from_claims(claims)
+        if not claims.get("sub"):
+            logger.error("Sub missing in claims")
+            return redirect("/s-identifier?error=missing_sub")
+
+        user, _ = _upsert_user_from_claims(claims)
 
         # Création de la session Django
         login(request, user, backend="django.contrib.auth.backends.ModelBackend")
@@ -105,22 +121,21 @@ class DsfOAuthWebLoginView(APIView):
         nonce = secrets.token_urlsafe(16)
         request.session["oauth_nonce"] = nonce
 
+        state = secrets.token_urlsafe(16)
+        request.session["oauth_state"] = state
+
         auth_url = oauth.portail.create_authorization_url(
             settings.DSF_OAUTH2_AUTHORIZATION_URL,
             redirect_uri=settings.DSF_OAUTH2_WEB_REDIRECT_URI,
             nonce=nonce,
+            state=state,
         )
 
         return redirect(auth_url[0])
 
 
-def _upsert_user_from_claims(claims: dict):
-
-    external_id = claims.get("sub")
-    if not external_id:
-        raise ValueError("Identifiant manquant dans le token DSF")
-
-    external_id = claims.get("sub")
+def _upsert_user_from_claims(claims: dict) -> tuple:
+    external_id = claims["sub"]
     user_info = claims.get("user_info", {})
     codes_da = claims.get("codes_da", [])
     echelon = user_info.get("echelon", "")
@@ -142,7 +157,7 @@ def _upsert_user_from_claims(claims: dict):
     except Organisation.DoesNotExist:
         pass
 
-    return user, echelon, codes_da
+    return user, echelon
 
 
 def _assign_membership(user: User, organisation: Organisation, echelon: str, codes_da: list[str]):
