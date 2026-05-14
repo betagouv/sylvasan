@@ -16,7 +16,7 @@ factory_boy==3.3.3
 Faker==40.15.0
 idna==3.13
 jmespath==1.1.0
-packaging==26.1
+packaging==26.2
 pipdeptree==2.35.2
 psycopg2==2.9.11
 PyJWT==2.12.1
