@@ -24,7 +24,7 @@
     "@ionic/vue": "^8.8.4",
     "@ionic/vue-router": "^8.8.4",
     "@tailwindcss/vite": "^4.2.4",
-    "@vueuse/core": "^14.2.1",
+    "@vueuse/core": "^14.3.0",
     "idb": "^8.0.3",
     "maplibre-gl": "^5.21.0",
     "pinia": "^3.0.4",
