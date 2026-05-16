@@ -79,6 +79,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/AccountPage': RouteRecordInfo<
+      '/AccountPage',
+      '/mon-compte',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/NotFoundPage': RouteRecordInfo<
       '/NotFoundPage',
       '/page-non-trouvée',
@@ -180,6 +187,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/LegalNoticesPage.vue': {
       routes:
         | '/LegalNoticesPage'
+      views:
+        | never
+    }
+    'src/pages/AccountPage.vue': {
+      routes:
+        | '/AccountPage'
       views:
         | never
     }
