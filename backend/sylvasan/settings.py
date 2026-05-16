@@ -289,7 +289,6 @@ SESSION_COOKIE_SAMESITE = "Lax"
 
 # Authentication
 AUTHENTICATION_BACKENDS = [
-    "organisation_specific.dsf.auth_backend.DsfpAuthBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
