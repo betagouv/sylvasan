@@ -20,6 +20,7 @@ type LoggedUser = {
   username: string
   id: number
   memberships: Membership[]
+  source: string
 }
 
 type SurveyDisplay = {

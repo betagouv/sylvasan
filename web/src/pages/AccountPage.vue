@@ -63,6 +63,13 @@ const personalInformation = computed(() => {
 
     <h1 class="fr-h3">Mon compte</h1>
 
+    <DsfrTag
+      icon="ri-links-line"
+      v-if="loggedUser?.source !== 'local'"
+      :label="`Compte ${loggedUser?.source?.toUpperCase()}`"
+      class="mb-6!"
+    />
+
     <section class="mb-8">
       <h2 class="fr-h5">Informations personnelles</h2>
       <dl class="grid grid-cols-1 sm:grid-cols-3 gap-4 pl-0!">

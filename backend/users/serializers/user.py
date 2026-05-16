@@ -25,4 +25,5 @@ class SimpleUserSerializer(serializers.ModelSerializer):
             "last_name",
             "username",
             "memberships",
+            "source",
         )
