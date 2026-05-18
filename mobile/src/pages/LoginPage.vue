@@ -31,11 +31,15 @@ const submit = async () => {
   try {
     const validatedData = validator.parse(payload.value)
     await authStore.login(validatedData.username, validatedData.password)
-    router.push({ name: "SurveyListPage" })
+    router.push({ name: "PositionPage" })
     resetFields()
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
+}
+
+const loginWithDsf = async () => {
+  await authStore.loginWithDsf()
 }
 </script>
 
@@ -71,6 +75,20 @@ const submit = async () => {
 
           <div class="fr-mt-4w text-center">
             <DsfrButton label="Se connecter" @click="submit" />
+          </div>
+
+          <div class="flex items-center gap-3 fr-mt-4w">
+            <hr class="flex-1 border-gray-300" />
+            <span class="fr-text--sm text-gray-500">ou</span>
+            <hr class="flex-1 border-gray-300" />
+          </div>
+
+          <div class="fr-mt-4w text-center">
+            <DsfrButton
+              label="S'identifier avec un compte DSF"
+              secondary
+              @click="loginWithDsf"
+            />
           </div>
         </div>
       </div>

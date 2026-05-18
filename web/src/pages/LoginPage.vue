@@ -11,17 +11,38 @@
 
 <script setup lang="ts">
 import * as z from "zod"
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { DsfrInput } from "@gouvminint/vue-dsfr"
 import { useApiFetch } from "../utils/data-fetching"
 import { ZodError } from "zod"
 import { useRootStore } from "../stores/root"
 import { useToastStore } from "../stores/toast"
-import { useRouter } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
 
 const store = useRootStore()
 const toast = useToastStore()
 const router = useRouter()
+const route = useRoute()
+
+const dsfLoginUrl =
+  import.meta.env.VITE_API_ROOT.replace(/\/api$/, "") + "/dsf/oauth/web/login/"
+
+const oauthErrorMessages: Record<string, string> = {
+  invalid_state:
+    "La session a expiré ou la connexion n'est pas valide. Veuillez réessayer.",
+  missing_params: "Des paramètres sont manquants. Veuillez réessayer.",
+  oauth_failed:
+    "La connexion avec le portail DSF a échoué. Veuillez réessayer.",
+  missing_sub:
+    "Votre identifiant DSF n'a pas pu être récupéré. Veuillez réessayer.",
+}
+
+const oauthError = computed(() => {
+  const code = route.query.error as string | undefined
+  return code
+    ? oauthErrorMessages[code] ?? "Une erreur est survenue. Veuillez réessayer."
+    : null
+})
 
 const payload = ref({
   username: "",
@@ -63,6 +84,14 @@ const submit = async () => {
     <h1>Se connecter</h1>
 
     <div class="max-w-md">
+      <DsfrAlert
+        v-if="oauthError"
+        type="error"
+        title="Erreur"
+        :description="oauthError"
+        class="mb-6"
+      />
+
       <DsfrInputGroup :error-message="formErrors?.fieldErrors?.username">
         <DsfrInput
           v-model="payload.username"
@@ -91,6 +120,15 @@ const submit = async () => {
         label="Se connecter"
         @click="submit"
       />
+
+      <hr class="mt-10! mb-4!" />
+
+      <a
+        :href="dsfLoginUrl"
+        class="fr-btn fr-btn--secondary block! w-full! text-center!"
+      >
+        S'identifier avec un compte DSF
+      </a>
     </div>
   </div>
 </template>

@@ -15,6 +15,7 @@ class UserAdmin(UserAdmin):
         "username",
     )
     show_facets = admin.ShowFacets.NEVER
+    readonly_fields = ("dsf_last_claims",)
 
     fieldsets = (
         (
@@ -52,6 +53,12 @@ class UserAdmin(UserAdmin):
                     "is_staff",
                     "is_superuser",
                 ),
+            },
+        ),
+        (
+            _("IGN/DSF"),
+            {
+                "fields": ("dsf_last_claims",),
             },
         ),
     )

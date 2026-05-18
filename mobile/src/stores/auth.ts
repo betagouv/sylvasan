@@ -1,5 +1,6 @@
 import { defineStore } from "pinia"
 import { Preferences } from "@capacitor/preferences"
+import { Browser } from "@capacitor/browser"
 import { useApiFetch } from "../utils/data-fetching"
 import type { LoggedUser } from "@shared-types/api"
 import { useSurveysStore } from "./surveys"
@@ -7,6 +8,9 @@ import { useSurveysStore } from "./surveys"
 const ACCESS_KEY = "auth_access"
 const REFRESH_KEY = "auth_refresh"
 const USER_KEY = "auth_user"
+const DSF_NONCE_KEY = "dsf_oauth_nonce"
+const DSF_STATE_KEY = "dsf_oauth_state"
+const DSF_REDIRECT_URI = "sylvasan://oauth/callback"
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -53,6 +57,8 @@ export const useAuthStore = defineStore("auth", {
         Preferences.remove({ key: ACCESS_KEY }),
         Preferences.remove({ key: REFRESH_KEY }),
         Preferences.remove({ key: USER_KEY }),
+        Preferences.remove({ key: DSF_NONCE_KEY }),
+        Preferences.remove({ key: DSF_STATE_KEY }),
       ])
     },
 
@@ -102,6 +108,66 @@ export const useAuthStore = defineStore("auth", {
       await this.persist()
 
       return true
+    },
+
+    async loginWithDsf() {
+      const nonce = crypto.randomUUID()
+      const state = crypto.randomUUID()
+
+      await Promise.all([
+        Preferences.set({ key: DSF_NONCE_KEY, value: nonce }),
+        Preferences.set({ key: DSF_STATE_KEY, value: state }),
+      ])
+
+      const authUrl = new URL(import.meta.env.VITE_DSF_AUTHORIZATION_URL)
+      authUrl.searchParams.set("client_id", import.meta.env.VITE_DSF_CLIENT_ID)
+      authUrl.searchParams.set("redirect_uri", DSF_REDIRECT_URI)
+      authUrl.searchParams.set("response_type", "code")
+      authUrl.searchParams.set("scope", "openid")
+      authUrl.searchParams.set("nonce", nonce)
+      authUrl.searchParams.set("state", state)
+
+      await Browser.open({ url: authUrl.toString() })
+    },
+
+    async handleDsfCallback(callbackUrl: string) {
+      const params = new URL(callbackUrl).searchParams
+      const code = params.get("code")
+      const returnedState = params.get("state")
+
+      // Retrieve and immediately remove both secrets to prevent replay attacks
+      const [{ value: nonce }, { value: storedState }] = await Promise.all([
+        Preferences.get({ key: DSF_NONCE_KEY }),
+        Preferences.get({ key: DSF_STATE_KEY }),
+      ])
+      await Promise.all([
+        Preferences.remove({ key: DSF_NONCE_KEY }),
+        Preferences.remove({ key: DSF_STATE_KEY }),
+      ])
+
+      if (!returnedState || returnedState !== storedState) {
+        throw new Error("State mismatch")
+      }
+
+      if (!code || !nonce) throw new Error("Missing code or nonce")
+
+      const platformBase = import.meta.env.VITE_API_ROOT.replace(/\/api$/, "")
+      const res = await fetch(`${platformBase}/dsf/oauth/app/callback/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, nonce }),
+      })
+
+      if (!res.ok) throw new Error("DSF OAuth exchange failed")
+
+      const data = await res.json()
+      this.access = data.access
+      this.refresh = data.refresh
+
+      await Promise.all([this.persist(), this.fetchUser()])
+
+      const surveyStore = useSurveysStore()
+      await surveyStore.sync()
     },
 
     async logout() {

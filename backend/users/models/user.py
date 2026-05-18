@@ -70,6 +70,8 @@ class User(PermissionsMixin, AbstractBaseUser, TimeStampable):
 
     is_active = models.BooleanField(default=True)
 
+    dsf_last_claims = models.JSONField("Dernière information de la part de l'IGN/DSF", null=True, blank=True)
+
     def activate(self):
         self.is_active = True
         self.save()

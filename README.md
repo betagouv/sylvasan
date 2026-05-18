@@ -97,6 +97,12 @@ DEFAULT_FROM_EMAIL= par ex. 'from@example.com'
 CONTACT_EMAIL= par ex. 'contact@example.com'
 EMAIL_BACKEND= par ex. 'django.core.mail.backends.console.EmailBackend'. Pour utiliser SendInBlue : 'anymail.backends.sendinblue.EmailBackend'
 DEV_FRONTEND_ORIGINS= Une liste de hosts pour le développement en local. Cette liste doit contenir les applications web et mobile, normalement `localhost:5173,localhost:5174`
+DSF_OAUTH2_CLIENT_SECRET= Utilisé pour le flow Oauth avec le DSF. Le secret client.
+DSF_OAUTH2_CLIENT_ID= Utilisé pour le flow Oauth avec le DSF. L'ID client.
+DSF_OAUTH2_PORTAIL_URL= Utilisé pour le flow Oauth avec le DSF. Le portail Oauth.
+DSF_OAUTH2_REDIRECT_APP_URI= Utilisé pour le flow Oauth avec le DSF. L'URL de redirection pour l'app mobile.
+DSF_OAUTH2_REDIRECT_WEB_URI= Utilisé pour le flow Oauth avec le DSF. L'URL de redirection pour l'app web.
+DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT= Utilisé pour le flow Oauth avec le DSF. URL à utiliser pour la redirection après succès ou échec de l'OAuth dans le web.
 ```
 
 #### Variables d'environnement web

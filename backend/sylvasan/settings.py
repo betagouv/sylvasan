@@ -289,7 +289,6 @@ SESSION_COOKIE_SAMESITE = "Lax"
 
 # Authentication
 AUTHENTICATION_BACKENDS = [
-    "organisation_specific.dsf.auth_backend.DsfpAuthBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 
@@ -326,3 +325,10 @@ SECURE_CSP = {
     ]
     + (["ws:"] if DEBUG else []),
 }
+
+DSF_OAUTH2_CLIENT_ID = env("DSF_OAUTH2_CLIENT_ID", default=None)
+DSF_OAUTH2_PORTAIL_URL = env("DSF_OAUTH2_PORTAIL_URL", default=None)
+DSF_OAUTH2_REDIRECT_APP_URI = env("DSF_OAUTH2_REDIRECT_APP_URI", default=None)
+DSF_OAUTH2_REDIRECT_WEB_URI = env("DSF_OAUTH2_REDIRECT_WEB_URI", default=None)
+DSF_OAUTH2_CLIENT_SECRET = env("DSF_OAUTH2_CLIENT_SECRET", default=None)
+DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT = env("DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT", default=None)
