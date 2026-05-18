@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "build-dev": "vue-tsc -b && vite build --mode development",
+    "build-emu": "vue-tsc -b && vite build --mode emulator",
     "build-staging": "vue-tsc -b && vite build --mode staging",
     "build-prod": "vue-tsc -b && vite build --mode production",
     "preview": "vite preview",

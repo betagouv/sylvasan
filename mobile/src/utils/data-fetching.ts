@@ -2,16 +2,24 @@ import { createFetch } from "@vueuse/core"
 import { useAuthStore } from "../stores/auth"
 import { storeToRefs } from "pinia"
 import { useFetch } from "@vueuse/core"
+import { Capacitor } from "@capacitor/core"
 
 const adjustOptions = (options: RequestInit) => {
   const { access } = storeToRefs(useAuthStore())
+  const headers = new Headers(options.headers || {})
 
   // Ajout de l'entête d'authorisation si le token est disponible
   if (access.value) {
-    const headers = new Headers(options.headers || {})
-    if (access.value) headers.set("Authorization", `Bearer ${access.value}`)
-    options.headers = headers
+    headers.set("Authorization", `Bearer ${access.value}`)
   }
+
+  // Le patch CapacitorHttp met automatiquement le Content-Type.
+  // Ces lignes préviennent le header en doublon "application/json, application/json"
+  if (Capacitor.isNativePlatform()) {
+    headers.delete("content-type")
+  }
+
+  options.headers = headers
   options.credentials = (import.meta.env.VITE_CREDENTIALS ||
     "same-origin") as RequestCredentials
   return options

@@ -34,25 +34,29 @@ const onSurveySelected = (id: number) => {
     <ion-tabs>
       <ion-router-outlet />
       <ion-tab-bar slot="bottom">
-        <ion-tab-button tab="carte" href="/carte">
+        <ion-tab-button class="flex-1_1_0!" tab="carte" href="/carte">
           <ion-icon :icon="mapOutline" />
           <ion-label>Ma position</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="observations" href="/observations">
+        <ion-tab-button
+          class="flex-1_1_0!"
+          tab="observations"
+          href="/observations"
+        >
           <ion-icon :icon="clipboardOutline" />
           <ion-label>Observations</ion-label>
         </ion-tab-button>
 
         <!-- Espace réservé pour le bouton central positionné en dehors de la tab bar -->
-        <div class="tab-center-spacer" />
+        <div class="tab-center-spacer flex-1_1_0!" />
 
-        <ion-tab-button tab="cartes" href="/cartes">
+        <ion-tab-button class="flex-1_1_0!" tab="cartes" href="/cartes">
           <ion-icon :icon="cloudDownloadOutline" />
           <ion-label>Cartes</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="profil" href="/profil">
+        <ion-tab-button class="flex-1_1_0!" tab="profil" href="/profil">
           <ion-icon :icon="personOutline" />
           <ion-label>Profil</ion-label>
         </ion-tab-button>
@@ -113,5 +117,13 @@ const onSurveySelected = (id: number) => {
   cursor: pointer;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
   z-index: 999;
+}
+
+ion-tab-button {
+  --padding-end: 0;
+  --padding-start: 0;
+}
+ion-tab-bar {
+  column-gap: 2px;
 }
 </style>
