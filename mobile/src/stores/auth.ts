@@ -9,6 +9,7 @@ const ACCESS_KEY = "auth_access"
 const REFRESH_KEY = "auth_refresh"
 const USER_KEY = "auth_user"
 const DSF_NONCE_KEY = "dsf_oauth_nonce"
+const DSF_STATE_KEY = "dsf_oauth_state"
 const DSF_REDIRECT_URI = "sylvasan://oauth/callback"
 
 export const useAuthStore = defineStore("auth", {
@@ -56,6 +57,8 @@ export const useAuthStore = defineStore("auth", {
         Preferences.remove({ key: ACCESS_KEY }),
         Preferences.remove({ key: REFRESH_KEY }),
         Preferences.remove({ key: USER_KEY }),
+        Preferences.remove({ key: DSF_NONCE_KEY }),
+        Preferences.remove({ key: DSF_STATE_KEY }),
       ])
     },
 
@@ -109,7 +112,12 @@ export const useAuthStore = defineStore("auth", {
 
     async loginWithDsf() {
       const nonce = crypto.randomUUID()
-      await Preferences.set({ key: DSF_NONCE_KEY, value: nonce })
+      const state = crypto.randomUUID()
+
+      await Promise.all([
+        Preferences.set({ key: DSF_NONCE_KEY, value: nonce }),
+        Preferences.set({ key: DSF_STATE_KEY, value: state }),
+      ])
 
       const authUrl = new URL(import.meta.env.VITE_DSF_AUTHORIZATION_URL)
       authUrl.searchParams.set("client_id", import.meta.env.VITE_DSF_CLIENT_ID)
@@ -117,14 +125,29 @@ export const useAuthStore = defineStore("auth", {
       authUrl.searchParams.set("response_type", "code")
       authUrl.searchParams.set("scope", "openid")
       authUrl.searchParams.set("nonce", nonce)
+      authUrl.searchParams.set("state", state)
 
       await Browser.open({ url: authUrl.toString() })
     },
 
     async handleDsfCallback(callbackUrl: string) {
-      const code = new URL(callbackUrl).searchParams.get("code")
-      const { value: nonce } = await Preferences.get({ key: DSF_NONCE_KEY })
-      await Preferences.remove({ key: DSF_NONCE_KEY })
+      const params = new URL(callbackUrl).searchParams
+      const code = params.get("code")
+      const returnedState = params.get("state")
+
+      // Retrieve and immediately remove both secrets to prevent replay attacks
+      const [{ value: nonce }, { value: storedState }] = await Promise.all([
+        Preferences.get({ key: DSF_NONCE_KEY }),
+        Preferences.get({ key: DSF_STATE_KEY }),
+      ])
+      await Promise.all([
+        Preferences.remove({ key: DSF_NONCE_KEY }),
+        Preferences.remove({ key: DSF_STATE_KEY }),
+      ])
+
+      if (!returnedState || returnedState !== storedState) {
+        throw new Error("State mismatch")
+      }
 
       if (!code || !nonce) throw new Error("Missing code or nonce")
 
