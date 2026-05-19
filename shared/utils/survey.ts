@@ -27,6 +27,17 @@ export const resolveFieldValue = (
     return ""
   }
 
+  if (
+    field?.ui?.widget === "map" &&
+    typeof raw === "object" &&
+    raw !== null &&
+    "lat" in raw &&
+    "lon" in raw
+  ) {
+    const { lat, lon } = raw as { lat: number; lon: number }
+    return `Latitude : ${lat}, longitude : ${lon}`
+  }
+
   const choices = field?.ui?.choices
   if (!choices || !choices.length) return String(raw)
 
