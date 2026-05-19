@@ -17,7 +17,7 @@ djangorestframework-camel-case==1.4.2
 djangorestframework_simplejwt==5.5.1
 factory_boy==3.3.3
 Faker==40.15.0
-idna==3.13
+idna==3.14
 jmespath==1.1.0
 joserfc==1.6.5
 packaging==26.2
