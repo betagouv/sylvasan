@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { watch } from "vue"
 import type { SurveyField, VocabularySet } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
-import { getEmptyValue } from "../utils/survey"
+import { getEmptyValue, evaluateCondition } from "../utils/survey"
 
 const createEmptyItem = () =>
   Object.fromEntries(
@@ -34,6 +35,38 @@ const updateItem = (index: number, fieldId: string, value: unknown) => {
     i === index ? { ...item, [fieldId]: value } : item
   )
 }
+
+const isSubFieldVisible = (
+  subField: SurveyField,
+  item: Record<string, unknown>
+): boolean => {
+  if (!subField.condition) return true
+  return evaluateCondition(subField.condition, item)
+}
+
+watch(
+  () =>
+    modelValue.value.map((item) =>
+      (props.field.fields ?? []).map((f) => isSubFieldVisible(f, item))
+    ),
+  (newVisibility, oldVisibility) => {
+    let needsUpdate = false
+    const updated = modelValue.value.map((item, i) => {
+      const newVis = newVisibility[i]
+      const oldVis = oldVisibility?.[i]
+      let result = item
+      ;(props.field.fields ?? []).forEach((subField, j) => {
+        if ((!oldVis || oldVis[j]) && !newVis[j]) {
+          result = { ...result, [subField.id]: getEmptyValue(subField) }
+          needsUpdate = true
+        }
+      })
+      return result
+    })
+    if (needsUpdate) modelValue.value = updated
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -64,15 +97,16 @@ const updateItem = (index: number, fieldId: string, value: unknown) => {
         />
       </div>
 
-      <FieldRenderer
-        v-for="subField in field.fields"
-        :key="subField.id"
-        :field="subField"
-        :model-value="item[subField.id]"
-        :disabled="disabled"
-        :vocabularies="props.vocabularies"
-        @update:model-value="updateItem(index, subField.id, $event)"
-      />
+      <template v-for="subField in field.fields" :key="subField.id">
+        <FieldRenderer
+          v-if="isSubFieldVisible(subField, item)"
+          :field="subField"
+          :model-value="item[subField.id]"
+          :disabled="disabled"
+          :vocabularies="props.vocabularies"
+          @update:model-value="updateItem(index, subField.id, $event)"
+        />
+      </template>
     </div>
 
     <DsfrButton
