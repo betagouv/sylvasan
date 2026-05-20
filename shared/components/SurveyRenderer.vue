@@ -4,7 +4,7 @@ import type { Component } from "vue"
 import type { SurveySchema, SurveyField, VocabularySet } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
 
-import { getEmptyValue } from "../utils/survey"
+import { getEmptyValue, evaluateCondition } from "../utils/survey"
 
 const props = withDefaults(
   defineProps<{
@@ -71,6 +71,22 @@ function handleDone() {
   emit("done", { ...formData })
 }
 
+const isFieldVisible = (field: SurveyField): boolean => {
+  if (!field.condition) return true
+  return evaluateCondition(field.condition, formData)
+}
+
+watch(
+  () => props.schema.fields.map((f) => isFieldVisible(f)),
+  (newVisibility, oldVisibility) => {
+    props.schema.fields.forEach((field, index) => {
+      if ((!oldVisibility || oldVisibility[index]) && !newVisibility[index])
+        formData[field.id] = getEmptyValue(field)
+    })
+  },
+  { immediate: true }
+)
+
 watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
 </script>
 
@@ -90,15 +106,16 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
       name="field-area"
       v-if="currentPageFields.length"
     >
-      <FieldRenderer
-        v-for="field in currentPageFields"
-        :key="`render-${field.id}`"
-        :field="field"
-        v-model="formData[field.id]"
-        :disabled="readonly"
-        :vocabularies="props.vocabularies"
-        :mapComponent="mapComponent"
-      />
+      <template v-for="field in currentPageFields" :key="`render-${field.id}`">
+        <FieldRenderer
+          v-if="isFieldVisible(field)"
+          :field="field"
+          v-model="formData[field.id]"
+          :disabled="readonly"
+          :vocabularies="props.vocabularies"
+          :mapComponent="mapComponent"
+        />
+      </template>
     </TransitionGroup>
 
     <!-- Boutons de navigation -->
