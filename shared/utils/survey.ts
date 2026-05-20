@@ -1,4 +1,10 @@
-import type { SurveyField, FieldWidget, Condition } from "../types/survey"
+import type {
+  SurveyField,
+  FieldWidget,
+  Condition,
+  SimpleCondition,
+  ConditionOperator,
+} from "../types/survey"
 
 export const getEmptyValue = (field: SurveyField): any => {
   if (!field.ui?.widget) return ""
@@ -93,4 +99,28 @@ export function evaluateCondition(
     default:
       return true
   }
+}
+
+const operatorLabel: Record<ConditionOperator, string> = {
+  eq: "=",
+  neq: "≠",
+  in: "dans",
+  not_in: "pas dans",
+}
+
+const formatSimpleCondition = (c: SimpleCondition): string => {
+  const val = Array.isArray(c.value) ? c.value.join(", ") : String(c.value)
+  return `« ${c.field} » ${operatorLabel[c.operator]} « ${val} »`
+}
+
+const formatCondition = (condition: Condition): string => {
+  if ("conditions" in condition) {
+    const sep = condition.operator === "and" ? " ET " : " OU "
+    return condition.conditions.map(formatCondition).join(sep)
+  }
+  return formatSimpleCondition(condition)
+}
+
+export const conditionsText = (condition: Condition): string => {
+  return "Affiché si : " + formatCondition(condition)
 }

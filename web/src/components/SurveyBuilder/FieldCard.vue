@@ -13,6 +13,7 @@ import type { WidgetData } from "./mappings"
 import NewFieldModal from "./NewFieldModal.vue"
 import { useRootStore } from "../../stores/root"
 import VocabularyModal from "./VocabularyModal.vue"
+import { conditionsText } from "@shared-utils/survey"
 
 const rootStore = useRootStore()
 
@@ -113,6 +114,13 @@ const formatDate = (isoString: string): string => {
         </p>
         <div class="grow"></div>
         <div class="font-mono text-gray-400">{{ field.id }}</div>
+      </div>
+
+      <div v-if="field.condition" class="flex flex-column items-center">
+        <div>
+          <DsfrTag small label="Visibilité conditionnelle" />
+        </div>
+        <DsfrTooltip :content="conditionsText(field.condition)" />
       </div>
 
       <!-- Champ text / numérique -->
@@ -243,7 +251,13 @@ const formatDate = (isoString: string): string => {
     </div>
 
     <div class="self-center end flex flex-col gap-2">
-      <DsfrButton icon="ri-edit-line" @click="editModalOpened = true" secondary icon-only label="Modifier le champ" />
+      <DsfrButton
+        icon="ri-edit-line"
+        @click="editModalOpened = true"
+        secondary
+        icon-only
+        label="Modifier le champ"
+      />
 
       <DsfrButton
         icon="ri-delete-bin-line"
@@ -257,7 +271,12 @@ const formatDate = (isoString: string): string => {
       :opened="editModalOpened"
       :payload="field"
       :field-ids="fieldIds"
-      @edit="(f) => { emit('edit', f); editModalOpened = false }"
+      @edit="
+        (f) => {
+          emit('edit', f)
+          editModalOpened = false
+        }
+      "
       @close="editModalOpened = false"
     />
 
