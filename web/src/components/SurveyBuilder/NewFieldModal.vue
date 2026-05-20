@@ -107,7 +107,14 @@ const assignWidgetAndType = (option: FieldWidget) => {
   if (!mapping) return
   optionsSource.value = "manual"
   selectedVocabularyCode.value = ""
-  payload.value = makeEmptyPayload(mapping.type, mapping.widget)
+  payload.value = {
+    ...makeEmptyPayload(mapping.type, mapping.widget),
+    ...{
+      id: payload.value.id,
+      label: payload.value.label,
+      required: payload.value.required,
+    },
+  }
 }
 
 const onOptionsSourceChange = (source: string | number | boolean) => {
