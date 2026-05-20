@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, watch, nextTick } from "vue"
 import type { SurveyField, FieldWidget, FieldType } from "@shared-types/survey"
 import ConditionModalSegment from "./ConditionModalSegment.vue"
 import * as z from "zod"
@@ -14,11 +14,14 @@ import ChoiceCard from "./ChoiceCard.vue"
 import VocabularyModal from "./VocabularyModal.vue"
 import { useRootStore } from "../../stores/root"
 
-const emit = defineEmits(["add", "close"])
+const emit = defineEmits(["add", "edit", "close"])
 
-const props = defineProps(["opened"])
+const props = defineProps(["opened", "payload"])
 
 const rootStore = useRootStore()
+
+const getDefaultPayload = () =>
+  props.payload ? props.payload : makeEmptyPayload()
 
 const makeEmptyPayload = (
   type: FieldType = "string",
@@ -38,7 +41,7 @@ const makeEmptyPayload = (
   validation: {},
 })
 
-const payload = ref<SurveyField>(makeEmptyPayload())
+const payload = ref<SurveyField>(getDefaultPayload())
 
 const optionsSource = ref<"manual" | "vocabulary">("manual")
 const selectedVocabularyCode = ref<string>("")
@@ -118,15 +121,20 @@ const onVocabularyChange = (code: string) => {
   payload.value.vocabulary = code || undefined
 }
 
-const addField = () => {
+const saveField = () => {
   try {
     validator.parse(payload.value)
     const emitValue = { ...payload.value }
-    payload.value = makeEmptyPayload()
-    optionsSource.value = "manual"
-    selectedVocabularyCode.value = ""
-    conditionSegment.value?.reset()
-    emit("add", emitValue)
+    if (isEditMode.value) {
+      emit("edit", emitValue)
+    } else {
+      payload.value = makeEmptyPayload()
+      optionsSource.value = "manual"
+      selectedVocabularyCode.value = ""
+      conditionSegment.value?.reset()
+      emit("add", emitValue)
+    }
+    formErrors.value = undefined
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
@@ -148,7 +156,30 @@ const removeOption = (option: DsfrSelectOption) => {
   )
 }
 
+const isEditMode = computed(() => !!props.payload)
+
 const conditionSegment = ref<InstanceType<typeof ConditionModalSegment>>()
+
+watch(
+  () => props.opened,
+  async (opened) => {
+    if (!opened) return
+    formErrors.value = undefined
+    if (props.payload) {
+      payload.value = JSON.parse(JSON.stringify(props.payload))
+      optionsSource.value = props.payload.vocabulary ? "vocabulary" : "manual"
+      selectedVocabularyCode.value = props.payload.vocabulary ?? ""
+      await nextTick()
+      conditionSegment.value?.loadCondition(props.payload.condition)
+    } else {
+      payload.value = makeEmptyPayload()
+      optionsSource.value = "manual"
+      selectedVocabularyCode.value = ""
+      await nextTick()
+      conditionSegment.value?.reset()
+    }
+  }
+)
 
 const close = () => {
   if (formErrors.value?.fieldErrors) formErrors.value.fieldErrors = undefined
@@ -518,7 +549,7 @@ const close = () => {
     <!-- Footer -->
     <template v-slot:footer>
       <div class="flex justify-end w-full">
-        <DsfrButton label="Ajouter" @click="addField" />
+        <DsfrButton :label="isEditMode ? 'Modifier' : 'Ajouter'" @click="saveField" />
       </div>
     </template>
   </DsfrModal>

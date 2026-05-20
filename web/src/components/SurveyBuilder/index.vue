@@ -124,6 +124,16 @@ const addField = async (field: SurveyField) => {
   await forceTabsHeightRecalc()
 }
 
+const editField = async (updatedField: SurveyField) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((f) =>
+      f.id === updatedField.id ? updatedField : f
+    ),
+  }
+  await forceTabsHeightRecalc()
+}
+
 const removeField = async (fieldId: string) => {
   schema.value = {
     ...schema.value,
@@ -311,6 +321,7 @@ const updatePageTitle = (title: any, index: number) => {
                 @move-up="moveFieldUp(field.id)"
                 @move-down="moveFieldDown(field.id)"
                 @delete="removeField(field.id)"
+                @edit="(f) => editField(f)"
                 @add-sub-field="(subField) => addSubField(field.id, subField)"
                 @remove-sub-field="
                   (subFieldId) => removeSubField(field.id, subFieldId)

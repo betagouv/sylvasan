@@ -36,6 +36,7 @@ const { field } = defineProps<{
 }>()
 const emit = defineEmits([
   "delete",
+  "edit",
   "moveUp",
   "moveDown",
   "addSubField",
@@ -45,6 +46,7 @@ const emit = defineEmits([
 ])
 
 const confirmDeleteOpened = ref(false)
+const editModalOpened = ref(false)
 const subFieldModalOpened = ref(false)
 
 const confirmDeleteActions: DsfrButtonProps[] = [
@@ -238,7 +240,9 @@ const formatDate = (isoString: string): string => {
       </div>
     </div>
 
-    <div class="self-center end">
+    <div class="self-center end flex flex-col gap-2">
+      <DsfrButton icon="ri-edit-line" @click="editModalOpened = true" secondary icon-only label="Modifier le champ" />
+
       <DsfrButton
         icon="ri-delete-bin-line"
         @click="confirmDeleteOpened = true"
@@ -246,6 +250,13 @@ const formatDate = (isoString: string): string => {
         icon-only
       />
     </div>
+
+    <NewFieldModal
+      :opened="editModalOpened"
+      :payload="field"
+      @edit="(f) => { emit('edit', f); editModalOpened = false }"
+      @close="editModalOpened = false"
+    />
 
     <DsfrModal
       :opened="confirmDeleteOpened"
