@@ -14,7 +14,7 @@ export const getEmptyValue = (field: SurveyField): any => {
     select: "",
     checkboxes: Array(),
     switch: false,
-    radio: Array(),
+    radio: "",
     date: "",
     array: Array(),
     autocomplete: "",
