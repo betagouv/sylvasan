@@ -30,9 +30,10 @@ const resolvedVocabulary = computed(() =>
     : undefined
 )
 
-const { field } = defineProps<{
+const { field, fieldIds } = defineProps<{
   field: SurveyField
   depth?: number
+  fieldIds?: string[]
 }>()
 const emit = defineEmits([
   "delete",
@@ -234,6 +235,7 @@ const formatDate = (isoString: string): string => {
         <NewFieldModal
           :opened="subFieldModalOpened"
           :exclude-widgets="['array']"
+          :field-ids="field.fields?.map((f) => f.id) ?? []"
           @add="handleAddSubField"
           @close="subFieldModalOpened = false"
         />
@@ -254,6 +256,7 @@ const formatDate = (isoString: string): string => {
     <NewFieldModal
       :opened="editModalOpened"
       :payload="field"
+      :field-ids="fieldIds"
       @edit="(f) => { emit('edit', f); editModalOpened = false }"
       @close="editModalOpened = false"
     />

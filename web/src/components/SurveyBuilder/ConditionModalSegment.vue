@@ -11,6 +11,10 @@ const emit = defineEmits<{
   "update:modelValue": [value: Condition | undefined]
 }>()
 
+const props = defineProps<{
+  fieldIds?: string[]
+}>()
+
 type ConditionRow = {
   id: number
   field: string
@@ -132,7 +136,14 @@ defineExpose({ reset, loadCondition })
       :key="row.id"
       class="flex gap-3 items-end mb-3 border border-gray-300 px-4 pt-2 mt-2 rounded"
     >
-      <DsfrInputGroup class="mb-0! grow">
+      <DsfrSelect
+        v-if="props.fieldIds?.length"
+        label="Champ"
+        :options="props.fieldIds.map((id) => ({ text: id, value: id }))"
+        :model-value="row.field"
+        @update:model-value="(v: string) => (row.field = v)"
+      />
+      <DsfrInputGroup v-else class="mb-0! grow">
         <DsfrInput
           label-visible
           label="Id du champ"

@@ -16,7 +16,11 @@ import { useRootStore } from "../../stores/root"
 
 const emit = defineEmits(["add", "edit", "close"])
 
-const props = defineProps(["opened", "payload"])
+const props = defineProps<{
+  opened?: boolean
+  payload?: SurveyField
+  fieldIds?: string[]
+}>()
 
 const rootStore = useRootStore()
 
@@ -543,13 +547,17 @@ const close = () => {
     <hr />
     <ConditionModalSegment
       ref="conditionSegment"
+      :field-ids="props.fieldIds?.filter?.((id) => id !== payload.id)"
       @update:model-value="payload.condition = $event"
     />
 
     <!-- Footer -->
     <template v-slot:footer>
       <div class="flex justify-end w-full">
-        <DsfrButton :label="isEditMode ? 'Modifier' : 'Ajouter'" @click="saveField" />
+        <DsfrButton
+          :label="isEditMode ? 'Modifier' : 'Ajouter'"
+          @click="saveField"
+        />
       </div>
     </template>
   </DsfrModal>

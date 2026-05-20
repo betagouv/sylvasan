@@ -318,6 +318,7 @@ const updatePageTitle = (title: any, index: number) => {
                 v-for="field in index === activeTab ? activePageFields : []"
                 :key="`card-${field.id}`"
                 :field="field"
+                :field-ids="activePageFields.map((f) => f.id)"
                 @move-up="moveFieldUp(field.id)"
                 @move-down="moveFieldDown(field.id)"
                 @delete="removeField(field.id)"
@@ -350,6 +351,7 @@ const updatePageTitle = (title: any, index: number) => {
       <NewFieldModal
         @add="(f) => addField(f)"
         :opened="modalOpened"
+        :field-ids="activePageFields.map((f) => f.id)"
         @close="closeModal"
       />
     </div>
