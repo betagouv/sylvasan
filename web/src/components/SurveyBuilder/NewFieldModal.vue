@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue"
 import type { SurveyField, FieldWidget, FieldType } from "@shared-types/survey"
+import ConditionModalSegment from "./ConditionModalSegment.vue"
 import * as z from "zod"
 import { ZodError } from "zod"
 import { DsfrInputGroup } from "@gouvminint/vue-dsfr"
@@ -124,6 +125,7 @@ const addField = () => {
     payload.value = makeEmptyPayload()
     optionsSource.value = "manual"
     selectedVocabularyCode.value = ""
+    conditionSegment.value?.reset()
     emit("add", emitValue)
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
@@ -146,6 +148,8 @@ const removeOption = (option: DsfrSelectOption) => {
   )
 }
 
+const conditionSegment = ref<InstanceType<typeof ConditionModalSegment>>()
+
 const close = () => {
   if (formErrors.value?.fieldErrors) formErrors.value.fieldErrors = undefined
   emit("close")
@@ -154,7 +158,6 @@ const close = () => {
 
 <template>
   <DsfrModal :opened="props.opened" @close="close" size="xl">
-    <h3 class="fr-text--md">Nouveau champ</h3>
     <div class="md:flex gap-6">
       <DsfrSelect
         @update:modelValue="(value: FieldWidget) => assignWidgetAndType(value)"
@@ -504,6 +507,13 @@ const close = () => {
     <div v-else>
       <DsfrNotice type="warning" title="Pas encore disponible" />
     </div>
+
+    <!-- Affichage conditionnel -->
+    <hr />
+    <ConditionModalSegment
+      ref="conditionSegment"
+      @update:model-value="payload.condition = $event"
+    />
 
     <!-- Footer -->
     <template v-slot:footer>
