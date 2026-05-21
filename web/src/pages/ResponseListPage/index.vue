@@ -118,8 +118,12 @@ const updateCreatedAfter = (value: string) =>
 const updateCreatedBefore = (value: string) =>
   updateQuery({ created_before: value, page: 1 })
 
-const exportJson = () => { window.location.href = exportJsonUrl.value }
-const exportCsv = () => { window.location.href = exportCsvUrl.value }
+const exportJson = () => {
+  window.location.href = exportJsonUrl.value
+}
+const exportCsv = () => {
+  window.location.href = exportCsvUrl.value
+}
 
 watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
 </script>
@@ -159,6 +163,9 @@ watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
           icon="ri-table-3"
           @click="exportCsv"
         />
+        <p v-if="data?.count" class="fr-text--sm text-stone-500 mb-0!">
+          {{ data.count }} réponses au total
+        </p>
       </div>
     </div>
     <div v-if="isFetching" class="flex justify-center my-20">
