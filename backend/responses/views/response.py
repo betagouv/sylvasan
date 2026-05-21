@@ -21,8 +21,8 @@ class ResponsePagination(LimitOffsetPagination):
 
 
 class ResponseFilterSet(django_filters.FilterSet):
-    created_after = django_filters.DateFilter(field_name="creation_date", lookup_expr="gte")
-    created_before = django_filters.DateFilter(field_name="creation_date", lookup_expr="lte")
+    created_after = django_filters.DateTimeFilter(field_name="creation_date", lookup_expr="gte")
+    created_before = django_filters.DateTimeFilter(field_name="creation_date", lookup_expr="lte")
 
     class Meta:
         model = Response
