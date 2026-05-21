@@ -16,13 +16,12 @@ const props = defineProps<{
 }>()
 
 type ConditionRow = {
-  id: number
+  id: string
   field: string
   operator: ConditionOperator
   valueRaw: string
 }
 
-let nextRowId = 0
 const conditionRows = ref<ConditionRow[]>([])
 const logicalOperator = ref<LogicalOperator>("and")
 
@@ -68,7 +67,7 @@ watch(logicalOperator, syncCondition)
 
 const addConditionRow = () =>
   conditionRows.value.push({
-    id: nextRowId++,
+    id: crypto.randomUUID(),
     field: "",
     operator: "eq",
     valueRaw: "",
@@ -96,7 +95,7 @@ const loadCondition = (condition: Condition | undefined) => {
   if ("conditions" in condition) {
     logicalOperator.value = condition.operator
     conditionRows.value = condition.conditions.map((c) => ({
-      id: nextRowId++,
+      id: crypto.randomUUID(),
       field: (c as SimpleCondition).field,
       operator: (c as SimpleCondition).operator,
       valueRaw: serializeConditionValue((c as SimpleCondition).value),
@@ -105,7 +104,7 @@ const loadCondition = (condition: Condition | undefined) => {
     logicalOperator.value = "and"
     conditionRows.value = [
       {
-        id: nextRowId++,
+        id: crypto.randomUUID(),
         field: condition.field,
         operator: condition.operator,
         valueRaw: serializeConditionValue(condition.value),

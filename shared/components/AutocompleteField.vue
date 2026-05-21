@@ -39,6 +39,12 @@ const select = (entry: VocabularyEntry) => {
   highlightedIndex.value = -1
 }
 
+// Si le modelValue est pre-rempli on selectionne l'option
+if (!!modelValue.value) {
+  const selectedEntry = props.entries.find((x) => x.code === modelValue.value)
+  if (selectedEntry) select(selectedEntry)
+}
+
 const onFocus = () => {
   query.value = selectedLabel.value
   isOpen.value = true
