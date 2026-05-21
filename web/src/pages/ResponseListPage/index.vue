@@ -6,7 +6,9 @@
     "title": "Réponses à mes enquêtes",
     "defaultQueryParams": {
       "page": 1,
-      "limit": 2
+      "limit": 2,
+      "created_after": "",
+      "created_before": ""
     }
   }
 }
@@ -18,6 +20,8 @@ import { useApiFetch } from "../../utils/data-fetching"
 import type { ResponseDisplay } from "@shared-types/response"
 import { useRouter, useRoute } from "vue-router"
 import ProgressSpinner from "../../components/ProgressSpinner.vue"
+import PaginationSizeSelect from "./PaginationSizeSelect.vue"
+import DateRangeFilter from "./DateRangeFilter.vue"
 
 const router = useRouter()
 const route = useRoute()
@@ -25,10 +29,20 @@ const route = useRoute()
 const limit = computed(() => parseInt(route.query.limit as string))
 const page = computed(() => parseInt(route.query.page as string))
 const offset = computed(() => (page.value - 1) * limit.value)
-
-const url = computed(
-  () => `/responses/?limit=${limit.value}&offset=${offset.value}`
+const createdAfter = computed(() => (route.query.created_after as string) ?? "")
+const createdBefore = computed(
+  () => (route.query.created_before as string) ?? ""
 )
+
+const url = computed(() => {
+  const params = new URLSearchParams({
+    limit: String(limit.value),
+    offset: String(offset.value),
+  })
+  if (createdAfter.value) params.set("created_after", createdAfter.value)
+  if (createdBefore.value) params.set("created_before", createdBefore.value)
+  return `/responses/?${params.toString()}`
+})
 
 type PaginatedResponse = { count: number; results: ResponseDisplay[] }
 
@@ -79,11 +93,18 @@ const headers = [
   { text: "Date de création", headerAttrs: { id: "th-creation-date" } },
 ]
 
-const updatePage = (newPage: number) => updateQuery({ page: newPage + 1 })
 const updateQuery = (newQuery: Record<string, string | number>) =>
   router.push({ query: { ...route.query, ...newQuery } })
 
-watch([page, limit], fetchSearchResults)
+const updateLimit = (newValue: number) =>
+  updateQuery({ limit: newValue, page: 1 })
+const updatePage = (newPage: number) => updateQuery({ page: newPage + 1 })
+const updateCreatedAfter = (value: string) =>
+  updateQuery({ created_after: value, page: 1 })
+const updateCreatedBefore = (value: string) =>
+  updateQuery({ created_before: value, page: 1 })
+
+watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
 </script>
 
 <template>
@@ -91,6 +112,19 @@ watch([page, limit], fetchSearchResults)
     <DsfrBreadcrumb
       :links="[{ to: '/dashboard', text: 'Dashboard' }, { text: 'Réponses' }]"
     />
+    <div class="border mb-2 rounded border-gray-300 p-4 flex gap-4 items-end">
+      <DateRangeFilter
+        :created-after="createdAfter"
+        :created-before="createdBefore"
+        @update:created-after="updateCreatedAfter"
+        @update:created-before="updateCreatedBefore"
+      />
+      <div class="grow"></div>
+      <PaginationSizeSelect
+        :modelValue="limit"
+        @update:modelValue="updateLimit"
+      />
+    </div>
     <div v-if="isFetching" class="flex justify-center my-20">
       <ProgressSpinner />
     </div>
@@ -99,7 +133,7 @@ watch([page, limit], fetchSearchResults)
       class="border rounded border-slate-200 p-10 mb-10"
     >
       <p class="text-stone-500 italic mb-0!">
-        Aucune réponse reçue pour le moment.
+        Pas de réponse avec ces paramètres
       </p>
     </div>
     <template v-else-if="data?.results.length">

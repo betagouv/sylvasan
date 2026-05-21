@@ -100,6 +100,20 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/ResponseListPage/DateRangeFilter': RouteRecordInfo<
+      '/ResponseListPage/DateRangeFilter',
+      '/ResponseListPage/DateRangeFilter',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/ResponseListPage/PaginationSizeSelect': RouteRecordInfo<
+      '/ResponseListPage/PaginationSizeSelect',
+      '/ResponseListPage/PaginationSizeSelect',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/ResponsePage/': RouteRecordInfo<
       '/ResponsePage/',
       '/response/:id',
@@ -205,6 +219,18 @@ declare module 'vue-router/auto-routes' {
     'src/pages/ResponseListPage/index.vue': {
       routes:
         | '/ResponseListPage/'
+      views:
+        | never
+    }
+    'src/pages/ResponseListPage/DateRangeFilter.vue': {
+      routes:
+        | '/ResponseListPage/DateRangeFilter'
+      views:
+        | never
+    }
+    'src/pages/ResponseListPage/PaginationSizeSelect.vue': {
+      routes:
+        | '/ResponseListPage/PaginationSizeSelect'
       views:
         | never
     }
