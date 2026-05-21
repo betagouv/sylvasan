@@ -138,12 +138,19 @@ watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
     </div>
     <template v-else-if="data?.results.length">
       <DsfrTable :rows="rows" :headers="headers" />
-      <DsfrPagination
-        v-if="totalPages > 1"
-        :pages="pages"
-        :current-page="page - 1"
-        @update:currentPage="updatePage"
-      />
+      <div class="flex" v-if="totalPages > 1">
+        <DsfrPagination
+          :pages="pages"
+          :current-page="page - 1"
+          @update:currentPage="updatePage"
+        />
+        <div class="grow"></div>
+        <div>
+          <p v-if="data.count" class="fr-text--sm text-stone-500">
+            {{ data.count }} réponses au total
+          </p>
+        </div>
+      </div>
     </template>
   </div>
 </template>
