@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, watch, nextTick } from "vue"
 import type { SurveyField, FieldWidget, FieldType } from "@shared-types/survey"
+import ConditionModalSegment from "./ConditionModalSegment.vue"
 import * as z from "zod"
 import { ZodError } from "zod"
 import { DsfrInputGroup } from "@gouvminint/vue-dsfr"
@@ -13,11 +14,18 @@ import ChoiceCard from "./ChoiceCard.vue"
 import VocabularyModal from "./VocabularyModal.vue"
 import { useRootStore } from "../../stores/root"
 
-const emit = defineEmits(["add", "close"])
+const emit = defineEmits(["add", "edit", "close"])
 
-const props = defineProps(["opened"])
+const props = defineProps<{
+  opened?: boolean
+  payload?: SurveyField
+  fieldIds?: string[]
+}>()
 
 const rootStore = useRootStore()
+
+const getDefaultPayload = () =>
+  props.payload ? props.payload : makeEmptyPayload()
 
 const makeEmptyPayload = (
   type: FieldType = "string",
@@ -37,7 +45,7 @@ const makeEmptyPayload = (
   validation: {},
 })
 
-const payload = ref<SurveyField>(makeEmptyPayload())
+const payload = ref<SurveyField>(getDefaultPayload())
 
 const optionsSource = ref<"manual" | "vocabulary">("manual")
 const selectedVocabularyCode = ref<string>("")
@@ -67,7 +75,7 @@ const validator = z
     type: z.string().min(1, "Ce champ ne peut pas être vide"),
     label: z.string().min(1, "Ce champ ne peut pas être vide"),
     id: z.string().min(1, "Ce champ ne peut pas être vide"),
-    validation: z.object({ min: z.any(), max: z.any() }).optional(),
+    validation: z.object({ min: z.any().optional(), max: z.any().optional() }).optional(),
   })
   .superRefine((data, ctx) => {
     // Validation que min est inférieur à max pour les champs numériques
@@ -99,7 +107,14 @@ const assignWidgetAndType = (option: FieldWidget) => {
   if (!mapping) return
   optionsSource.value = "manual"
   selectedVocabularyCode.value = ""
-  payload.value = makeEmptyPayload(mapping.type, mapping.widget)
+  payload.value = {
+    ...makeEmptyPayload(mapping.type, mapping.widget),
+    ...{
+      id: payload.value.id,
+      label: payload.value.label,
+      required: payload.value.required,
+    },
+  }
 }
 
 const onOptionsSourceChange = (source: string | number | boolean) => {
@@ -117,15 +132,22 @@ const onVocabularyChange = (code: string) => {
   payload.value.vocabulary = code || undefined
 }
 
-const addField = () => {
+const saveField = () => {
   try {
     validator.parse(payload.value)
     const emitValue = { ...payload.value }
-    payload.value = makeEmptyPayload()
-    optionsSource.value = "manual"
-    selectedVocabularyCode.value = ""
-    emit("add", emitValue)
+    if (isEditMode.value) {
+      emit("edit", emitValue)
+    } else {
+      payload.value = makeEmptyPayload()
+      optionsSource.value = "manual"
+      selectedVocabularyCode.value = ""
+      conditionSegment.value?.reset()
+      emit("add", emitValue)
+    }
+    formErrors.value = undefined
   } catch (error) {
+    console.error(error)
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
 }
@@ -146,6 +168,31 @@ const removeOption = (option: DsfrSelectOption) => {
   )
 }
 
+const isEditMode = computed(() => !!props.payload)
+
+const conditionSegment = ref<InstanceType<typeof ConditionModalSegment>>()
+
+watch(
+  () => props.opened,
+  async (opened) => {
+    if (!opened) return
+    formErrors.value = undefined
+    if (props.payload) {
+      payload.value = JSON.parse(JSON.stringify(props.payload))
+      optionsSource.value = props.payload.vocabulary ? "vocabulary" : "manual"
+      selectedVocabularyCode.value = props.payload.vocabulary ?? ""
+      await nextTick()
+      conditionSegment.value?.loadCondition(props.payload.condition)
+    } else {
+      payload.value = makeEmptyPayload()
+      optionsSource.value = "manual"
+      selectedVocabularyCode.value = ""
+      await nextTick()
+      conditionSegment.value?.reset()
+    }
+  }
+)
+
 const close = () => {
   if (formErrors.value?.fieldErrors) formErrors.value.fieldErrors = undefined
   emit("close")
@@ -154,7 +201,6 @@ const close = () => {
 
 <template>
   <DsfrModal :opened="props.opened" @close="close" size="xl">
-    <h3 class="fr-text--md">Nouveau champ</h3>
     <div class="md:flex gap-6">
       <DsfrSelect
         @update:modelValue="(value: FieldWidget) => assignWidgetAndType(value)"
@@ -505,10 +551,21 @@ const close = () => {
       <DsfrNotice type="warning" title="Pas encore disponible" />
     </div>
 
+    <!-- Affichage conditionnel -->
+    <hr />
+    <ConditionModalSegment
+      ref="conditionSegment"
+      :field-ids="props.fieldIds?.filter?.((id) => id !== payload.id)"
+      @update:model-value="payload.condition = $event"
+    />
+
     <!-- Footer -->
     <template v-slot:footer>
       <div class="flex justify-end w-full">
-        <DsfrButton label="Ajouter" @click="addField" />
+        <DsfrButton
+          :label="isEditMode ? 'Modifier' : 'Ajouter'"
+          @click="saveField"
+        />
       </div>
     </template>
   </DsfrModal>

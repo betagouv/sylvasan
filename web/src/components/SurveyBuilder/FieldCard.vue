@@ -13,6 +13,7 @@ import type { WidgetData } from "./mappings"
 import NewFieldModal from "./NewFieldModal.vue"
 import { useRootStore } from "../../stores/root"
 import VocabularyModal from "./VocabularyModal.vue"
+import { conditionsText } from "@shared-utils/survey"
 
 const rootStore = useRootStore()
 
@@ -30,12 +31,14 @@ const resolvedVocabulary = computed(() =>
     : undefined
 )
 
-const { field } = defineProps<{
+const { field, fieldIds } = defineProps<{
   field: SurveyField
   depth?: number
+  fieldIds?: string[]
 }>()
 const emit = defineEmits([
   "delete",
+  "edit",
   "moveUp",
   "moveDown",
   "addSubField",
@@ -45,6 +48,7 @@ const emit = defineEmits([
 ])
 
 const confirmDeleteOpened = ref(false)
+const editModalOpened = ref(false)
 const subFieldModalOpened = ref(false)
 
 const confirmDeleteActions: DsfrButtonProps[] = [
@@ -110,6 +114,13 @@ const formatDate = (isoString: string): string => {
         </p>
         <div class="grow"></div>
         <div class="font-mono text-gray-400">{{ field.id }}</div>
+      </div>
+
+      <div v-if="field.condition" class="flex items-center">
+        <div>
+          <DsfrTag small label="Visibilité conditionnelle" />
+        </div>
+        <DsfrTooltip :content="conditionsText(field.condition)" />
       </div>
 
       <!-- Champ text / numérique -->
@@ -232,13 +243,22 @@ const formatDate = (isoString: string): string => {
         <NewFieldModal
           :opened="subFieldModalOpened"
           :exclude-widgets="['array']"
+          :field-ids="field.fields?.map((f) => f.id) ?? []"
           @add="handleAddSubField"
           @close="subFieldModalOpened = false"
         />
       </div>
     </div>
 
-    <div class="self-center end">
+    <div class="self-center end flex flex-col gap-2">
+      <DsfrButton
+        icon="ri-edit-line"
+        @click="editModalOpened = true"
+        secondary
+        icon-only
+        label="Modifier le champ"
+      />
+
       <DsfrButton
         icon="ri-delete-bin-line"
         @click="confirmDeleteOpened = true"
@@ -246,6 +266,19 @@ const formatDate = (isoString: string): string => {
         icon-only
       />
     </div>
+
+    <NewFieldModal
+      :opened="editModalOpened"
+      :payload="field"
+      :field-ids="fieldIds"
+      @edit="
+        (f) => {
+          emit('edit', f)
+          editModalOpened = false
+        }
+      "
+      @close="editModalOpened = false"
+    />
 
     <DsfrModal
       :opened="confirmDeleteOpened"

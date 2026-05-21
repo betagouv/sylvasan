@@ -4,6 +4,7 @@ import type {
   SurveySchema,
   SurveyField,
   SurveyPage,
+  Condition,
 } from "@shared-types/survey"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import NewFieldModal from "./NewFieldModal.vue"
@@ -121,6 +122,51 @@ const addField = async (field: SurveyField) => {
     ),
   }
   closeModal()
+  await forceTabsHeightRecalc()
+}
+
+const renameConditionField = (
+  condition: Condition | undefined,
+  oldId: string,
+  newId: string
+): Condition | undefined => {
+  if (!condition) return undefined
+  if ("conditions" in condition) {
+    return {
+      ...condition,
+      conditions: condition.conditions.map(
+        (c) => renameConditionField(c, oldId, newId) as Condition
+      ),
+    }
+  }
+  return condition.field === oldId ? { ...condition, field: newId } : condition
+}
+
+const editField = async (updatedField: SurveyField, oldField: SurveyField) => {
+  const idChanged = updatedField.id !== oldField.id
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((f) => {
+      if (f.id === oldField.id) return updatedField
+      if (!idChanged) return f
+      return {
+        ...f,
+        condition: renameConditionField(
+          f.condition,
+          oldField.id,
+          updatedField.id
+        ),
+      }
+    }),
+    pages: idChanged
+      ? schema.value.pages?.map((p) => ({
+          ...p,
+          fields: p.fields.map((fid) =>
+            fid === oldField.id ? updatedField.id : fid
+          ),
+        }))
+      : schema.value.pages,
+  }
   await forceTabsHeightRecalc()
 }
 
@@ -308,9 +354,11 @@ const updatePageTitle = (title: any, index: number) => {
                 v-for="field in index === activeTab ? activePageFields : []"
                 :key="`card-${field.id}`"
                 :field="field"
+                :field-ids="activePageFields.map((f) => f.id)"
                 @move-up="moveFieldUp(field.id)"
                 @move-down="moveFieldDown(field.id)"
                 @delete="removeField(field.id)"
+                @edit="(f) => editField(f, field)"
                 @add-sub-field="(subField) => addSubField(field.id, subField)"
                 @remove-sub-field="
                   (subFieldId) => removeSubField(field.id, subFieldId)
@@ -339,6 +387,7 @@ const updatePageTitle = (title: any, index: number) => {
       <NewFieldModal
         @add="(f) => addField(f)"
         :opened="modalOpened"
+        :field-ids="activePageFields.map((f) => f.id)"
         @close="closeModal"
       />
     </div>

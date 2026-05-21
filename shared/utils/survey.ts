@@ -1,4 +1,10 @@
-import type { SurveyField, FieldWidget } from "../types/survey"
+import type {
+  SurveyField,
+  FieldWidget,
+  Condition,
+  SimpleCondition,
+  ConditionOperator,
+} from "../types/survey"
 
 export const getEmptyValue = (field: SurveyField): any => {
   if (!field.ui?.widget) return ""
@@ -8,7 +14,7 @@ export const getEmptyValue = (field: SurveyField): any => {
     select: "",
     checkboxes: Array(),
     switch: false,
-    radio: Array(),
+    radio: "",
     date: "",
     array: Array(),
     autocomplete: "",
@@ -60,4 +66,67 @@ export const resolveFieldValue = (
   }
 
   return String(raw)
+}
+
+export function evaluateCondition(
+  condition: Condition,
+  formData: Record<string, unknown>
+): boolean {
+  // Condition composée
+  if ("conditions" in condition) {
+    if (condition.operator === "and") {
+      return condition.conditions.every((c) => evaluateCondition(c, formData))
+    } else {
+      return condition.conditions.some((c) => evaluateCondition(c, formData))
+    }
+  }
+
+  // Condition simple
+  const fieldValue = formData[condition.field]
+  switch (condition.operator) {
+    case "eq":
+      return fieldValue === condition.value
+    case "neq":
+      return fieldValue !== condition.value
+    case "in":
+      return Array.isArray(condition.value)
+        ? condition.value.includes(fieldValue)
+        : false
+    case "not_in":
+      return Array.isArray(condition.value)
+        ? !condition.value.includes(fieldValue)
+        : true
+    case "contains":
+      return Array.isArray(fieldValue) && fieldValue.includes(condition.value)
+    case "not_contains":
+      return !Array.isArray(fieldValue) || !fieldValue.includes(condition.value)
+    default:
+      return true
+  }
+}
+
+const operatorLabel: Record<ConditionOperator, string> = {
+  eq: "=",
+  neq: "≠",
+  in: "dans",
+  not_in: "pas dans",
+  contains: "contient",
+  not_contains: "ne contient pas",
+}
+
+const formatSimpleCondition = (c: SimpleCondition): string => {
+  const val = Array.isArray(c.value) ? c.value.join(", ") : String(c.value)
+  return `« ${c.field} » ${operatorLabel[c.operator]} « ${val} »`
+}
+
+const formatCondition = (condition: Condition): string => {
+  if ("conditions" in condition) {
+    const sep = condition.operator === "and" ? " ET " : " OU "
+    return condition.conditions.map(formatCondition).join(sep)
+  }
+  return formatSimpleCondition(condition)
+}
+
+export const conditionsText = (condition: Condition): string => {
+  return "Affiché si : " + formatCondition(condition)
 }
