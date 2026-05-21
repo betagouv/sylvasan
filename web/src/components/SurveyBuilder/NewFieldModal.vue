@@ -75,7 +75,7 @@ const validator = z
     type: z.string().min(1, "Ce champ ne peut pas être vide"),
     label: z.string().min(1, "Ce champ ne peut pas être vide"),
     id: z.string().min(1, "Ce champ ne peut pas être vide"),
-    validation: z.object({ min: z.any(), max: z.any() }).optional(),
+    validation: z.object({ min: z.any().optional(), max: z.any().optional() }).optional(),
   })
   .superRefine((data, ctx) => {
     // Validation que min est inférieur à max pour les champs numériques
@@ -147,6 +147,7 @@ const saveField = () => {
     }
     formErrors.value = undefined
   } catch (error) {
+    console.error(error)
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
   }
 }

@@ -201,7 +201,9 @@
             "eq",
             "neq",
             "in",
-            "not_in"
+            "not_in",
+            "contains",
+            "not_contains"
           ],
           "type": "string"
         },

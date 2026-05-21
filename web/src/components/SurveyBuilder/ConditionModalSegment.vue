@@ -28,6 +28,8 @@ const logicalOperator = ref<LogicalOperator>("and")
 const operatorOptions = [
   { text: "est égal à (=)", value: "eq" },
   { text: "est différent de (≠)", value: "neq" },
+  { text: "contient (multi-sélection)", value: "contains" },
+  { text: "ne contient pas (multi-sélection)", value: "not_contains" },
 ]
 
 const logicalOperatorOptions = [

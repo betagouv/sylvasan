@@ -96,6 +96,10 @@ export function evaluateCondition(
       return Array.isArray(condition.value)
         ? !condition.value.includes(fieldValue)
         : true
+    case "contains":
+      return Array.isArray(fieldValue) && fieldValue.includes(condition.value)
+    case "not_contains":
+      return Array.isArray(fieldValue) && !fieldValue.includes(condition.value)
     default:
       return true
   }
@@ -106,6 +110,8 @@ const operatorLabel: Record<ConditionOperator, string> = {
   neq: "≠",
   in: "dans",
   not_in: "pas dans",
+  contains: "contient",
+  not_contains: "ne contient pas",
 }
 
 const formatSimpleCondition = (c: SimpleCondition): string => {

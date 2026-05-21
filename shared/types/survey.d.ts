@@ -1,6 +1,13 @@
 export type FieldType = "string" | "number" | "boolean" | "array" | "object"
 
-export type ConditionOperator = "eq" | "neq" | "in" | "not_in"
+export type ConditionOperator =
+  | "eq" // field === value
+  | "neq" // field !== value
+  | "in" // value.includes(field)  — field is one of a list
+  | "not_in" // !value.includes(field)
+  | "contains" // field.includes(value)  — field array contains an item
+  | "not_contains" // !field.includes(value)
+
 export type LogicalOperator = "and" | "or"
 
 export interface SimpleCondition {
