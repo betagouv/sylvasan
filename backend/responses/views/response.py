@@ -1,12 +1,28 @@
 from django.db.models import Q
 
+from django_filters import rest_framework as django_filters
 from organisations.models import Membership, MembershipType
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 
 from responses.models import Response
 from responses.permissions import CanCreateResponse
 from responses.serializers import FullResponseSerializer, ResponseDisplaySerializer, ResponseSerializer
+
+
+class ResponsePagination(LimitOffsetPagination):
+    default_limit = 20
+    max_limit = 100
+
+
+class ResponseFilterSet(django_filters.FilterSet):
+    submitted_after = django_filters.DateTimeFilter(field_name="submission_date", lookup_expr="gte")
+    submitted_before = django_filters.DateTimeFilter(field_name="submission_date", lookup_expr="lte")
+
+    class Meta:
+        model = Response
+        fields = []
 
 
 class ResponseQuerySetMixin:
@@ -30,6 +46,12 @@ class ResponseQuerySetMixin:
 
 
 class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
+    pagination_class = ResponsePagination
+    filter_backends = [
+        django_filters.DjangoFilterBackend,
+    ]
+    filterset_class = ResponseFilterSet
+
     def get_serializer_class(self):
         if self.request.method == "GET":
             return ResponseDisplaySerializer

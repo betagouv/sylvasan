@@ -3,33 +3,71 @@
   "path": "/reponses",
   "meta": {
     "authenticationRequired": true,
-    "title": "Réponses à mes enquêtes"
+    "title": "Réponses à mes enquêtes",
+    "defaultQueryParams": {
+      "page": 1,
+      "limit": 2
+    }
   }
 }
 </route>
 
 <script setup lang="ts">
+import { computed, watch } from "vue"
 import { useApiFetch } from "../../utils/data-fetching"
-import { computed } from "vue"
 import type { ResponseDisplay } from "@shared-types/response"
+import { useRouter, useRoute } from "vue-router"
+import ProgressSpinner from "../../components/ProgressSpinner.vue"
 
-const { data: responses } = useApiFetch("/responses/").get().json()
+const router = useRouter()
+const route = useRoute()
+
+const limit = computed(() => parseInt(route.query.limit as string))
+const page = computed(() => parseInt(route.query.page as string))
+const offset = computed(() => (page.value - 1) * limit.value)
+
+const url = computed(
+  () => `/responses/?limit=${limit.value}&offset=${offset.value}`
+)
+
+type PaginatedResponse = { count: number; results: ResponseDisplay[] }
+
+const { data, execute, isFetching } = useApiFetch(url)
+  .get()
+  .json<PaginatedResponse>()
+
+const fetchSearchResults = async () => {
+  await execute()
+  // <- Gestion d'erreur
+}
+
+const totalPages = computed(() =>
+  data.value ? Math.ceil(data.value.count / limit.value) : 0
+)
+
+const pages = computed(() =>
+  Array.from({ length: totalPages.value }, (_, i) => ({
+    label: String(i + 1),
+    title: `Page ${i + 1}`,
+    href: `${route.path}?page=${i + 1}`,
+  }))
+)
 
 const rows = computed(() =>
-  responses.value?.map((response: ResponseDisplay) => ({
+  (data.value?.results ?? []).map((response: ResponseDisplay) => ({
     rowData: [
       response.id,
       {
         component: "router-link",
-        text: `${response.survey.title}`,
+        text: response.survey.title,
         class: "font-bold",
         to: { name: "/ResponsePage/", params: { id: response.id } },
       },
       `${response.respondant?.firstName} ${response.respondant?.lastName}`,
-      `${new Date(response.creationDate).toLocaleDateString("fr-FR", {
+      new Date(response.creationDate).toLocaleDateString("fr-FR", {
         day: "numeric",
         month: "long",
-      })}`,
+      }),
     ],
   }))
 )
@@ -40,6 +78,12 @@ const headers = [
   { text: "Répondant", headerAttrs: { id: "th-respondent" } },
   { text: "Date de création", headerAttrs: { id: "th-creation-date" } },
 ]
+
+const updatePage = (newPage: number) => updateQuery({ page: newPage + 1 })
+const updateQuery = (newQuery: Record<string, string | number>) =>
+  router.push({ query: { ...route.query, ...newQuery } })
+
+watch([page, limit], fetchSearchResults)
 </script>
 
 <template>
@@ -47,15 +91,26 @@ const headers = [
     <DsfrBreadcrumb
       :links="[{ to: '/dashboard', text: 'Dashboard' }, { text: 'Réponses' }]"
     />
+    <div v-if="isFetching" class="flex justify-center my-20">
+      <ProgressSpinner />
+    </div>
     <div
-      v-if="responses && !responses.length"
+      v-else-if="data && !data.results.length"
       class="border rounded border-slate-200 p-10 mb-10"
     >
       <p class="text-stone-500 italic mb-0!">
         Aucune réponse reçue pour le moment.
       </p>
     </div>
-    <DsfrTable v-else :rows="rows" :headers="headers" />
+    <template v-else-if="data?.results.length">
+      <DsfrTable :rows="rows" :headers="headers" />
+      <DsfrPagination
+        v-if="totalPages > 1"
+        :pages="pages"
+        :current-page="page - 1"
+        @update:currentPage="updatePage"
+      />
+    </template>
   </div>
 </template>
 

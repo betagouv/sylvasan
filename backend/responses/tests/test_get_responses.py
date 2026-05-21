@@ -11,6 +11,9 @@ from responses.factories import ResponseFactory
 
 
 class TestGetResponses(APITestCase):
+    def get_results(self, response):
+        return response.json()["results"]
+
     def test_unauthenticated_cannot_list_responses(self):
         """
         Un·e utilisateur·ice non authentifié·e reçoit une 401
@@ -26,7 +29,7 @@ class TestGetResponses(APITestCase):
         ResponseFactory()
         response = self.client.get(reverse("response_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), [])
+        self.assertEqual(self.get_results(response), [])
 
     @authenticate
     def test_responder_sees_their_own_responses(self):
@@ -41,9 +44,9 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        json_response = response.json()
-        self.assertEqual(len(json_response), 1)
-        self.assertEqual(json_response[0]["id"], survey_response.id)
+        results = self.get_results(response)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], survey_response.id)
 
     @authenticate
     def test_responder_cannot_see_other_users_responses(self):
@@ -58,7 +61,7 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()), 0)
+        self.assertEqual(len(self.get_results(response)), 0)
 
     @authenticate
     def test_responder_cannot_see_responses_from_other_org(self):
@@ -80,9 +83,9 @@ class TestGetResponses(APITestCase):
         # La réponse appartient bien à l'utilisateur, même si la personne n'a plus le role dans cet
         # organisation, la réponse est renvoyée.
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        json_response = response.json()
-        self.assertEqual(len(json_response), 1)
-        self.assertEqual(json_response[0]["id"], survey_response.id)
+        results = self.get_results(response)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], survey_response.id)
 
     # Role MANAGER
 
@@ -101,7 +104,7 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        ids = [r["id"] for r in response.json()]
+        ids = [r["id"] for r in self.get_results(response)]
         self.assertIn(survey_response_a.id, ids)
         self.assertIn(survey_response_b.id, ids)
 
@@ -120,10 +123,9 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        json_response = response.json()
-
-        self.assertEqual(len(json_response), 1)
-        self.assertEqual(json_response[0]["id"], survey_response.id)
+        results = self.get_results(response)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], survey_response.id)
 
     @authenticate
     def test_org_manager_cannot_see_responses_from_other_org(self):
@@ -138,7 +140,7 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()), 0)
+        self.assertEqual(len(self.get_results(response)), 0)
 
     @authenticate
     def test_pole_manager_sees_responses_for_their_pole(self):
@@ -154,9 +156,9 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        json_response = response.json()
-        self.assertEqual(len(json_response), 1)
-        self.assertEqual(json_response[0]["id"], survey_response.id)
+        results = self.get_results(response)
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], survey_response.id)
 
     @authenticate
     def test_pole_manager_cannot_see_responses_from_other_pole(self):
@@ -172,7 +174,7 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()), 0)
+        self.assertEqual(len(self.get_results(response)), 0)
 
     @authenticate
     def test_pole_manager_cannot_see_org_level_responses(self):
@@ -187,8 +189,7 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.json()), 0)
+        self.assertEqual(len(self.get_results(response)), 0)
 
     # Role ADMIN
 
@@ -206,7 +207,7 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        ids = [r["id"] for r in response.json()]
+        ids = [r["id"] for r in self.get_results(response)]
         self.assertIn(survey_response_a.id, ids)
         self.assertIn(survey_response_b.id, ids)
 
@@ -234,7 +235,7 @@ class TestGetResponses(APITestCase):
         response = self.client.get(reverse("response_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        ids = [r["id"] for r in response.json()]
+        ids = [r["id"] for r in self.get_results(response)]
 
         # Visible : sa propre réponse dans org A et toutes les réponses de org B
         self.assertIn(ma_survey_response_org_a.id, ids)
