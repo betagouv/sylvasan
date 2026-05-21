@@ -116,7 +116,7 @@ const formatDate = (isoString: string): string => {
         <div class="font-mono text-gray-400">{{ field.id }}</div>
       </div>
 
-      <div v-if="field.condition" class="flex flex-column items-center">
+      <div v-if="field.condition" class="flex items-center">
         <div>
           <DsfrTag small label="Visibilité conditionnelle" />
         </div>

@@ -41,8 +41,6 @@ const parseConditionValue = (raw: string): unknown => {
   if (raw === "true") return true
   if (raw === "false") return false
   if (raw === "null") return null
-  const n = Number(raw)
-  if (raw.trim() !== "" && !isNaN(n)) return n
   return raw
 }
 

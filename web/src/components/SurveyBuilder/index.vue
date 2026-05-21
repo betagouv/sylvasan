@@ -4,6 +4,7 @@ import type {
   SurveySchema,
   SurveyField,
   SurveyPage,
+  Condition,
 } from "@shared-types/survey"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import NewFieldModal from "./NewFieldModal.vue"
@@ -124,13 +125,39 @@ const addField = async (field: SurveyField) => {
   await forceTabsHeightRecalc()
 }
 
+const renameConditionField = (
+  condition: Condition | undefined,
+  oldId: string,
+  newId: string
+): Condition | undefined => {
+  if (!condition) return undefined
+  if ("conditions" in condition) {
+    return {
+      ...condition,
+      conditions: condition.conditions.map(
+        (c) => renameConditionField(c, oldId, newId) as Condition
+      ),
+    }
+  }
+  return condition.field === oldId ? { ...condition, field: newId } : condition
+}
+
 const editField = async (updatedField: SurveyField, oldField: SurveyField) => {
   const idChanged = updatedField.id !== oldField.id
   schema.value = {
     ...schema.value,
-    fields: schema.value.fields.map((f) =>
-      f.id === oldField.id ? updatedField : f
-    ),
+    fields: schema.value.fields.map((f) => {
+      if (f.id === oldField.id) return updatedField
+      if (!idChanged) return f
+      return {
+        ...f,
+        condition: renameConditionField(
+          f.condition,
+          oldField.id,
+          updatedField.id
+        ),
+      }
+    }),
     pages: idChanged
       ? schema.value.pages?.map((p) => ({
           ...p,

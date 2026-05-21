@@ -40,7 +40,7 @@ const select = (entry: VocabularyEntry) => {
 }
 
 // Si le modelValue est pre-rempli on selectionne l'option
-if (!!modelValue.value) {
+if (modelValue.value) {
   const selectedEntry = props.entries.find((x) => x.code === modelValue.value)
   if (selectedEntry) select(selectedEntry)
 }

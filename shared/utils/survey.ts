@@ -99,7 +99,7 @@ export function evaluateCondition(
     case "contains":
       return Array.isArray(fieldValue) && fieldValue.includes(condition.value)
     case "not_contains":
-      return Array.isArray(fieldValue) && !fieldValue.includes(condition.value)
+      return !Array.isArray(fieldValue) || !fieldValue.includes(condition.value)
     default:
       return true
   }

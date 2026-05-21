@@ -53,7 +53,7 @@ const goNext = () => {
 const goPrev = () => {
   if (currentStep.value > 1) currentStep.value--
 }
-const formData = reactive<Record<string, string>>(
+const formData = reactive<Record<string, unknown>>(
   Object.fromEntries(
     props.schema.fields.map((field: SurveyField) => {
       const hasPrefillValue = props.prefillData?.hasOwnProperty(field.id)
