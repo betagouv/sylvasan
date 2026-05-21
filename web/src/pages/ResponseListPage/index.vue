@@ -34,14 +34,28 @@ const createdBefore = computed(
   () => (route.query.created_before as string) ?? ""
 )
 
-const url = computed(() => {
-  const params = new URLSearchParams({
-    limit: String(limit.value),
-    offset: String(offset.value),
-  })
+const filterParams = computed(() => {
+  const params = new URLSearchParams()
   if (createdAfter.value) params.set("created_after", createdAfter.value)
   if (createdBefore.value) params.set("created_before", createdBefore.value)
+  return params
+})
+
+const url = computed(() => {
+  const params = new URLSearchParams(filterParams.value)
+  params.set("limit", String(limit.value))
+  params.set("offset", String(offset.value))
   return `/responses/?${params.toString()}`
+})
+
+const base = import.meta.env.VITE_API_ROOT
+const exportJsonUrl = computed(() => {
+  const q = filterParams.value.toString()
+  return `${base}/responses/export/json/${q ? `?${q}` : ""}`
+})
+const exportCsvUrl = computed(() => {
+  const q = filterParams.value.toString()
+  return `${base}/responses/export/csv/${q ? `?${q}` : ""}`
 })
 
 type PaginatedResponse = { count: number; results: ResponseDisplay[] }
@@ -104,6 +118,9 @@ const updateCreatedAfter = (value: string) =>
 const updateCreatedBefore = (value: string) =>
   updateQuery({ created_before: value, page: 1 })
 
+const exportJson = () => { window.location.href = exportJsonUrl.value }
+const exportCsv = () => { window.location.href = exportCsvUrl.value }
+
 watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
 </script>
 
@@ -112,18 +129,37 @@ watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
     <DsfrBreadcrumb
       :links="[{ to: '/dashboard', text: 'Dashboard' }, { text: 'Réponses' }]"
     />
-    <div class="border mb-2 rounded border-gray-300 p-4 flex gap-4 items-end">
+    <div
+      class="filters border mb-2 rounded border-gray-300 p-4 flex gap-4 gap-8"
+    >
       <DateRangeFilter
         :created-after="createdAfter"
         :created-before="createdBefore"
         @update:created-after="updateCreatedAfter"
         @update:created-before="updateCreatedBefore"
       />
-      <div class="grow"></div>
+
       <PaginationSizeSelect
         :modelValue="limit"
         @update:modelValue="updateLimit"
       />
+      <div class="grow"></div>
+      <div class="flex flex-col gap-4">
+        <DsfrButton
+          label="Exporter JSON"
+          secondary
+          size="sm"
+          icon="ri-file-code-line"
+          @click="exportJson"
+        />
+        <DsfrButton
+          label="Exporter CSV"
+          secondary
+          size="sm"
+          icon="ri-table-3"
+          @click="exportCsv"
+        />
+      </div>
     </div>
     <div v-if="isFetching" class="flex justify-center my-20">
       <ProgressSpinner />
@@ -158,5 +194,9 @@ watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
 <style scoped>
 .fr-table :deep(table) {
   @apply table!;
+}
+
+.filters :deep(.fr-input-group) {
+  margin-bottom: 0;
 }
 </style>

@@ -1,8 +1,12 @@
+import csv
+import json
+
 from django.db.models import Q
+from django.http import HttpResponse
 
 from django_filters import rest_framework as django_filters
 from organisations.models import Membership, MembershipType
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics import GenericAPIView, ListAPIView, ListCreateAPIView, RetrieveAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 
@@ -88,3 +92,58 @@ class ResponseFullListAPIView(ListAPIView):
         if not has_responder_membership:
             return Response.objects.none()
         return Response.objects.filter(respondant=user)
+
+
+class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    filter_backends = [django_filters.DjangoFilterBackend]
+    filterset_class = ResponseFilterSet
+    serializer_class = FullResponseSerializer
+    pagination_class = None
+
+    def get_filtered_queryset(self):
+        queryset = self.get_queryset()
+        return self.filter_queryset(queryset)
+
+
+class ResponseJsonExportView(ResponseExportBaseView):
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_filtered_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        content = json.dumps(serializer.data, ensure_ascii=False, indent=2)
+        response = HttpResponse(content, content_type="application/json")
+        response["Content-Disposition"] = 'attachment; filename="reponses.json"'
+        return response
+
+
+class ResponseCsvExportView(ResponseExportBaseView):
+    def get(self, request, *args, **kwargs):
+        import io
+
+        queryset = self.get_filtered_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["ID", "Enquête", "Répondant", "Statut", "Date de création", "Données"])
+        for item in serializer.data:
+            respondant = item.get("respondant") or {}
+            first = respondant.get("firstName", "")
+            last = respondant.get("lastName", "")
+            writer.writerow(
+                [
+                    item["id"],
+                    item["survey"]["title"],
+                    f"{first} {last}".strip(),
+                    item["status"],
+                    item["creation_date"],
+                    json.dumps(item["data"], ensure_ascii=False),
+                ]
+            )
+
+        response = HttpResponse(
+            output.getvalue().encode("utf-8-sig"),
+            content_type="text/csv; charset=utf-8-sig",
+        )
+        response["Content-Disposition"] = 'attachment; filename="reponses.csv"'
+        return response
