@@ -6,6 +6,7 @@ from django.http import HttpResponse
 
 from django_filters import rest_framework as django_filters
 from organisations.models import Membership, MembershipType
+from rest_framework.filters import OrderingFilter
 from rest_framework.generics import GenericAPIView, ListAPIView, ListCreateAPIView, RetrieveAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
@@ -53,7 +54,9 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
     pagination_class = ResponsePagination
     filter_backends = [
         django_filters.DjangoFilterBackend,
+        OrderingFilter,
     ]
+    ordering_fields = ["creation_date", "id"]
     filterset_class = ResponseFilterSet
 
     def get_serializer_class(self):
@@ -96,10 +99,15 @@ class ResponseFullListAPIView(ListAPIView):
 
 class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
     permission_classes = [IsAuthenticated]
-    filter_backends = [django_filters.DjangoFilterBackend]
+    filter_backends = [
+        django_filters.DjangoFilterBackend,
+        OrderingFilter,
+    ]
     filterset_class = ResponseFilterSet
     serializer_class = FullResponseSerializer
     pagination_class = None
+
+    ordering_fields = ["creation_date", "id"]
 
     def get_filtered_queryset(self):
         queryset = self.get_queryset()

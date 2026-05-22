@@ -107,6 +107,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/ResponseListPage/OrderingFilter': RouteRecordInfo<
+      '/ResponseListPage/OrderingFilter',
+      '/ResponseListPage/OrderingFilter',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/ResponseListPage/PaginationSizeSelect': RouteRecordInfo<
       '/ResponseListPage/PaginationSizeSelect',
       '/ResponseListPage/PaginationSizeSelect',
@@ -225,6 +232,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/ResponseListPage/DateRangeFilter.vue': {
       routes:
         | '/ResponseListPage/DateRangeFilter'
+      views:
+        | never
+    }
+    'src/pages/ResponseListPage/OrderingFilter.vue': {
+      routes:
+        | '/ResponseListPage/OrderingFilter'
       views:
         | never
     }

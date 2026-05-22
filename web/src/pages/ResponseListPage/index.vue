@@ -8,7 +8,8 @@
       "page": 1,
       "limit": 2,
       "created_after": "",
-      "created_before": ""
+      "created_before": "",
+      "triage": ""
     }
   }
 }
@@ -22,6 +23,7 @@ import { useRouter, useRoute } from "vue-router"
 import ProgressSpinner from "../../components/ProgressSpinner.vue"
 import PaginationSizeSelect from "./PaginationSizeSelect.vue"
 import DateRangeFilter from "./DateRangeFilter.vue"
+import OrderingFilter from "./OrderingFilter.vue"
 
 const router = useRouter()
 const route = useRoute()
@@ -33,11 +35,13 @@ const createdAfter = computed(() => (route.query.created_after as string) ?? "")
 const createdBefore = computed(
   () => (route.query.created_before as string) ?? ""
 )
+const ordering = computed(() => route.query.triage as string)
 
 const filterParams = computed(() => {
   const params = new URLSearchParams()
   if (createdAfter.value) params.set("created_after", createdAfter.value)
   if (createdBefore.value) params.set("created_before", createdBefore.value)
+  params.set("ordering", String(ordering.value))
   return params
 })
 
@@ -117,6 +121,7 @@ const updateCreatedAfter = (value: string) =>
   updateQuery({ created_after: value, page: 1 })
 const updateCreatedBefore = (value: string) =>
   updateQuery({ created_before: value, page: 1 })
+const updateOrdering = (value: string) => updateQuery({ triage: value })
 
 const exportJson = () => {
   window.location.href = exportJsonUrl.value
@@ -125,7 +130,7 @@ const exportCsv = () => {
   window.location.href = exportCsvUrl.value
 }
 
-watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
+watch([page, limit, createdAfter, createdBefore, ordering], fetchSearchResults)
 </script>
 
 <template>
@@ -142,11 +147,16 @@ watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
         @update:created-after="updateCreatedAfter"
         @update:created-before="updateCreatedBefore"
       />
-
-      <PaginationSizeSelect
-        :modelValue="limit"
-        @update:modelValue="updateLimit"
-      />
+      <div class="flex flex-col gap-4">
+        <PaginationSizeSelect
+          :modelValue="limit"
+          @update:modelValue="updateLimit"
+        />
+        <OrderingFilter
+          :model-value="ordering"
+          @update:modelValue="updateOrdering"
+        />
+      </div>
       <div class="grow"></div>
       <div class="flex flex-col gap-4">
         <DsfrButton
@@ -204,6 +214,9 @@ watch([page, limit, createdAfter, createdBefore], fetchSearchResults)
 }
 
 .filters :deep(.fr-input-group) {
+  margin-bottom: 0;
+}
+.filters :deep(.fr-select-group) {
   margin-bottom: 0;
 }
 </style>
