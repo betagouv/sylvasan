@@ -96,7 +96,7 @@ const onKeydown = (e: KeyboardEvent) => {
     const entry = filtered.value[highlightedIndex.value]
     if (entry) select(entry)
   } else if (e.key === "Escape") {
-    close()
+    ;(e.target as HTMLElement).blur()
   }
 }
 </script>
