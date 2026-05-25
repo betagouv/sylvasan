@@ -17,13 +17,18 @@ const isOpen = ref(false)
 const highlightedIndex = ref(-1)
 const listRef = ref<HTMLUListElement | null>(null)
 
+const normalize = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+
 const filtered = computed(() => {
   if (!query.value) return props.entries.slice(0, 20)
-  const q = query.value.toLowerCase()
+  const q = normalize(query.value)
   return props.entries
     .filter(
-      (e) =>
-        e.label.toLowerCase().includes(q) || e.code.toLowerCase().includes(q)
+      (e) => normalize(e.label).includes(q) || normalize(e.code).includes(q)
     )
     .slice(0, 20)
 })
@@ -91,7 +96,7 @@ const onKeydown = (e: KeyboardEvent) => {
     const entry = filtered.value[highlightedIndex.value]
     if (entry) select(entry)
   } else if (e.key === "Escape") {
-    close()
+    ;(e.target as HTMLElement).blur()
   }
 }
 </script>
