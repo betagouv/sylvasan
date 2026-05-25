@@ -6,7 +6,7 @@
     "title": "Réponses à mes enquêtes",
     "defaultQueryParams": {
       "page": 1,
-      "limit": 2,
+      "limit": 10,
       "created_after": "",
       "created_before": "",
       "triage": ""
