@@ -22,7 +22,7 @@ idna==3.14
 jmespath==1.1.0
 joserfc==1.6.5
 packaging==26.2
-pipdeptree==2.35.2
+pipdeptree==2.35.3
 psycopg2==2.9.12
 pycparser==3.0
 PyJWT==2.12.1
