@@ -1,3 +1,6 @@
+import base64
+import os
+
 from django.urls import reverse
 
 from common.utils import authenticate
@@ -8,6 +11,13 @@ from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
 
 from responses.factories import ResponseFactory
+
+_TEST_FILES = os.path.join(os.path.dirname(__file__), "files")
+
+
+def _b64(filename):
+    with open(os.path.join(_TEST_FILES, filename), "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
 
 
 def response_url(response_id):
@@ -191,3 +201,59 @@ class TestRetrieveResponse(APITestCase):
         response = self.client.get(response_url(other_response.id), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class TestRetrieveResponseWithImages(APITestCase):
+    @authenticate
+    def test_retrieve_returns_thumbnail_references_not_base64(self):
+        """
+        Récupérer une réponse avec des images retourne des objets {id, thumbnail}
+        dans le champ data, sans les données base64 originales
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(
+            organisation=org,
+            json_schema={"fields": [{"id": "photo_arbre", "ui": {"widget": "image"}}]},
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        create = self.client.post(
+            reverse("response_list_create"),
+            {"survey": survey.id, "data": {"photo_arbre": [{"file": _b64("Blue.jpg")}]}},
+            format="json",
+        )
+        self.assertEqual(create.status_code, status.HTTP_201_CREATED)
+
+        retrieve = self.client.get(response_url(create.json()["id"]), format="json")
+
+        self.assertEqual(retrieve.status_code, status.HTTP_200_OK)
+        photo_data = retrieve.json()["data"]["photoArbre"]
+        self.assertEqual(len(photo_data), 1)
+        self.assertIn("id", photo_data[0])
+        self.assertIn("thumbnail", photo_data[0])
+        self.assertNotIn("file", photo_data[0])
+
+    @authenticate
+    def test_retrieve_thumbnail_is_valid_base64(self):
+        """
+        La miniature dans la réponse récupérée est une chaîne base64 valide
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(
+            organisation=org,
+            json_schema={"fields": [{"id": "photo_arbre", "ui": {"widget": "image"}}]},
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        create = self.client.post(
+            reverse("response_list_create"),
+            {"survey": survey.id, "data": {"photo_arbre": [{"file": _b64("Green.jpg")}]}},
+            format="json",
+        )
+        self.assertEqual(create.status_code, status.HTTP_201_CREATED)
+
+        retrieve = self.client.get(response_url(create.json()["id"]), format="json")
+
+        thumbnail = retrieve.json()["data"]["photoArbre"][0]["thumbnail"]
+        decoded = base64.b64decode(thumbnail)
+        self.assertGreater(len(decoded), 0)
