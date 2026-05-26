@@ -9,7 +9,7 @@
 </route>
 
 <script setup lang="ts">
-import { useApiFetch } from "../../utils/data-fetching"
+import { useApiFetch } from "../utils/data-fetching"
 import { computed } from "vue"
 import type { SurveyDisplay } from "@shared-types/api"
 
@@ -23,7 +23,7 @@ const rows = computed(() =>
         component: "router-link",
         text: survey.title,
         class: "font-bold",
-        to: { name: "/SurveyPage/", params: { id: survey.id } },
+        to: { name: "/SurveyPage", params: { id: survey.id } },
       },
       survey.organisationName,
       survey.poleName,

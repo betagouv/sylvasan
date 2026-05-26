@@ -10,13 +10,13 @@
 
 <script setup lang="ts">
 import { useRoute } from "vue-router"
-import { useApiFetch } from "../../utils/data-fetching"
+import { useApiFetch } from "../utils/data-fetching.ts"
 import type { SurveyField } from "@shared-types/survey"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import { resolveFieldValue } from "@shared-utils/survey"
 import { storeToRefs } from "pinia"
-import { useRootStore } from "../../stores/root"
-import MapField from "../../components/MapField.vue"
+import { useRootStore } from "../stores/root.ts"
+import MapField from "../components/MapField.vue"
 
 const route = useRoute()
 const { vocabularies } = storeToRefs(useRootStore())

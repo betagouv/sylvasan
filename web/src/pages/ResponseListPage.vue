@@ -17,13 +17,13 @@
 
 <script setup lang="ts">
 import { computed, watch } from "vue"
-import { useApiFetch } from "../../utils/data-fetching"
+import { useApiFetch } from "../utils/data-fetching.ts"
 import type { ResponseDisplay } from "@shared-types/response"
 import { useRouter, useRoute } from "vue-router"
-import ProgressSpinner from "../../components/ProgressSpinner.vue"
-import PaginationSizeSelect from "./PaginationSizeSelect.vue"
-import DateRangeFilter from "./DateRangeFilter.vue"
-import OrderingFilter from "./OrderingFilter.vue"
+import ProgressSpinner from "../components/ProgressSpinner.vue"
+import PaginationSizeSelect from "../components/ResponseListPage/PaginationSizeSelect.vue"
+import DateRangeFilter from "../components/ResponseListPage/DateRangeFilter.vue"
+import OrderingFilter from "../components/ResponseListPage/OrderingFilter.vue"
 
 const router = useRouter()
 const route = useRoute()
@@ -41,7 +41,7 @@ const filterParams = computed(() => {
   const params = new URLSearchParams()
   if (createdAfter.value) params.set("created_after", createdAfter.value)
   if (createdBefore.value) params.set("created_before", createdBefore.value)
-  params.set("ordering", String(ordering.value))
+  if (ordering.value) params.set("ordering", String(ordering.value))
   return params
 })
 
@@ -93,7 +93,7 @@ const rows = computed(() =>
         component: "router-link",
         text: response.survey.title,
         class: "font-bold",
-        to: { name: "/ResponsePage/", params: { id: response.id } },
+        to: { name: "/ResponsePage", params: { id: response.id } },
       },
       `${response.respondant?.firstName} ${response.respondant?.lastName}`,
       new Date(response.creationDate).toLocaleDateString("fr-FR", {
@@ -138,9 +138,7 @@ watch([page, limit, createdAfter, createdBefore, ordering], fetchSearchResults)
     <DsfrBreadcrumb
       :links="[{ to: '/dashboard', text: 'Dashboard' }, { text: 'Réponses' }]"
     />
-    <div
-      class="filters border mb-2 rounded border-gray-300 p-4 flex gap-4 gap-8"
-    >
+    <div class="filters border mb-2 rounded border-gray-300 p-4 flex gap-8">
       <DateRangeFilter
         :created-after="createdAfter"
         :created-before="createdBefore"

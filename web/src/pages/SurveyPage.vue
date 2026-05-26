@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { useRoute } from "vue-router"
-import { useApiFetch } from "../../utils/data-fetching"
+import { useApiFetch } from "../utils/data-fetching"
 
 const route = useRoute()
 
