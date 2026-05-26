@@ -22,6 +22,7 @@ declare module 'vue-router' {
   interface TypesConfig {
     ParamParsers:
       | never
+    RouteNamedMap: import('vue-router/auto-routes').RouteNamedMap
   }
 }
 
@@ -58,6 +59,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/SurveyCreationPage': RouteRecordInfo<
+      '/SurveyCreationPage',
+      '/creation-enquete',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/DashboardPage': RouteRecordInfo<
       '/DashboardPage',
       '/dashboard',
@@ -68,6 +76,20 @@ declare module 'vue-router/auto-routes' {
     '/PrivacyPolicyPage': RouteRecordInfo<
       '/PrivacyPolicyPage',
       '/donnees-personnelles',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/SurveyPage': RouteRecordInfo<
+      '/SurveyPage',
+      '/enquete/:id',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/SurveyListPage': RouteRecordInfo<
+      '/SurveyListPage',
+      '/enquetes',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -93,36 +115,15 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/ResponseListPage/': RouteRecordInfo<
-      '/ResponseListPage/',
+    '/ResponseListPage': RouteRecordInfo<
+      '/ResponseListPage',
       '/reponses',
       Record<never, never>,
       Record<never, never>,
       | never
     >,
-    '/ResponseListPage/DateRangeFilter': RouteRecordInfo<
-      '/ResponseListPage/DateRangeFilter',
-      '/ResponseListPage/DateRangeFilter',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/ResponseListPage/OrderingFilter': RouteRecordInfo<
-      '/ResponseListPage/OrderingFilter',
-      '/ResponseListPage/OrderingFilter',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/ResponseListPage/PaginationSizeSelect': RouteRecordInfo<
-      '/ResponseListPage/PaginationSizeSelect',
-      '/ResponseListPage/PaginationSizeSelect',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/ResponsePage/': RouteRecordInfo<
-      '/ResponsePage/',
+    '/ResponsePage': RouteRecordInfo<
+      '/ResponsePage',
       '/response/:id',
       Record<never, never>,
       Record<never, never>,
@@ -131,27 +132,6 @@ declare module 'vue-router/auto-routes' {
     '/LoginPage': RouteRecordInfo<
       '/LoginPage',
       '/s-identifier',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/SurveyCreationPage/': RouteRecordInfo<
-      '/SurveyCreationPage/',
-      '/creation-enquete',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/SurveyListPage/': RouteRecordInfo<
-      '/SurveyListPage/',
-      '/enquetes',
-      Record<never, never>,
-      Record<never, never>,
-      | never
-    >,
-    '/SurveyPage/': RouteRecordInfo<
-      '/SurveyPage/',
-      '/enquete/:id',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -193,6 +173,12 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
+    'src/pages/SurveyCreationPage.vue': {
+      routes:
+        | '/SurveyCreationPage'
+      views:
+        | never
+    }
     'src/pages/DashboardPage.vue': {
       routes:
         | '/DashboardPage'
@@ -202,6 +188,18 @@ declare module 'vue-router/auto-routes' {
     'src/pages/PrivacyPolicyPage.vue': {
       routes:
         | '/PrivacyPolicyPage'
+      views:
+        | never
+    }
+    'src/pages/SurveyPage.vue': {
+      routes:
+        | '/SurveyPage'
+      views:
+        | never
+    }
+    'src/pages/SurveyListPage.vue': {
+      routes:
+        | '/SurveyListPage'
       views:
         | never
     }
@@ -223,57 +221,21 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
-    'src/pages/ResponseListPage/index.vue': {
+    'src/pages/ResponseListPage.vue': {
       routes:
-        | '/ResponseListPage/'
+        | '/ResponseListPage'
       views:
         | never
     }
-    'src/pages/ResponseListPage/DateRangeFilter.vue': {
+    'src/pages/ResponsePage.vue': {
       routes:
-        | '/ResponseListPage/DateRangeFilter'
-      views:
-        | never
-    }
-    'src/pages/ResponseListPage/OrderingFilter.vue': {
-      routes:
-        | '/ResponseListPage/OrderingFilter'
-      views:
-        | never
-    }
-    'src/pages/ResponseListPage/PaginationSizeSelect.vue': {
-      routes:
-        | '/ResponseListPage/PaginationSizeSelect'
-      views:
-        | never
-    }
-    'src/pages/ResponsePage/index.vue': {
-      routes:
-        | '/ResponsePage/'
+        | '/ResponsePage'
       views:
         | never
     }
     'src/pages/LoginPage.vue': {
       routes:
         | '/LoginPage'
-      views:
-        | never
-    }
-    'src/pages/SurveyCreationPage/index.vue': {
-      routes:
-        | '/SurveyCreationPage/'
-      views:
-        | never
-    }
-    'src/pages/SurveyListPage/index.vue': {
-      routes:
-        | '/SurveyListPage/'
-      views:
-        | never
-    }
-    'src/pages/SurveyPage/index.vue': {
-      routes:
-        | '/SurveyPage/'
       views:
         | never
     }

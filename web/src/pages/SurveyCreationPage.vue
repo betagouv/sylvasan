@@ -10,13 +10,13 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import SurveyBuilder from "../../components/SurveyBuilder/index.vue"
+import SurveyBuilder from "../components/SurveyBuilder/index.vue"
 import type { SurveySchema } from "@shared-types/survey"
 import { DsfrBreadcrumb } from "@gouvminint/vue-dsfr"
-import { useApiFetch } from "../../utils/data-fetching"
-import { useToastStore } from "../../stores/toast"
+import { useApiFetch } from "../utils/data-fetching.ts"
+import { useToastStore } from "../stores/toast.ts"
 import { useRouter } from "vue-router"
-import { useRootStore } from "../../stores/root"
+import { useRootStore } from "../stores/root.ts"
 import * as z from "zod"
 import { ZodError } from "zod"
 
@@ -172,7 +172,10 @@ const createSurvey = async () => {
     title="Titre de page manquant"
     @close="pageTitleModalOpened = false"
   >
-    <p>Toutes les pages doivent avoir un titre. Veuillez renseigner le titre de chaque page avant de sauvegarder.</p>
+    <p>
+      Toutes les pages doivent avoir un titre. Veuillez renseigner le titre de
+      chaque page avant de sauvegarder.
+    </p>
     <template #footer>
       <div class="flex justify-end w-full">
         <DsfrButton label="OK" @click="pageTitleModalOpened = false" />
