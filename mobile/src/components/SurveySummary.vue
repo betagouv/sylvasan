@@ -5,12 +5,15 @@ import type { Survey, SurveyField } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
 import { resolveFieldValue } from "@shared-utils/survey"
+import { useVocabulariesStore } from "../stores/vocabularies"
 
 const { response, data, survey } = defineProps<{
   response?: ResponseFull | LocalResponse
   data?: Record<string, unknown>
   survey: Survey
 }>()
+
+const { vocabularySets } = useVocabulariesStore()
 
 const isRemote = (res: LocalResponse | ResponseFull): res is ResponseFull =>
   (<ResponseFull>res).id !== undefined
@@ -22,7 +25,7 @@ const fieldLabel = (fieldId: string): string =>
 
 const resolveValue = (fieldId: string, raw: unknown): string => {
   const field = survey.jsonSchema.fields.find((f) => f.id === fieldId)
-  return resolveFieldValue(field, raw)
+  return resolveFieldValue(field, raw, vocabularySets)
 }
 
 const isArrayField = (fieldId: string): boolean =>
@@ -76,9 +79,9 @@ const getSubFields = (fieldId: string): SurveyField[] =>
               </p>
               <p
                 class="font-medium mb-0!"
-                v-if="resolveFieldValue(subField, item[subField.id])"
+                v-if="resolveFieldValue(subField, item[subField.id], vocabularySets)"
               >
-                {{ resolveFieldValue(subField, item[subField.id]) }}
+                {{ resolveFieldValue(subField, item[subField.id], vocabularySets) }}
               </p>
               <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
             </div>

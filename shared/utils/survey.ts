@@ -4,6 +4,7 @@ import type {
   Condition,
   SimpleCondition,
   ConditionOperator,
+  VocabularySet,
 } from "../types/survey"
 
 export const getEmptyValue = (field: SurveyField): any => {
@@ -25,7 +26,8 @@ export const getEmptyValue = (field: SurveyField): any => {
 
 export const resolveFieldValue = (
   field: SurveyField | undefined,
-  raw: unknown
+  raw: unknown,
+  vocabularies: VocabularySet[] = []
 ): string => {
   if (field?.ui?.widget === "switch") {
     if (raw === true) return field.ui.activeText ?? "Oui"
@@ -42,6 +44,12 @@ export const resolveFieldValue = (
   ) {
     const { lat, lon } = raw as { lat: number; lon: number }
     return `Latitude : ${lat}, longitude : ${lon}`
+  }
+
+  if (field?.vocabulary) {
+    const vocabSet = vocabularies.find((v) => v.code === field.vocabulary)
+    const entry = vocabSet?.entries.find((e) => e.code === String(raw))
+    return entry ? `${raw} – ${entry.label}` : String(raw)
   }
 
   const choices = field?.ui?.choices
