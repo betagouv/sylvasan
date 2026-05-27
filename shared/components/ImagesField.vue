@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useId } from "vue"
+import { computed, ref, useId } from "vue"
 import type { SurveyField } from "@shared-types/survey"
 
 type LocalImageItem = { file: string }
@@ -13,6 +13,9 @@ const props = defineProps<{
 
 const modelValue = defineModel<ImageItem[]>({ default: () => [] })
 const inputId = useId()
+const fileInput = ref<HTMLInputElement | null>(null)
+
+const openFilePicker = () => fileInput.value?.click()
 
 const maxImages = computed(() => props.field.validation?.maxItems ?? 5)
 const atMax = computed(() => modelValue.value.length >= maxImages.value)
@@ -34,11 +37,14 @@ const fileToBase64 = (file: File): Promise<LocalImageItem> =>
     reader.readAsDataURL(file)
   })
 
-const handleChange = async (files: FileList) => {
+const handleChange = async (event: Event) => {
+  const files = (event.target as HTMLInputElement).files
+  if (!files) return
   const remaining = maxImages.value - modelValue.value.length
   const toProcess = Array.from(files).slice(0, remaining)
   const newItems = await Promise.all(toProcess.map(fileToBase64))
   modelValue.value = [...modelValue.value, ...newItems]
+  if (fileInput.value) fileInput.value.value = ""
 }
 
 const removeItem = (index: number) => {
@@ -51,7 +57,7 @@ const removeItem = (index: number) => {
     <p class="fr-label mb-1!">{{ field.label }}</p>
     <p v-if="field.ui?.hint" class="fr-hint-text mb-2">{{ field.ui.hint }}</p>
 
-    <div v-if="modelValue.length" class="grid grid-cols-2 gap-3 mb-4">
+    <div v-if="modelValue.length" class="grid grid-cols-2 gap-2 mb-4">
       <div
         v-for="(item, index) in modelValue"
         :key="index"
@@ -69,29 +75,36 @@ const removeItem = (index: number) => {
         >
           <v-icon name="ri-image-line" scale="2" class="text-slate-400" />
         </div>
-        <button
+        <DsfrButton
           v-if="!disabled"
-          type="button"
-          class="absolute top-1 right-1 bg-white rounded-full shadow"
+          icon-only
+          icon="ri-close-circle-fill"
+          class="absolute top-1 right-1 bg-white/80!"
+          secondary
           @click="removeItem(index)"
           :aria-label="`Supprimer la photo ${index + 1}`"
-        >
-          <v-icon
-            name="ri-close-circle-fill"
-            scale="1.4"
-            class="text-red-500 block"
-          />
-        </button>
+        />
       </div>
     </div>
 
-    <DsfrFileUpload
-      v-if="!atMax && !disabled"
-      :id="inputId"
-      :label="`Ajouter une photo (${modelValue.length} / ${maxImages})`"
-      accept="image/*"
-      @change="handleChange"
-    />
+    <template v-if="!atMax && !disabled">
+      <input
+        :id="inputId"
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        multiple
+        class="sr-only"
+        @change="handleChange"
+      />
+      <DsfrButton
+        type="button"
+        secondary
+        icon="ri-image-add-line"
+        :label="`Ajouter une photo (${modelValue.length} / ${maxImages})`"
+        @click="openFilePicker"
+      />
+    </template>
 
     <p v-if="atMax" class="fr-info-text">
       Maximum de {{ maxImages }} photo(s) atteint
