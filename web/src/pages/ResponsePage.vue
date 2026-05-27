@@ -32,7 +32,7 @@ const resolveValue = (fieldId: string, raw: unknown): string => {
   const field = response.value?.survey.jsonSchema.fields.find(
     (f: SurveyField) => f.id === fieldId
   )
-  return resolveFieldValue(field, raw)
+  return resolveFieldValue(field, raw, vocabularies.value)
 }
 
 const isArrayField = (fieldId: string): boolean =>
@@ -95,9 +95,9 @@ const getSubFields = (fieldId: string): SurveyField[] =>
                     </p>
                     <p
                       class="font-medium mb-0!"
-                      v-if="resolveFieldValue(subField, item[subField.id])"
+                      v-if="resolveFieldValue(subField, item[subField.id], vocabularies)"
                     >
-                      {{ resolveFieldValue(subField, item[subField.id]) }}
+                      {{ resolveFieldValue(subField, item[subField.id], vocabularies) }}
                     </p>
                     <p class="italic text-stone-500 mb-0!" v-else>
                       Non renseigné
