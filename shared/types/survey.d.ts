@@ -69,6 +69,7 @@ export type FieldWidget =
   | "array"
   | "autocomplete"
   | "map"
+  | "image"
 
 export interface SurveyPage {
   id: string

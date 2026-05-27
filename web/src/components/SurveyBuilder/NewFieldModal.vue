@@ -75,7 +75,9 @@ const validator = z
     type: z.string().min(1, "Ce champ ne peut pas être vide"),
     label: z.string().min(1, "Ce champ ne peut pas être vide"),
     id: z.string().min(1, "Ce champ ne peut pas être vide"),
-    validation: z.object({ min: z.any().optional(), max: z.any().optional() }).optional(),
+    validation: z
+      .object({ min: z.any().optional(), max: z.any().optional() })
+      .optional(),
   })
   .superRefine((data, ctx) => {
     // Validation que min est inférieur à max pour les champs numériques
@@ -546,13 +548,37 @@ const close = () => {
       </DsfrInputGroup>
     </div>
 
+    <div v-else-if="payload.ui?.widget === 'image'">
+      <div class="flex gap-8">
+        <DsfrInputGroup>
+          <DsfrInput
+            label-visible
+            v-model="payload.ui.hint"
+            v-if="payload.ui"
+            label="Aide"
+            class="max-w-xs"
+          />
+        </DsfrInputGroup>
+        <DsfrInputGroup>
+          <DsfrInput
+            type="number"
+            v-model="payload.validation.maxItems"
+            label="No. max d'éléments"
+            label-visible
+            v-if="payload.validation"
+            placeholder="5"
+          />
+        </DsfrInputGroup>
+      </div>
+    </div>
+
     <!-- Pas encore gérés -->
     <div v-else>
       <DsfrNotice type="warning" title="Pas encore disponible" />
     </div>
 
     <!-- Affichage conditionnel -->
-    <hr />
+    <hr class="mt-4!" />
     <ConditionModalSegment
       ref="conditionSegment"
       :field-ids="props.fieldIds?.filter?.((id) => id !== payload.id)"

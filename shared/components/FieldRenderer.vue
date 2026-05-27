@@ -9,6 +9,7 @@ import type {
 } from "@shared-types/survey"
 import ArrayField from "./ArrayField.vue"
 import AutocompleteField from "./AutocompleteField.vue"
+import ImagesField from "./ImagesField.vue"
 
 const props = defineProps<{
   field: SurveyField
@@ -24,6 +25,13 @@ const modelValue = defineModel<unknown>()
 const arrayModelValue = computed({
   get: () => (modelValue.value as Record<string, unknown>[] | undefined) ?? [],
   set: (val: Record<string, unknown>[]) => {
+    modelValue.value = val
+  },
+})
+
+const imagesModelValue = computed({
+  get: () => (modelValue.value as object[] | undefined) ?? [],
+  set: (val: object[]) => {
     modelValue.value = val
   },
 })
@@ -186,6 +194,13 @@ const mapValue = computed({
       :hint="field.ui?.hint"
       :disabled="disabled"
       v-model="autocompleteValue"
+    />
+
+    <ImagesField
+      v-else-if="field.ui?.widget === 'image'"
+      :field="field"
+      v-model="imagesModelValue"
+      :disabled="disabled"
     />
 
     <component
