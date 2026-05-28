@@ -72,7 +72,7 @@ Le champ `file_url` (converti en `fileUrl` par `CamelCaseJSONRenderer`) est calc
 
 Les URL S3 sont publiques mais non devinables (nom de fichier basé sur un UUID). Cette approche est commune dans les applications web et est jugée acceptable pour ce contexte.
 
-### 8. Enrichissement dynamique des images à la lecture
+### 6. Enrichissement dynamique des images à la lecture
 
 `FullResponseSerializer.to_representation()` enrichit les champs image à chaque lecture. Pour chaque champ de type `widget: "image"` dans le schéma de l'enquête, les stubs `{"id": X}` du JSONField sont remplacés par la représentation complète issue de `ResponseImageSerializer` :
 
@@ -86,7 +86,7 @@ Les querysets alimentant `FullResponseSerializer` utilisent `select_related("sur
 
 **Raison principale de ce choix** : stocker une représentation figée dans le JSONField crée un couplage entre le format de stockage et la logique de sérialisation. Toute évolution (taille de vignette, format d'URL, ajout de champ) nécessiterait une migration de données. L'enrichissement dynamique découple les deux et garantit que les données servies sont toujours à jour.
 
-### 6. Stockage mobile offline : `@capacitor/filesystem`
+### 7. Stockage mobile offline : `@capacitor/filesystem`
 
 Lors de la sauvegarde d'un brouillon, les images en base64 présentes dans le formulaire sont écrites sur le système de fichiers natif via `@capacitor/filesystem` (`Directory.Data`), et remplacées dans les données du brouillon par des références légères :
 
@@ -105,7 +105,7 @@ La conversion est gérée dans `mobile/src/utils/imageStorage.ts` :
 
 La suppression des fichiers locaux est couplée à la suppression du brouillon (`responses.ts:deleteDraft`) et à la soumission réussie (`responses.ts:submitResponse`) pour éviter les fichiers orphelins.
 
-### 7. Affichage des images locales
+### 8. Affichage des images locales
 
 Avant soumission, les `FilesystemImageItem` sont affichés dans l'interface via `Capacitor.convertFileSrc(path)`, qui traduit un chemin natif en URL accessible par la WebView. Cette conversion n'est jamais appelée dans l'application web (les `FilesystemImageItem` n'y apparaissent jamais).
 

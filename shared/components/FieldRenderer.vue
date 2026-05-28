@@ -31,8 +31,8 @@ const arrayModelValue = computed({
 })
 
 const imagesModelValue = computed({
-  get: () => (modelValue.value as object[] | undefined) ?? [],
-  set: (val: object[]) => {
+  get: () => (modelValue.value as ImageItem[] | undefined) ?? [],
+  set: (val: ImageItem[]) => {
     modelValue.value = val
   },
 })

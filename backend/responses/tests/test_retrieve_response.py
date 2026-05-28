@@ -1,6 +1,7 @@
 import base64
 import os
 
+from django.test.utils import override_settings
 from django.urls import reverse
 
 from common.utils import authenticate
@@ -257,3 +258,29 @@ class TestRetrieveResponseWithImages(APITestCase):
         thumbnail = retrieve.json()["data"]["photoArbre"][0]["thumbnail"]
         decoded = base64.b64decode(thumbnail)
         self.assertGreater(len(decoded), 0)
+
+    @override_settings(HOSTNAME="hostname")
+    @override_settings(SECURE=False)
+    @authenticate
+    def test_retrieve_file_url_is_valid(self):
+        """
+        Le URL du fichier est valide
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(
+            organisation=org,
+            json_schema={"fields": [{"id": "photo_arbre", "ui": {"widget": "image"}}]},
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        create = self.client.post(
+            reverse("response_list_create"),
+            {"survey": survey.id, "data": {"photo_arbre": [{"file": _b64("Green.jpg")}]}},
+            format="json",
+        )
+        self.assertEqual(create.status_code, status.HTTP_201_CREATED)
+
+        retrieve = self.client.get(response_url(create.json()["id"]), format="json")
+
+        file_url = retrieve.json()["data"]["photoArbre"][0]["fileUrl"]
+        self.assertTrue(file_url.startswith("http://hostname"))

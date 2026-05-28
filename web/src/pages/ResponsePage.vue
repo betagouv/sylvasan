@@ -164,6 +164,12 @@ const openViewer = (images: ImageItem[], index: number) => {
                     alt=""
                   />
                   <div
+                    v-else
+                    class="w-full h-full bg-slate-100 flex items-center justify-center"
+                  >
+                    <v-icon name="ri-image-line" scale="2" class="text-slate-400" />
+                  </div>
+                  <div
                     class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center"
                   >
                     <v-icon

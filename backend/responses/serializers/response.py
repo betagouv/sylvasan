@@ -19,6 +19,11 @@ logger = logging.getLogger(__name__)
 MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024  # 2 Mo par image
 
 
+def get_base_url() -> str:
+    scheme = "https" if settings.SECURE else "http"
+    return f"{scheme}://{settings.HOSTNAME}/"
+
+
 class ResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Response
@@ -44,6 +49,9 @@ class ResponseSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _create_images_from_data(response, data, schema):
+        # Notez que cette fonction modifie "data" in-place, après que l'objet Response
+        # est créé. C'est intentionnel mais pas très propre.
+
         modified = False
         for field in schema.get("fields", []):
             if field.get("ui", {}).get("widget") != "image":
@@ -136,11 +144,6 @@ class FullResponseSerializer(serializers.ModelSerializer):
 
         ret["data"] = data
         return ret
-
-
-def get_base_url() -> str:
-    scheme = "https" if settings.SECURE else "http"
-    return f"{scheme}://{settings.HOSTNAME}/"
 
 
 class ResponseImageSerializer(serializers.ModelSerializer):

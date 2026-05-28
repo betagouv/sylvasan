@@ -86,6 +86,8 @@ const compressImage = (file: File): Promise<LocalImageItem> =>
     img.src = objectUrl
   })
 
+const compressing = ref(false)
+
 const handleChange = async (event: Event) => {
   const files = (event.target as HTMLInputElement).files
   if (!files) return
@@ -104,8 +106,6 @@ const handleChange = async (event: Event) => {
 const removeItem = (index: number) => {
   modelValue.value = modelValue.value.filter((_, i) => i !== index)
 }
-
-const compressing = ref(false)
 
 const viewerOpen = ref(false)
 const viewerIndex = ref(0)
