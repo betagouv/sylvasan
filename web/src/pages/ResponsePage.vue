@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../utils/data-fetching.ts"
-import type { SurveyField } from "@shared-types/survey"
+import type { SurveyField, ImageItem } from "@shared-types/survey"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import { resolveFieldValue } from "@shared-utils/survey"
 import { storeToRefs } from "pinia"
@@ -40,10 +40,21 @@ const isArrayField = (fieldId: string): boolean =>
     (f: SurveyField) => f.id === fieldId
   )?.ui?.widget === "array"
 
+const isImageField = (fieldId: string): boolean =>
+  response.value?.survey.jsonSchema.fields.find(
+    (f: SurveyField) => f.id === fieldId
+  )?.ui?.widget === "image"
+
 const getSubFields = (fieldId: string): SurveyField[] =>
   response.value?.survey.jsonSchema.fields.find(
     (f: SurveyField) => f.id === fieldId
   )?.fields ?? []
+
+const imageSrc = (item: ImageItem): string | null => {
+  if ("file" in item) return `data:image/jpeg;base64,${item.file}`
+  if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
+  return null
+}
 </script>
 
 <template>
@@ -95,14 +106,49 @@ const getSubFields = (fieldId: string): SurveyField[] =>
                     </p>
                     <p
                       class="font-medium mb-0!"
-                      v-if="resolveFieldValue(subField, item[subField.id], vocabularies)"
+                      v-if="
+                        resolveFieldValue(
+                          subField,
+                          item[subField.id],
+                          vocabularies
+                        )
+                      "
                     >
-                      {{ resolveFieldValue(subField, item[subField.id], vocabularies) }}
+                      {{
+                        resolveFieldValue(
+                          subField,
+                          item[subField.id],
+                          vocabularies
+                        )
+                      }}
                     </p>
                     <p class="italic text-stone-500 mb-0!" v-else>
                       Non renseigné
                     </p>
                   </div>
+                </div>
+              </div>
+            </template>
+
+            <!-- Champ images -->
+            <template
+              v-else-if="isImageField(entry[0]) && Array.isArray(entry[1])"
+            >
+              <p v-if="!entry[1].length" class="italic text-stone-500 mb-0!">
+                Non renseigné
+              </p>
+              <div v-else class="grid grid-cols-3 gap-2 my-2">
+                <div
+                  v-for="(img, idx) in (entry[1] as ImageItem[])"
+                  :key="idx"
+                  class="aspect-square rounded overflow-hidden border border-slate-200"
+                >
+                  <img
+                    v-if="imageSrc(img)"
+                    :src="imageSrc(img)!"
+                    class="w-full h-full object-cover"
+                    alt=""
+                  />
                 </div>
               </div>
             </template>

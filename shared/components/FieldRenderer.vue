@@ -6,6 +6,7 @@ import type {
   VocabularySet,
   VocabularyEntry,
   MapValue,
+  ImageItem,
 } from "@shared-types/survey"
 import ArrayField from "./ArrayField.vue"
 import AutocompleteField from "./AutocompleteField.vue"
@@ -199,7 +200,7 @@ const mapValue = computed({
     <ImagesField
       v-else-if="field.ui?.widget === 'image'"
       :field="field"
-      v-model="imagesModelValue"
+      v-model="imagesModelValue as ImageItem[]"
       :disabled="disabled"
     />
 

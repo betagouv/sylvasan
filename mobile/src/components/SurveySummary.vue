@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
-import type { Survey, SurveyField } from "@shared-types/survey"
+import type { Survey, SurveyField, ImageItem } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
 import { resolveFieldValue } from "@shared-utils/survey"
@@ -31,8 +31,17 @@ const resolveValue = (fieldId: string, raw: unknown): string => {
 const isArrayField = (fieldId: string): boolean =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.ui?.widget === "array"
 
+const isImageField = (fieldId: string): boolean =>
+  survey.jsonSchema.fields.find((f) => f.id === fieldId)?.ui?.widget === "image"
+
 const getSubFields = (fieldId: string): SurveyField[] =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.fields ?? []
+
+const imageSrc = (item: ImageItem): string | null => {
+  if ("file" in item) return `data:image/jpeg;base64,${item.file}`
+  if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
+  return null
+}
 </script>
 
 <template>
@@ -79,11 +88,36 @@ const getSubFields = (fieldId: string): SurveyField[] =>
               </p>
               <p
                 class="font-medium mb-0!"
-                v-if="resolveFieldValue(subField, item[subField.id], vocabularySets)"
+                v-if="
+                  resolveFieldValue(subField, item[subField.id], vocabularySets)
+                "
               >
-                {{ resolveFieldValue(subField, item[subField.id], vocabularySets) }}
+                {{
+                  resolveFieldValue(subField, item[subField.id], vocabularySets)
+                }}
               </p>
               <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+            </div>
+          </div>
+        </template>
+
+        <!-- Champ images -->
+        <template v-else-if="isImageField(entry[0]) && Array.isArray(entry[1])">
+          <p v-if="!entry[1].length" class="italic mb-0! text-stone-500">
+            Non renseigné
+          </p>
+          <div v-else class="grid grid-cols-4 gap-2 my-2">
+            <div
+              v-for="(img, idx) in (entry[1] as ImageItem[])"
+              :key="idx"
+              class="aspect-square rounded overflow-hidden border border-slate-200"
+            >
+              <img
+                v-if="imageSrc(img)"
+                :src="imageSrc(img)!"
+                class="w-full h-full object-cover"
+                alt=""
+              />
             </div>
           </div>
         </template>

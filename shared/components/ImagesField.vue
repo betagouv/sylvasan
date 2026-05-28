@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, useId } from "vue"
-import type { SurveyField } from "@shared-types/survey"
-
-type LocalImageItem = { file: string }
-type RemoteImageItem = { id: number; thumbnail: string | null }
-type ImageItem = LocalImageItem | RemoteImageItem
+import type {
+  SurveyField,
+  ImageItem,
+  LocalImageItem,
+} from "@shared-types/survey"
 
 const props = defineProps<{
   field: SurveyField
@@ -78,8 +78,8 @@ const removeItem = (index: number) => {
         <DsfrButton
           v-if="!disabled"
           icon-only
-          icon="ri-close-circle-fill"
-          class="absolute top-1 right-1 bg-white/80!"
+          icon="ri-delete-bin-line"
+          class="absolute top-1 right-1 bg-white/90! rounded-full"
           secondary
           @click="removeItem(index)"
           :aria-label="`Supprimer la photo ${index + 1}`"

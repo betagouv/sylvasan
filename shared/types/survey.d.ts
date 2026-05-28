@@ -10,6 +10,10 @@ export type ConditionOperator =
 
 export type LogicalOperator = "and" | "or"
 
+export type LocalImageItem = { file: string }
+export type RemoteImageItem = { id: number; thumbnail: string | null }
+export type ImageItem = LocalImageItem | RemoteImageItem
+
 export interface SimpleCondition {
   field: string
   operator: ConditionOperator
