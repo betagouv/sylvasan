@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
-import type { Survey, SurveyField } from "@shared-types/survey"
+import type { Survey, SurveyField, ImageItem } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
 import { resolveFieldValue } from "@shared-utils/survey"
 import { useVocabulariesStore } from "../stores/vocabularies"
+import ImageViewer from "@shared-components/ImageViewer.vue"
 
 const { response, data, survey } = defineProps<{
   response?: ResponseFull | LocalResponse
@@ -31,8 +32,28 @@ const resolveValue = (fieldId: string, raw: unknown): string => {
 const isArrayField = (fieldId: string): boolean =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.ui?.widget === "array"
 
+const isImageField = (fieldId: string): boolean =>
+  survey.jsonSchema.fields.find((f) => f.id === fieldId)?.ui?.widget === "image"
+
 const getSubFields = (fieldId: string): SurveyField[] =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.fields ?? []
+
+const imageSrc = (item: ImageItem): string | null => {
+  if ("type" in item) return (window as any).Capacitor?.convertFileSrc(item.path) ?? null
+  if ("file" in item) return `data:image/jpeg;base64,${item.file}`
+  if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
+  return null
+}
+
+const viewerOpen = ref(false)
+const viewerImages = ref<ImageItem[]>([])
+const viewerIndex = ref(0)
+
+const openViewer = (images: ImageItem[], index: number) => {
+  viewerImages.value = images
+  viewerIndex.value = index
+  viewerOpen.value = true
+}
 </script>
 
 <template>
@@ -79,11 +100,43 @@ const getSubFields = (fieldId: string): SurveyField[] =>
               </p>
               <p
                 class="font-medium mb-0!"
-                v-if="resolveFieldValue(subField, item[subField.id], vocabularySets)"
+                v-if="
+                  resolveFieldValue(subField, item[subField.id], vocabularySets)
+                "
               >
-                {{ resolveFieldValue(subField, item[subField.id], vocabularySets) }}
+                {{
+                  resolveFieldValue(subField, item[subField.id], vocabularySets)
+                }}
               </p>
               <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+            </div>
+          </div>
+        </template>
+
+        <!-- Champ images -->
+        <template v-else-if="isImageField(entry[0]) && Array.isArray(entry[1])">
+          <p v-if="!entry[1].length" class="italic mb-0! text-stone-500">
+            Non renseigné
+          </p>
+          <div v-else class="grid grid-cols-4 gap-2 my-2">
+            <div
+              v-for="(img, idx) in (entry[1] as ImageItem[])"
+              :key="idx"
+              class="aspect-square rounded overflow-hidden border border-slate-200 cursor-pointer"
+              @click="openViewer(entry[1] as ImageItem[], idx)"
+            >
+              <img
+                v-if="imageSrc(img)"
+                :src="imageSrc(img)!"
+                class="w-full h-full object-cover"
+                alt=""
+              />
+              <div
+                v-else
+                class="w-full h-full bg-slate-100 flex items-center justify-center"
+              >
+                <v-icon name="ri-image-line" scale="2" class="text-slate-400" />
+              </div>
             </div>
           </div>
         </template>
@@ -100,4 +153,11 @@ const getSubFields = (fieldId: string): SurveyField[] =>
       </div>
     </div>
   </div>
+
+  <ImageViewer
+    :images="viewerImages"
+    :startIndex="viewerIndex"
+    :opened="viewerOpen"
+    @close="viewerOpen = false"
+  />
 </template>

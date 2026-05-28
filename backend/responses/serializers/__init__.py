@@ -1,1 +1,7 @@
-from .response import FullResponseSerializer, FullSurveySerializer, ResponseDisplaySerializer, ResponseSerializer
+from .response import (
+    FullResponseSerializer,
+    FullSurveySerializer,
+    ResponseDisplaySerializer,
+    ResponseSerializer,
+    ResponseImageSerializer,
+)

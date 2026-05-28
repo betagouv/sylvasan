@@ -68,4 +68,10 @@ export const typeWidgetMapping: Record<FieldWidget, WidgetData> = {
     label: "Carte / Localisation",
     icon: "ri-map-pin-line",
   },
+  image: {
+    type: "array",
+    widget: "image",
+    label: "Images",
+    icon: "ri-multi-image-fill",
+  },
 }

@@ -20,6 +20,7 @@ export const getEmptyValue = (field: SurveyField): any => {
     array: Array(),
     autocomplete: "",
     map: null,
+    image: Array(),
   }
   return mapping[field.ui.widget]
 }

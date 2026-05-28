@@ -120,7 +120,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div>
-    <p class="fr-label mb-1">
+    <p class="fr-label mb-1!">
       {{ label }}
       <span v-if="required" class="text-[var(--text-default-error)]"> *</span>
       <span v-if="hint" class="fr-hint-text">{{ hint }}</span>

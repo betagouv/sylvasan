@@ -31,3 +31,9 @@ class Response(TimeStampable, Historisable):
 
     def __str__(self):
         return f"{self.survey} – {self.get_status_display()}"
+
+
+class ResponseImage(TimeStampable):
+    response = models.ForeignKey(Response, on_delete=models.CASCADE, related_name="images")
+    file = models.ImageField(upload_to="response_images/%Y/%m/")
+    thumbnail = models.ImageField(upload_to="response_thumbnails/%Y/%m/")

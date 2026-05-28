@@ -197,6 +197,22 @@ const formatDate = (isoString: string): string => {
         </div>
       </div>
 
+      <!-- Champ Carte -->
+      <div v-if="field.ui?.widget === 'map'">
+        <div class="flex gap-2" v-if="field.ui?.hint">
+          <div class="text-gray-500 text-medium">Aide</div>
+          <div>{{ field.ui.hint }}</div>
+        </div>
+      </div>
+
+      <!-- Champ Images -->
+      <div v-if="field.ui?.widget === 'image'">
+        <div class="flex gap-2" v-if="field.ui?.hint">
+          <div class="text-gray-500 text-medium">Aide</div>
+          <div>{{ field.ui.hint }}</div>
+        </div>
+      </div>
+
       <!-- Champ Liste d'objets -->
       <div v-if="field.ui?.widget === 'array'">
         <div class="flex gap-2 mb-1" v-if="field.ui?.addLabel">
