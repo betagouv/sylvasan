@@ -3,6 +3,7 @@ import io
 import logging
 import uuid
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import transaction
 
@@ -109,19 +110,31 @@ class FullResponseSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+def get_base_url() -> str:
+    scheme = "https" if settings.SECURE else "http"
+    return f"{scheme}://{settings.HOSTNAME}/"
+
+
 class ResponseImageSerializer(serializers.ModelSerializer):
     file = serializers.CharField(write_only=True)
     thumbnail = serializers.SerializerMethodField()
+    file_url = serializers.SerializerMethodField()
 
     class Meta:
         model = ResponseImage
-        fields = ("id", "file", "thumbnail")
+        fields = ("id", "file", "thumbnail", "file_url")
 
     def get_thumbnail(self, obj):
         if not obj.thumbnail:
             return None
         with obj.thumbnail.open("rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
+
+    def get_file_url(self, obj):
+        url = obj.file.url
+        if url.startswith("http"):
+            return url
+        return get_base_url().rstrip("/") + url
 
     def validate_file(self, value):
         if len(value) > int(MAX_IMAGE_SIZE_BYTES * 4 / 3):

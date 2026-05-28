@@ -9,10 +9,12 @@
 </route>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../utils/data-fetching.ts"
 import type { SurveyField, ImageItem } from "@shared-types/survey"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
+import ImageViewer from "@shared-components/ImageViewer.vue"
 import { resolveFieldValue } from "@shared-utils/survey"
 import { storeToRefs } from "pinia"
 import { useRootStore } from "../stores/root.ts"
@@ -54,6 +56,16 @@ const imageSrc = (item: ImageItem): string | null => {
   if ("file" in item) return `data:image/jpeg;base64,${item.file}`
   if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
   return null
+}
+
+const viewerOpen = ref(false)
+const viewerImages = ref<ImageItem[]>([])
+const viewerIndex = ref(0)
+
+const openViewer = (images: ImageItem[], index: number) => {
+  viewerImages.value = images
+  viewerIndex.value = index
+  viewerOpen.value = true
 }
 </script>
 
@@ -137,11 +149,12 @@ const imageSrc = (item: ImageItem): string | null => {
               <p v-if="!entry[1].length" class="italic text-stone-500 mb-0!">
                 Non renseigné
               </p>
-              <div v-else class="grid grid-cols-3 gap-2 my-2">
+              <div v-else class="grid grid-cols-7 gap-2 my-2">
                 <div
                   v-for="(img, idx) in (entry[1] as ImageItem[])"
                   :key="idx"
-                  class="aspect-square rounded overflow-hidden border border-slate-200"
+                  class="group aspect-square rounded overflow-hidden border border-slate-200 cursor-pointer relative"
+                  @click="openViewer(entry[1] as ImageItem[], idx)"
                 >
                   <img
                     v-if="imageSrc(img)"
@@ -149,6 +162,16 @@ const imageSrc = (item: ImageItem): string | null => {
                     class="w-full h-full object-cover"
                     alt=""
                   />
+                  <div
+                    class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center"
+                  >
+                    <v-icon
+                      name="ri-search-eye-line"
+                      color="white"
+                      scale="1.5"
+                      class="text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
+                  </div>
                 </div>
               </div>
             </template>
@@ -186,4 +209,11 @@ const imageSrc = (item: ImageItem): string | null => {
       </div>
     </div>
   </div>
+
+  <ImageViewer
+    :images="viewerImages"
+    :startIndex="viewerIndex"
+    :opened="viewerOpen"
+    @close="viewerOpen = false"
+  />
 </template>

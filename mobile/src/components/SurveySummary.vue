@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 import type { Survey, SurveyField, ImageItem } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
 import { resolveFieldValue } from "@shared-utils/survey"
 import { useVocabulariesStore } from "../stores/vocabularies"
+import ImageViewer from "@shared-components/ImageViewer.vue"
 
 const { response, data, survey } = defineProps<{
   response?: ResponseFull | LocalResponse
@@ -41,6 +42,16 @@ const imageSrc = (item: ImageItem): string | null => {
   if ("file" in item) return `data:image/jpeg;base64,${item.file}`
   if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
   return null
+}
+
+const viewerOpen = ref(false)
+const viewerImages = ref<ImageItem[]>([])
+const viewerIndex = ref(0)
+
+const openViewer = (images: ImageItem[], index: number) => {
+  viewerImages.value = images
+  viewerIndex.value = index
+  viewerOpen.value = true
 }
 </script>
 
@@ -110,7 +121,8 @@ const imageSrc = (item: ImageItem): string | null => {
             <div
               v-for="(img, idx) in (entry[1] as ImageItem[])"
               :key="idx"
-              class="aspect-square rounded overflow-hidden border border-slate-200"
+              class="aspect-square rounded overflow-hidden border border-slate-200 cursor-pointer"
+              @click="openViewer(entry[1] as ImageItem[], idx)"
             >
               <img
                 v-if="imageSrc(img)"
@@ -134,4 +146,11 @@ const imageSrc = (item: ImageItem): string | null => {
       </div>
     </div>
   </div>
+
+  <ImageViewer
+    :images="viewerImages"
+    :startIndex="viewerIndex"
+    :opened="viewerOpen"
+    @close="viewerOpen = false"
+  />
 </template>

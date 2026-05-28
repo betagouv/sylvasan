@@ -5,6 +5,7 @@ import type {
   ImageItem,
   LocalImageItem,
 } from "@shared-types/survey"
+import ImageViewer from "./ImageViewer.vue"
 
 const props = defineProps<{
   field: SurveyField
@@ -50,6 +51,14 @@ const handleChange = async (event: Event) => {
 const removeItem = (index: number) => {
   modelValue.value = modelValue.value.filter((_, i) => i !== index)
 }
+
+const viewerOpen = ref(false)
+const viewerIndex = ref(0)
+
+const openViewer = (index: number) => {
+  viewerIndex.value = index
+  viewerOpen.value = true
+}
 </script>
 
 <template>
@@ -61,7 +70,8 @@ const removeItem = (index: number) => {
       <div
         v-for="(item, index) in modelValue"
         :key="index"
-        class="relative rounded overflow-hidden border border-slate-200 aspect-square"
+        class="relative rounded overflow-hidden border border-slate-200 aspect-square cursor-pointer"
+        @click.stop="openViewer(index)"
       >
         <img
           v-if="previewSrc(item)"
@@ -81,7 +91,7 @@ const removeItem = (index: number) => {
           icon="ri-delete-bin-line"
           class="absolute top-1 right-1 bg-white/90! rounded-full"
           secondary
-          @click="removeItem(index)"
+          @click.stop="removeItem(index)"
           :aria-label="`Supprimer la photo ${index + 1}`"
         />
       </div>
@@ -110,4 +120,11 @@ const removeItem = (index: number) => {
       Maximum de {{ maxImages }} photo(s) atteint
     </p>
   </div>
+
+  <ImageViewer
+    :images="modelValue"
+    :startIndex="viewerIndex"
+    :opened="viewerOpen"
+    @close="viewerOpen = false"
+  />
 </template>
