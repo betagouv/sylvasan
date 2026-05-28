@@ -258,10 +258,10 @@ class TestCreateResponseWithImages(APITestCase):
         self.assertEqual(ResponseImage.objects.count(), 2)
 
     @authenticate
-    def test_image_data_replaced_with_thumbnail_reference(self):
+    def test_image_data_replaced_with_id_stub(self):
         """
-        Après soumission, le champ image dans data contient des objets {id, thumbnail}
-        en lieu et place des données base64 originales
+        Après soumission, le champ image dans data contient des objets {id} uniquement.
+        L'enrichissement (thumbnail, fileUrl) est fait à la lecture via FullResponseSerializer.
         """
         response = self._post_with_images(_image_survey(), "Blue.jpg")
 
@@ -269,20 +269,8 @@ class TestCreateResponseWithImages(APITestCase):
         photo_data = response.json()["data"]["photoArbre"]
         self.assertEqual(len(photo_data), 1)
         self.assertIn("id", photo_data[0])
-        self.assertIn("thumbnail", photo_data[0])
         self.assertNotIn("file", photo_data[0])
-
-    @authenticate
-    def test_thumbnail_is_valid_base64_image(self):
-        """
-        La miniature retournée est une chaîne base64 valide et non vide
-        """
-        response = self._post_with_images(_image_survey(), "Blue.jpg")
-
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        thumbnail = response.json()["data"]["photoArbre"][0]["thumbnail"]
-        decoded = base64.b64decode(thumbnail)
-        self.assertGreater(len(decoded), 0)
+        self.assertNotIn("thumbnail", photo_data[0])
 
     @authenticate
     def test_oversized_image_returns_400(self):

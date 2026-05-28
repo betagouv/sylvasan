@@ -1,4 +1,4 @@
-# 5. Champ image — sérialisation, vignette, URL et stockage mobile
+# 5. Champ image — sérialisation, vignette, URL, stockage mobile et enrichissement dynamique
 
 Date : 2026-05-28
 
@@ -32,31 +32,38 @@ Le mobile envoie les images en base64 inline dans le corps de la requête, au fo
 { "photo_arbre": [{ "file": "<base64>" }, { "file": "<base64>" }] }
 ```
 
-À noter que côté frontend - mobile et web - le `ImagesField.vue` effectue une compression de l'image pour s'assurer qu'elle ne dépasse pas la taille limite imposée par le backend.
+Avant tout envoi, `ImagesField.vue` applique une double compression côté client via un `<canvas>` HTML :
+
+1. **Redimensionnement** : si la dimension la plus grande dépasse 2 000 px, l'image est redimensionnée proportionnellement (côté max ≤ 2 000 px, ratio conservé).
+2. **Réduction de qualité JPEG** : la qualité est réduite par paliers de 0,1 (depuis 0,85) jusqu'à ce que le blob soit ≤ 2 Mo, ou jusqu'à un plancher de qualité 0,1.
+
+Cette compression s'applique sur mobile comme sur le web. Le backend valide également la taille : tout base64 représentant plus de 2 Mo de données brutes est rejeté avec une 400 (`ResponseImageSerializer.validate_file`).
 
 **Avantage principal** : la soumission est atomique — une seule requête, soit entièrement réussie, soit entièrement échouée. Il n'y a pas de gestion d'état partiel (ex. « photos uploadées, réponse échouée »).
 
-**Limite acceptée** : les images transitent en base64, ce qui représente environ 33 % de surcharge par rapport au binaire. Cette surcharge est acceptable pour des photos compressées ≤ 2 Mo par image (limite validée côté sérialiseur Django).
+**Limite acceptée** : les images transitent en base64, ce qui représente environ 33 % de surcharge par rapport au binaire. Cette surcharge est acceptable pour des photos compressées ≤ 2 Mo par image.
 
 ### 3. Stockage backend : modèle `ResponseImage`
 
-Côté backend, chaque image est extraite du champ `data` JSON lors de la création de la réponse et stockée dans un modèle dédié `ResponseImage` (fichier original + vignette). Le champ `data` de la réponse est ensuite mis à jour pour remplacer les données base64 par des références légères.
+Côté backend, chaque image est extraite du champ `data` JSON lors de la création de la réponse et stockée dans un modèle dédié `ResponseImage` (fichier original + vignette). Le champ `data` de la réponse est ensuite mis à jour pour remplacer les données base64 par des stubs légers de la forme :
+
+```json
+{ "photo_arbre": [{ "id": 42 }] }
+```
+
+Ces stubs ne contiennent que l'identifiant du `ResponseImage`. La vignette et l'URL de fichier sont calculées dynamiquement à la lecture (voir décision 8). Ce choix garantit que les données stockées ne sont jamais périmées si la logique de sérialisation évolue.
 
 Le traitement se fait dans `ResponseSerializer._create_images_from_data()`, dans une transaction atomique. En cas d'échec, toute la réponse est annulée.
 
-### 4. Vignette base64 en réponse
+### 4. Vignette base64
 
-Après création, le sérialiseur retourne une vignette en base64 (200×200 px, JPEG qualité 60) plutôt que l'image complète :
+La vignette est générée par Pillow **au moment de l'enregistrement** (200×200 px, JPEG qualité 60) et stockée sur disque/S3 séparément du fichier original. Elle n'est pas figée dans le JSONField : elle est lue depuis le modèle et encodée en base64 à chaque retour API (voir décision 8).
 
-```json
-{ "photo_arbre": [{ "id": 1, "thumbnail": "<base64_vignette>", "fileUrl": "https://..." }] }
-```
-
-La vignette est générée par Pillow au moment de l'enregistrement et stockée sur disque/S3 séparément du fichier original. Elle est encodée en base64 dans la réponse API afin d'être stockable directement dans les `Preferences` Capacitor du mobile (quelques Ko au lieu de plusieurs Mo).
+La vignette est encodée en base64 dans la réponse afin d'être directement intégrable dans les `Preferences` Capacitor du mobile (quelques Ko au lieu de plusieurs Mo), sans URL intermédiaire.
 
 ### 5. URL du fichier complet (`fileUrl`)
 
-En plus de la vignette, le sérialiseur retourne une URL vers le fichier complet (`fileUrl`). Cette URL permet à l'interface web d'afficher la photo en pleine résolution dans la visionneuse plein écran, sans avoir à retransmettre des données volumineuses.
+Le sérialiseur retourne une URL vers le fichier complet (`fileUrl`), calculée à la lecture depuis `obj.file.url`. Elle n'est pas stockée dans le JSONField.
 
 Le champ `file_url` (converti en `fileUrl` par `CamelCaseJSONRenderer`) est calculé dans `ResponseImageSerializer.get_file_url()` :
 
@@ -64,6 +71,20 @@ Le champ `file_url` (converti en `fileUrl` par `CamelCaseJSONRenderer`) est calc
 - En développement local : le chemin relatif (`/media/...`) est préfixé avec `settings.HOSTNAME`.
 
 Les URL S3 sont publiques mais non devinables (nom de fichier basé sur un UUID). Cette approche est commune dans les applications web et est jugée acceptable pour ce contexte.
+
+### 8. Enrichissement dynamique des images à la lecture
+
+`FullResponseSerializer.to_representation()` enrichit les champs image à chaque lecture. Pour chaque champ de type `widget: "image"` dans le schéma de l'enquête, les stubs `{"id": X}` du JSONField sont remplacés par la représentation complète issue de `ResponseImageSerializer` :
+
+```json
+{ "photo_arbre": [{ "id": 42, "thumbnail": "<base64_vignette>", "fileUrl": "https://..." }] }
+```
+
+La méthode est compatible avec les données historiques : tout item contenant une clé `"id"` (qu'il s'agisse d'un stub `{"id": X}` ou d'un ancien enregistrement avec `thumbnail`/`fileUrl` inlines) est ré-enrichi depuis le modèle live. Les items sans clé `"id"` sont passés tels quels.
+
+Les querysets alimentant `FullResponseSerializer` utilisent `select_related("survey").prefetch_related("images")` pour éviter les requêtes N+1.
+
+**Raison principale de ce choix** : stocker une représentation figée dans le JSONField crée un couplage entre le format de stockage et la logique de sérialisation. Toute évolution (taille de vignette, format d'URL, ajout de champ) nécessiterait une migration de données. L'enrichissement dynamique découple les deux et garantit que les données servies sont toujours à jour.
 
 ### 6. Stockage mobile offline : `@capacitor/filesystem`
 
@@ -127,9 +148,13 @@ Rejeté : charger des images complètes pour afficher des miniatures dans une gr
 - Brouillons légers : les `Preferences` ne contiennent que des chemins de fichiers.
 - Affichage rapide des vignettes dans les listes et résumés.
 - Accès à la pleine résolution depuis le web via `fileUrl`.
+- La double compression côté client (redimensionnement + qualité JPEG) garantit qu'aucune image de plus de 2 Mo ne transite sur le réseau, même depuis un appareil photo haute résolution.
+- Les données image dans le JSONField sont pérennes : un changement de logique de sérialisation (taille de vignette, format d'URL, nouveau champ) ne nécessite aucune migration.
+- L'enrichissement dynamique corrige les éventuelles données historiques au format ancien sans traitement spécifique.
+- L'utilisation de `prefetch_related("images")` élimine les requêtes N+1 sur les endpoints qui retournent des listes de réponses.
 
 ### Négatives
 
 - Complexité du cycle de vie des fichiers locaux : il faut s'assurer que `deleteLocalImages` est appelé dans tous les chemins de suppression (soumission réussie, suppression manuelle du brouillon).
-- Les réponses stockées avant l'introduction de ce champ ne contiennent pas de `fileUrl` — le code doit gérer cette absence gracieusement (`fileUrl` est optionnel dans `RemoteImageItem`).
+- L'enrichissement dynamique ajoute une lecture de `ResponseImage` par réponse à chaque lecture — coût amorti par le `prefetch_related`.
 - En développement navigateur, les images restent en base64 en mémoire et saturent `localStorage` si l'on teste avec de nombreuses photos. Ce comportement est accepté comme limitation connue de l'environnement de développement.

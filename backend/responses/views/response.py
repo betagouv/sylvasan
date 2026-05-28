@@ -47,7 +47,7 @@ class ResponseQuerySetMixin:
             else:
                 query |= Q(survey__organisation=membership.organisation)
 
-        return Response.objects.filter(query).distinct()
+        return Response.objects.filter(query).distinct().select_related("survey").prefetch_related("images")
 
 
 class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
@@ -94,7 +94,7 @@ class ResponseFullListAPIView(ListAPIView):
         ).exists()
         if not has_responder_membership:
             return Response.objects.none()
-        return Response.objects.filter(respondant=user)
+        return Response.objects.filter(respondant=user).select_related("survey").prefetch_related("images")
 
 
 class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):

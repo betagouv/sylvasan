@@ -61,7 +61,7 @@ class ResponseSerializer(serializers.ModelSerializer):
                     serializer = ResponseImageSerializer(data=item)
                     serializer.is_valid(raise_exception=True)
                     img_obj = serializer.save(response=response)
-                    processed.append(ResponseImageSerializer(img_obj).data)
+                    processed.append({"id": img_obj.id})
                 except serializers.ValidationError:
                     raise
                 except Exception:
@@ -108,6 +108,34 @@ class FullResponseSerializer(serializers.ModelSerializer):
             "creation_date",
         )
         read_only_fields = fields
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+
+        schema = instance.survey.json_schema or {}
+        image_field_ids = [f["id"] for f in schema.get("fields", []) if f.get("ui", {}).get("widget") == "image"]
+        if not image_field_ids:
+            return ret
+
+        images_by_id = {img.id: img for img in instance.images.all()}
+        data = ret.get("data") or {}
+
+        for field_id in image_field_ids:
+            items = data.get(field_id)
+            if not isinstance(items, list):
+                continue
+            enriched = []
+            for item in items:
+                if isinstance(item, dict) and "id" in item:
+                    img = images_by_id.get(item["id"])
+                    if img:
+                        enriched.append(ResponseImageSerializer(img).data)
+                else:
+                    enriched.append(item)
+            data[field_id] = enriched
+
+        ret["data"] = data
+        return ret
 
 
 def get_base_url() -> str:
