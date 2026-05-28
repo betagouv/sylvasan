@@ -80,7 +80,7 @@ Les URL S3 sont publiques mais non devinables (nom de fichier basé sur un UUID)
 { "photo_arbre": [{ "id": 42, "thumbnail": "<base64_vignette>", "fileUrl": "https://..." }] }
 ```
 
-La méthode est compatible avec les données historiques : tout item contenant une clé `"id"` (qu'il s'agisse d'un stub `{"id": X}` ou d'un ancien enregistrement avec `thumbnail`/`fileUrl` inlines) est ré-enrichi depuis le modèle live. Les items sans clé `"id"` sont passés tels quels.
+La méthode est compatible avec d'eventuels évolutions : tout item contenant une clé `"id"` est ré-enrichi depuis le modèle live. Les items sans clé `"id"` sont passés tels quels.
 
 Les querysets alimentant `FullResponseSerializer` utilisent `select_related("survey").prefetch_related("images")` pour éviter les requêtes N+1.
 
@@ -150,7 +150,6 @@ Rejeté : charger des images complètes pour afficher des miniatures dans une gr
 - Accès à la pleine résolution depuis le web via `fileUrl`.
 - La double compression côté client (redimensionnement + qualité JPEG) garantit qu'aucune image de plus de 2 Mo ne transite sur le réseau, même depuis un appareil photo haute résolution.
 - Les données image dans le JSONField sont pérennes : un changement de logique de sérialisation (taille de vignette, format d'URL, nouveau champ) ne nécessite aucune migration.
-- L'enrichissement dynamique corrige les éventuelles données historiques au format ancien sans traitement spécifique.
 - L'utilisation de `prefetch_related("images")` élimine les requêtes N+1 sur les endpoints qui retournent des listes de réponses.
 
 ### Négatives
