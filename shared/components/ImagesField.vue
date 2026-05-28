@@ -22,20 +22,68 @@ const maxImages = computed(() => props.field.validation?.maxItems ?? 5)
 const atMax = computed(() => modelValue.value.length >= maxImages.value)
 
 const previewSrc = (item: ImageItem): string | null => {
+  if ("type" in item)
+    return (window as any).Capacitor?.convertFileSrc(item.path) ?? null
   if ("file" in item) return `data:image/jpeg;base64,${item.file}`
   if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
   return null
 }
 
-const fileToBase64 = (file: File): Promise<LocalImageItem> =>
+const MAX_DIM = 2000
+const MAX_BYTES = 2 * 1024 * 1024
+
+const compressImage = (file: File): Promise<LocalImageItem> =>
   new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = reader.result as string
-      resolve({ file: dataUrl.split(",")[1] })
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error("Lecture image échouée"))
     }
-    reader.onerror = reject
-    reader.readAsDataURL(file)
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl)
+
+      // D'abord on redimensione l'image pour s'assurer que le côté le plus grand est ≤ MAX_DIM
+      let { width, height } = img
+      if (Math.max(width, height) > MAX_DIM) {
+        if (width >= height) {
+          height = Math.round((height / width) * MAX_DIM)
+          width = MAX_DIM
+        } else {
+          width = Math.round((width / height) * MAX_DIM)
+          height = MAX_DIM
+        }
+      }
+
+      const canvas = document.createElement("canvas")
+      canvas.width = width
+      canvas.height = height
+      canvas.getContext("2d")!.drawImage(img, 0, 0, width, height)
+
+      // Puis on réduit graduellement la qualité jusqu'à arriver sous la taille MAX_BYTES
+      let quality = 0.85
+      let blob: Blob
+      while (true) {
+        blob = await new Promise<Blob>((res, rej) =>
+          canvas.toBlob(
+            (b) => (b ? res(b) : rej(new Error("Compression échouée"))),
+            "image/jpeg",
+            quality
+          )
+        )
+        if (blob.size <= MAX_BYTES || quality <= 0.1) break
+        quality = Math.max(0.1, quality - 0.1)
+      }
+
+      const reader = new FileReader()
+      reader.onerror = reject
+      reader.onload = () =>
+        resolve({ file: (reader.result as string).split(",")[1] })
+      reader.readAsDataURL(blob)
+    }
+
+    img.src = objectUrl
   })
 
 const handleChange = async (event: Event) => {
@@ -43,7 +91,7 @@ const handleChange = async (event: Event) => {
   if (!files) return
   const remaining = maxImages.value - modelValue.value.length
   const toProcess = Array.from(files).slice(0, remaining)
-  const newItems = await Promise.all(toProcess.map(fileToBase64))
+  const newItems = await Promise.all(toProcess.map(compressImage))
   modelValue.value = [...modelValue.value, ...newItems]
   if (fileInput.value) fileInput.value.value = ""
 }

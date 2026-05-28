@@ -4,6 +4,7 @@ import { useApiFetch } from "../utils/data-fetching"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 import { useAuthStore } from "../stores/auth"
 import { storeToRefs } from "pinia"
+import { loadImagesFromFilesystem, deleteLocalImages } from "../utils/imageStorage"
 
 const LOCAL_RESPONSES_KEY = "local_responses" // Draft et pending
 const RESPONSES_KEY = "responses_cache"
@@ -111,16 +112,18 @@ export const useResponsesStore = defineStore("responses", {
       if (!localResponse) return false
 
       try {
+        const submissionData = await loadImagesFromFilesystem(localResponse.data)
+
         const { response } = await useApiFetch("/responses/")
           .post({
             survey: localResponse.surveyId,
-            data: localResponse.data,
+            data: submissionData,
             respondant: loggedUser.value?.id,
           })
           .json()
 
         if (response.value?.ok) {
-          // On enleve la réponse locale car elle a bien été sauvegardé dans le backend
+          await deleteLocalImages(localResponse.data)
           this.deleteDraft(localResponse.localId)
           await this.sync()
           return true
@@ -140,6 +143,8 @@ export const useResponsesStore = defineStore("responses", {
     },
 
     async deleteDraft(localId: string) {
+      const draft = this.localResponses.find((r) => r.localId === localId)
+      if (draft) await deleteLocalImages(draft.data)
       this.localResponses = this.localResponses.filter(
         (r) => r.localId !== localId
       )

@@ -26,6 +26,7 @@ import MapField from "../components/MapField.vue"
 import { useResponsesStore } from "../stores/responses"
 import { storeToRefs } from "pinia"
 import { useVocabulariesStore } from "../stores/vocabularies"
+import { saveImagesToFilesystem } from "../utils/imageStorage"
 
 const props = defineProps<{
   id?: number
@@ -68,10 +69,14 @@ onMounted(async () => {
 
 const saveDraftIfNeeded = async () => {
   if (Object.keys(currentFormData.value).length === 0) return
+  const schema = survey.value?.jsonSchema
+  const data = schema
+    ? await saveImagesToFilesystem(currentFormData.value, schema)
+    : currentFormData.value
   const localId = await responsesStore.upsertDraft(
     surveyId.value,
     survey.value?.title ?? "",
-    currentFormData.value,
+    data,
     currentLocalId.value
   )
   currentLocalId.value = localId
@@ -110,10 +115,15 @@ const confirmDelete = async () => {
 const saveResponse = async (data: Record<string, unknown>) => {
   currentFormData.value = data
 
+  const schema = survey.value?.jsonSchema
+  const draftData = schema
+    ? await saveImagesToFilesystem(data, schema)
+    : data
+
   const localId = await responsesStore.upsertDraft(
     surveyId.value,
     survey.value?.title ?? "",
-    data,
+    draftData,
     currentLocalId.value
   )
 
