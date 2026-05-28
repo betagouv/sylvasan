@@ -39,6 +39,7 @@ const getSubFields = (fieldId: string): SurveyField[] =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.fields ?? []
 
 const imageSrc = (item: ImageItem): string | null => {
+  if ("type" in item) return (window as any).Capacitor?.convertFileSrc(item.path) ?? null
   if ("file" in item) return `data:image/jpeg;base64,${item.file}`
   if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
   return null

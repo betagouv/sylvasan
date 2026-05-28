@@ -53,6 +53,7 @@ const getSubFields = (fieldId: string): SurveyField[] =>
   )?.fields ?? []
 
 const imageSrc = (item: ImageItem): string | null => {
+  if ("type" in item) return null
   if ("file" in item) return `data:image/jpeg;base64,${item.file}`
   if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
   return null

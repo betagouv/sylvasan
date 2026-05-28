@@ -12,7 +12,11 @@ export type LogicalOperator = "and" | "or"
 
 export type LocalImageItem = { file: string }
 export type FilesystemImageItem = { type: "local"; path: string }
-export type RemoteImageItem = { id: number; thumbnail: string | null; fileUrl?: string }
+export type RemoteImageItem = {
+  id: number
+  thumbnail: string | null
+  fileUrl?: string
+}
 export type ImageItem = LocalImageItem | FilesystemImageItem | RemoteImageItem
 
 export interface SimpleCondition {
