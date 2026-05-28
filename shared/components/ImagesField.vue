@@ -121,7 +121,7 @@ const openViewer = (index: number) => {
     <p class="fr-label mb-1!">{{ field.label }}</p>
     <p v-if="field.ui?.hint" class="fr-hint-text mb-2">{{ field.ui.hint }}</p>
 
-    <div v-if="modelValue.length" class="grid grid-cols-2 gap-2 mb-4">
+    <div v-if="modelValue.length" class="grid grid-cols-3 gap-2 mb-4">
       <div
         v-for="(item, index) in modelValue"
         :key="index"
@@ -170,7 +170,9 @@ const openViewer = (index: number) => {
         :disabled="compressing"
         @click="openFilePicker"
       />
-      <p v-if="compressing" class="fr-hint-text mt-1">Adaptation de l'image...</p>
+      <p v-if="compressing" class="fr-hint-text mt-1">
+        Adaptation de l'image...
+      </p>
     </template>
 
     <p v-if="atMax" class="fr-info-text">

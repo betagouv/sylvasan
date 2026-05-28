@@ -192,7 +192,7 @@ const openViewer = (images: ImageItem[], index: number) => {
           </div>
         </div>
         <!-- Preview -->
-        <div class="col-span-12 sm:col-span-6 md:col-span-5 lg:col-span-4">
+        <div class="col-span-12 sm:col-span-6 md:col-span-5 lg:col-span-4 mb-4">
           <div
             v-if="response.survey.jsonSchema"
             class="border rounded border-slate-300 p-4"
