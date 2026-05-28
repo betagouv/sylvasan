@@ -91,14 +91,21 @@ const handleChange = async (event: Event) => {
   if (!files) return
   const remaining = maxImages.value - modelValue.value.length
   const toProcess = Array.from(files).slice(0, remaining)
-  const newItems = await Promise.all(toProcess.map(compressImage))
-  modelValue.value = [...modelValue.value, ...newItems]
-  if (fileInput.value) fileInput.value.value = ""
+  compressing.value = true
+  try {
+    const newItems = await Promise.all(toProcess.map(compressImage))
+    modelValue.value = [...modelValue.value, ...newItems]
+  } finally {
+    compressing.value = false
+    if (fileInput.value) fileInput.value.value = ""
+  }
 }
 
 const removeItem = (index: number) => {
   modelValue.value = modelValue.value.filter((_, i) => i !== index)
 }
+
+const compressing = ref(false)
 
 const viewerOpen = ref(false)
 const viewerIndex = ref(0)
@@ -160,8 +167,10 @@ const openViewer = (index: number) => {
         secondary
         icon="ri-image-add-line"
         :label="`Ajouter une photo (${modelValue.length} / ${maxImages})`"
+        :disabled="compressing"
         @click="openFilePicker"
       />
+      <p v-if="compressing" class="fr-hint-text mt-1">Adaptation de l'image...</p>
     </template>
 
     <p v-if="atMax" class="fr-info-text">

@@ -15,6 +15,7 @@ import {
   IonBackButton,
   IonButton,
   IonIcon,
+  IonSpinner,
   IonTitle,
   useIonRouter,
   alertController,
@@ -43,6 +44,7 @@ const prefillData = ref<Record<string, unknown> | undefined>(undefined)
 const dataReady = ref(false)
 const showSummary = ref(false)
 const summaryData = ref<Record<string, unknown>>({})
+const saving = ref(false)
 
 const router = useIonRouter()
 const route = useRoute()
@@ -113,33 +115,38 @@ const confirmDelete = async () => {
 }
 
 const saveResponse = async (data: Record<string, unknown>) => {
-  currentFormData.value = data
+  saving.value = true
+  try {
+    currentFormData.value = data
 
-  const schema = survey.value?.jsonSchema
-  const draftData = schema
-    ? await saveImagesToFilesystem(data, schema)
-    : data
+    const schema = survey.value?.jsonSchema
+    const draftData = schema
+      ? await saveImagesToFilesystem(data, schema)
+      : data
 
-  const localId = await responsesStore.upsertDraft(
-    surveyId.value,
-    survey.value?.title ?? "",
-    draftData,
-    currentLocalId.value
-  )
-
-  currentLocalId.value = localId
-  const success = await responsesStore.submitResponse(localId)
-
-  if (success) {
-    toast.show("Votre réponse a été envoyée", "success")
-    if (props.isModal) emit("close")
-    else router.navigate({ name: "ResponseListPage" }, "back", "replace")
-  } else {
-    toast.show(
-      "Votre réponse a été sauvegardée localement et sera envoyée dès que possible"
+    const localId = await responsesStore.upsertDraft(
+      surveyId.value,
+      survey.value?.title ?? "",
+      draftData,
+      currentLocalId.value
     )
-    if (props.isModal) emit("close")
-    else router.navigate({ name: "ResponseListPage" }, "back", "replace")
+
+    currentLocalId.value = localId
+    const success = await responsesStore.submitResponse(localId)
+
+    if (success) {
+      toast.show("Votre réponse a été envoyée", "success")
+      if (props.isModal) emit("close")
+      else router.navigate({ name: "ResponseListPage" }, "back", "replace")
+    } else {
+      toast.show(
+        "Votre réponse a été sauvegardée localement et sera envoyée dès que possible"
+      )
+      if (props.isModal) emit("close")
+      else router.navigate({ name: "ResponseListPage" }, "back", "replace")
+    }
+  } finally {
+    saving.value = false
   }
 }
 </script>
@@ -197,13 +204,21 @@ const saveResponse = async (data: Record<string, unknown>) => {
               label="Modifier"
               secondary
               icon="ri-edit-line"
+              :disabled="saving"
               @click="showSummary = false"
             />
-            <DsfrButton
-              label="Sauvegarder"
-              icon="ri-cloud-line"
-              @click="saveResponse(summaryData)"
-            />
+            <div class="flex items-center gap-3">
+              <div v-if="saving" class="flex items-center gap-2 text-sm text-stone-500">
+                <ion-spinner name="crescent" style="width: 1rem; height: 1rem" />
+                <span>Envoi en cours...</span>
+              </div>
+              <DsfrButton
+                label="Sauvegarder"
+                icon="ri-cloud-line"
+                :disabled="saving"
+                @click="saveResponse(summaryData)"
+              />
+            </div>
           </div>
         </template>
       </template>
