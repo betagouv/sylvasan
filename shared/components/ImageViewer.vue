@@ -17,13 +17,16 @@ const currentIndex = ref(props.startIndex)
 
 watch(
   () => props.startIndex,
-  (val) => { currentIndex.value = val }
+  (val) => {
+    currentIndex.value = val
+  }
 )
 
 const current = computed(() => props.images[currentIndex.value])
 
 const fullSrc = (item: ImageItem): string => {
-  if ("type" in item) return (window as any).Capacitor?.convertFileSrc(item.path) ?? ""
+  if ("type" in item)
+    return (window as any).Capacitor?.convertFileSrc(item.path) ?? ""
   if ("id" in item) {
     if (item.fileUrl) return item.fileUrl
     if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
@@ -32,12 +35,20 @@ const fullSrc = (item: ImageItem): string => {
   return `data:image/jpeg;base64,${item.file}`
 }
 
+const direction = ref<"left" | "right">("left")
+
 const prev = () => {
-  if (currentIndex.value > 0) currentIndex.value--
+  if (currentIndex.value > 0) {
+    direction.value = "right"
+    currentIndex.value--
+  }
 }
 
 const next = () => {
-  if (currentIndex.value < props.images.length - 1) currentIndex.value++
+  if (currentIndex.value < props.images.length - 1) {
+    direction.value = "left"
+    currentIndex.value++
+  }
 }
 
 const onKeydown = (e: KeyboardEvent) => {
@@ -48,6 +59,19 @@ const onKeydown = (e: KeyboardEvent) => {
 
 onMounted(() => window.addEventListener("keydown", onKeydown))
 onUnmounted(() => window.removeEventListener("keydown", onKeydown))
+
+const touchStartX = ref(0)
+
+const onTouchStart = (e: TouchEvent) => {
+  touchStartX.value = e.touches[0].clientX
+}
+
+const onTouchEnd = (e: TouchEvent) => {
+  const delta = e.changedTouches[0].clientX - touchStartX.value
+  if (Math.abs(delta) < 50) return
+  if (delta > 0) prev()
+  else next()
+}
 </script>
 
 <template>
@@ -58,13 +82,20 @@ onUnmounted(() => window.removeEventListener("keydown", onKeydown))
       size="xl"
       @close="emit('close')"
     >
-      <div class="flex items-center justify-center min-h-64">
-        <img
-          v-if="current && fullSrc(current)"
-          :src="fullSrc(current)"
-          class="max-w-full max-h-[70vh] object-contain rounded"
-          alt=""
-        />
+      <div
+        class="relative overflow-hidden flex items-center justify-center min-h-64"
+        @touchstart.passive="onTouchStart"
+        @touchend.passive="onTouchEnd"
+      >
+        <Transition :name="`slide-${direction}`">
+          <img
+            v-if="current && fullSrc(current)"
+            :key="currentIndex"
+            :src="fullSrc(current)"
+            class="max-w-full max-h-[70vh] object-contain rounded"
+            alt=""
+          />
+        </Transition>
       </div>
 
       <template v-if="images.length > 1" #footer>
@@ -91,3 +122,18 @@ onUnmounted(() => window.removeEventListener("keydown", onKeydown))
     </DsfrModal>
   </Teleport>
 </template>
+
+<style scoped>
+.slide-left-enter-active,
+.slide-left-leave-active,
+.slide-right-enter-active,
+.slide-right-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  position: absolute;
+}
+
+.slide-left-enter-from  { transform: translateX(100%);  opacity: 0; }
+.slide-left-leave-to    { transform: translateX(-100%); opacity: 0; }
+.slide-right-enter-from { transform: translateX(-100%); opacity: 0; }
+.slide-right-leave-to   { transform: translateX(100%);  opacity: 0; }
+</style>

@@ -100,6 +100,33 @@ class ResponseDisplaySerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+def _enrich_image_fields(ret, instance, image_serializer_class):
+    schema = instance.survey.json_schema or {}
+    image_field_ids = [f["id"] for f in schema.get("fields", []) if f.get("ui", {}).get("widget") == "image"]
+    if not image_field_ids:
+        return ret
+
+    images_by_id = {img.id: img for img in instance.images.all()}
+    data = ret.get("data") or {}
+
+    for field_id in image_field_ids:
+        items = data.get(field_id)
+        if not isinstance(items, list):
+            continue
+        enriched = []
+        for item in items:
+            if isinstance(item, dict) and "id" in item:
+                img = images_by_id.get(item["id"])
+                if img:
+                    enriched.append(image_serializer_class(img).data)
+            else:
+                enriched.append(item)
+        data[field_id] = enriched
+
+    ret["data"] = data
+    return ret
+
+
 class FullResponseSerializer(serializers.ModelSerializer):
     respondant = UserDisplaySerializer(read_only=True)
     survey = FullSurveySerializer(read_only=True)
@@ -118,32 +145,7 @@ class FullResponseSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def to_representation(self, instance):
-        ret = super().to_representation(instance)
-
-        schema = instance.survey.json_schema or {}
-        image_field_ids = [f["id"] for f in schema.get("fields", []) if f.get("ui", {}).get("widget") == "image"]
-        if not image_field_ids:
-            return ret
-
-        images_by_id = {img.id: img for img in instance.images.all()}
-        data = ret.get("data") or {}
-
-        for field_id in image_field_ids:
-            items = data.get(field_id)
-            if not isinstance(items, list):
-                continue
-            enriched = []
-            for item in items:
-                if isinstance(item, dict) and "id" in item:
-                    img = images_by_id.get(item["id"])
-                    if img:
-                        enriched.append(ResponseImageSerializer(img).data)
-                else:
-                    enriched.append(item)
-            data[field_id] = enriched
-
-        ret["data"] = data
-        return ret
+        return _enrich_image_fields(super().to_representation(instance), instance, ResponseImageSerializer)
 
 
 class ResponseImageSerializer(serializers.ModelSerializer):
@@ -196,3 +198,38 @@ class ResponseImageSerializer(serializers.ModelSerializer):
             file=ContentFile(image_data, name=f"{response.id}_{uid}.jpg"),
             thumbnail=ContentFile(thumb_io.read(), name=f"{response.id}_{uid}_thumb.jpg"),
         )
+
+
+class ResponseImageExportSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ResponseImage
+        fields = ("id", "file_url")
+
+    def get_file_url(self, obj):
+        url = obj.file.url
+        if url.startswith("http"):
+            return url
+        return get_base_url().rstrip("/") + url
+
+
+class ResponseExportSerializer(serializers.ModelSerializer):
+    respondant = UserDisplaySerializer(read_only=True)
+    survey = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = Response
+        fields = (
+            "id",
+            "survey",
+            "respondant",
+            "data",
+            "context",
+            "status",
+            "creation_date",
+        )
+        read_only_fields = fields
+
+    def to_representation(self, instance):
+        return _enrich_image_fields(super().to_representation(instance), instance, ResponseImageExportSerializer)
