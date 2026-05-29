@@ -13,7 +13,12 @@ from rest_framework.permissions import IsAuthenticated
 
 from responses.models import Response
 from responses.permissions import CanCreateResponse
-from responses.serializers import FullResponseSerializer, ResponseDisplaySerializer, ResponseSerializer
+from responses.serializers import (
+    FullResponseSerializer,
+    ResponseDisplaySerializer,
+    ResponseExportSerializer,
+    ResponseSerializer,
+)
 
 
 class ResponsePagination(LimitOffsetPagination):
@@ -104,7 +109,7 @@ class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
         OrderingFilter,
     ]
     filterset_class = ResponseFilterSet
-    serializer_class = FullResponseSerializer
+    serializer_class = ResponseExportSerializer
     pagination_class = None
 
     ordering_fields = ["creation_date", "id"]
@@ -141,7 +146,7 @@ class ResponseCsvExportView(ResponseExportBaseView):
             writer.writerow(
                 [
                     item["id"],
-                    item["survey"]["title"],
+                    item["survey"],
                     f"{first} {last}".strip(),
                     item["status"],
                     item["creation_date"],
