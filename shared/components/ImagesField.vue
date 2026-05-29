@@ -169,8 +169,8 @@ const openViewer = (index: number) => {
         :disabled="compressing"
         @click="openFilePicker"
       />
-      <p v-if="compressing" class="fr-hint-text mt-1">
-        Adaptation de l'image...
+      <p v-if="compressing || true" class="fr-hint-text my-4!">
+        Merci de patienter, l'image est en cours d'optimisation...
       </p>
     </template>
 
