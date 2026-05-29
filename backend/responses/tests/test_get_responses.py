@@ -340,3 +340,28 @@ class TestResponseFullList(APITestCase):
         self.assertIn(own_response.id, ids)
         # Les réponses des autres ne sont pas visibles, même si MANAGER dans la même org
         self.assertNotIn(other_response.id, ids)
+
+
+class TestFilterResponses(APITestCase):
+    def get_ids(self, response):
+        return [r["id"] for r in response.json()["results"]]
+
+    @authenticate
+    def test_filter_by_survey_returns_only_matching_responses(self):
+        """
+        Le paramètre ?survey=<id> ne retourne que les réponses de cette enquête,
+        et exclut celles des autres enquêtes.
+        """
+        org = OrganisationFactory()
+        survey_a = SurveyFactory(organisation=org)
+        survey_b = SurveyFactory(organisation=org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+
+        response_a = ResponseFactory(survey=survey_a)
+        ResponseFactory(survey=survey_b)
+
+        response = self.client.get(reverse("response_list_create"), {"survey": survey_a.id}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = self.get_ids(response)
+        self.assertEqual(ids, [response_a.id])

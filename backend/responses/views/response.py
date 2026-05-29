@@ -10,6 +10,9 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.generics import GenericAPIView, ListAPIView, ListCreateAPIView, RetrieveAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response as DRFResponse
+from surveys.models import Survey
+from surveys.serializers import SurveyDisplaySerializer
 
 from responses.models import Response
 from responses.permissions import CanCreateResponse
@@ -22,13 +25,37 @@ from responses.serializers import (
 
 
 class ResponsePagination(LimitOffsetPagination):
+    """
+    On ajoute dans le payload les enquêtes afin de pouvoir filtrer par enquête.
+    """
+
     default_limit = 20
     max_limit = 100
+
+    surveys = []
+
+    def paginate_queryset(self, queryset, request, view=None):
+        original_queryset = view.get_queryset()
+        survey_ids = original_queryset.values_list("survey", flat=True).distinct().order_by()
+        self.surveys = Survey.objects.filter(id__in=survey_ids)
+        return super().paginate_queryset(queryset, request, view)
+
+    def get_paginated_response(self, data):
+        return DRFResponse(
+            {
+                "count": self.count,
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+                "results": data,
+                "surveys": SurveyDisplaySerializer(self.surveys, many=True).data,
+            }
+        )
 
 
 class ResponseFilterSet(django_filters.FilterSet):
     created_after = django_filters.DateTimeFilter(field_name="creation_date", lookup_expr="gte")
     created_before = django_filters.DateTimeFilter(field_name="creation_date", lookup_expr="lte")
+    survey = django_filters.NumberFilter(field_name="survey_id")
 
     class Meta:
         model = Response
