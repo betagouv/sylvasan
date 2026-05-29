@@ -9,7 +9,8 @@
       "limit": 10,
       "created_after": "",
       "created_before": "",
-      "triage": ""
+      "triage": "",
+      "survey": ""
     }
   }
 }
@@ -19,6 +20,7 @@
 import { computed, watch } from "vue"
 import { useApiFetch } from "../utils/data-fetching.ts"
 import type { ResponseDisplay } from "@shared-types/response"
+import type { SurveyDisplay } from "@shared-types/api"
 import { useRouter, useRoute } from "vue-router"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
 import PaginationSizeSelect from "../components/ResponseListPage/PaginationSizeSelect.vue"
@@ -36,12 +38,14 @@ const createdBefore = computed(
   () => (route.query.created_before as string) ?? ""
 )
 const ordering = computed(() => route.query.triage as string)
+const surveyFilter = computed(() => (route.query.survey as string) ?? "")
 
 const filterParams = computed(() => {
   const params = new URLSearchParams()
   if (createdAfter.value) params.set("created_after", createdAfter.value)
   if (createdBefore.value) params.set("created_before", createdBefore.value)
   if (ordering.value) params.set("ordering", String(ordering.value))
+  if (surveyFilter.value) params.set("survey", surveyFilter.value)
   return params
 })
 
@@ -62,7 +66,11 @@ const exportCsvUrl = computed(() => {
   return `${base}/responses/export/csv/${q ? `?${q}` : ""}`
 })
 
-type PaginatedResponse = { count: number; results: ResponseDisplay[] }
+type PaginatedResponse = {
+  count: number
+  results: ResponseDisplay[]
+  surveys: SurveyDisplay[]
+}
 
 const { data, execute, isFetching } = useApiFetch(url)
   .get()
@@ -122,6 +130,7 @@ const updateCreatedAfter = (value: string) =>
 const updateCreatedBefore = (value: string) =>
   updateQuery({ created_before: value, page: 1 })
 const updateOrdering = (value: string) => updateQuery({ triage: value })
+const updateSurvey = (value: string) => updateQuery({ survey: value, page: 1 })
 
 const exportJson = () => {
   window.location.href = exportJsonUrl.value
@@ -130,7 +139,10 @@ const exportCsv = () => {
   window.location.href = exportCsvUrl.value
 }
 
-watch([page, limit, createdAfter, createdBefore, ordering], fetchSearchResults)
+watch(
+  [page, limit, createdAfter, createdBefore, ordering, surveyFilter],
+  fetchSearchResults
+)
 </script>
 
 <template>
@@ -139,12 +151,30 @@ watch([page, limit, createdAfter, createdBefore, ordering], fetchSearchResults)
       :links="[{ to: '/dashboard', text: 'Dashboard' }, { text: 'Réponses' }]"
     />
     <div class="filters border mb-2 rounded border-gray-300 p-4 flex gap-8">
-      <DateRangeFilter
-        :created-after="createdAfter"
-        :created-before="createdBefore"
-        @update:created-after="updateCreatedAfter"
-        @update:created-before="updateCreatedBefore"
-      />
+      <div>
+        <DateRangeFilter
+          class="mb-3"
+          :created-after="createdAfter"
+          :created-before="createdBefore"
+          @update:created-after="updateCreatedAfter"
+          @update:created-before="updateCreatedBefore"
+        />
+        <DsfrInputGroup>
+          <DsfrSelect
+            label="Enquête"
+            :model-value="surveyFilter"
+            :options="[
+              { value: '', text: 'Toutes les enquêtes' },
+              ...(data?.surveys ?? []).map((s) => ({
+                value: String(s.id),
+                text: s.title,
+              })),
+            ]"
+            class="text-sm!"
+            @update:modelValue="updateSurvey"
+          />
+        </DsfrInputGroup>
+      </div>
       <div class="flex flex-col gap-4">
         <PaginationSizeSelect
           :modelValue="limit"
