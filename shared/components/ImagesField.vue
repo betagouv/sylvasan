@@ -158,7 +158,6 @@ const openViewer = (index: number) => {
         ref="fileInput"
         type="file"
         accept="image/*"
-        multiple
         class="sr-only"
         @change="handleChange"
       />
