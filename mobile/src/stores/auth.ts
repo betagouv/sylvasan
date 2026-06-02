@@ -99,8 +99,10 @@ export const useAuthStore = defineStore("auth", {
         .post({ refresh: this.refresh })
         .json()
 
-      if (!response.value?.ok) {
-        await this.logout()
+      if (!response.value) return false // erreur réseau — on conserve la session
+
+      if (!response.value.ok) {
+        await this.logout() // le serveur a rejeté le token — il est expiré ou invalide
         return false
       }
 
