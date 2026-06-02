@@ -43,6 +43,35 @@ VOCABULARIES = [
     },
 ]
 
+BLACKLISTED_VOCABULARIES = [
+    "CMM",
+    "CM2013",
+    "CM",
+    "CM2016",
+    "CM2019",
+    "QD8",
+    "CODESP",
+    "CT",
+    "QD",
+    "PB",
+    "PBV2025",
+    "PBPA2024",
+    "PBV2024",
+    "PBV2023",
+    "PBPA2023",
+    "PBPA2022",
+    "PBV2022",
+    "PBPA2021",
+    "PBV2021",
+    "PBPA2020",
+    "PBV2020",
+    "PB123",
+    "PBPA2019",
+    "PBV2019",
+    "PBPA2018",
+    "PBV2018",
+]
+
 
 class Command(BaseCommand):
     help = "Synchronise les référentiels DSF depuis la base de référence metadsf"
@@ -106,6 +135,7 @@ class Command(BaseCommand):
                     SELECT unite, libelle
                     FROM metadsf.abunite
                     WHERE unite = %s
+                    AND type = 'NOMINAL'
                     """,
                     [unite],
                 )
@@ -114,6 +144,7 @@ class Command(BaseCommand):
                     """
                     SELECT unite, libelle
                     FROM metadsf.abunite
+                    WHERE type = 'NOMINAL'
                     ORDER BY unite
                     """
                 )
@@ -122,10 +153,11 @@ class Command(BaseCommand):
         return [
             {
                 "code": row[0],
-                "name": row[1],
+                "name": row[1] or row[0],
                 "unite": row[0],
             }
             for row in rows
+            if row[0] not in BLACKLISTED_VOCABULARIES
         ]
 
     def _sync_vocabulary(self, organisation, vocab_def, dry_run):
