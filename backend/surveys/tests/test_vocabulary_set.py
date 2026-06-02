@@ -130,7 +130,7 @@ class TestVocabularySetDetail(APITestCase):
         org = OrganisationFactory()
         other_org = OrganisationFactory()
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
-        other_vocab = VocabularySetFactory(organisation=other_org)
+        other_vocab = VocabularySetFactory(organisation=other_org, code="ZZZZ")
 
         response = self.client.get(reverse("vocabulary_set_detail", kwargs={"code": other_vocab.code}), format="json")
 
