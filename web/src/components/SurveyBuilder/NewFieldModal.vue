@@ -19,7 +19,8 @@ const emit = defineEmits(["add", "edit", "close"])
 const props = defineProps<{
   opened?: boolean
   payload?: SurveyField
-  fieldIds?: string[]
+  fieldIds?: string[] // Utilisé pour les conditions d'affichge
+  allFieldIds?: string[] // Utilisé pour s'assurer que l'ID est unique
 }>()
 
 const rootStore = useRootStore()
@@ -70,31 +71,47 @@ const resolvedVocabulary = computed(() =>
     : undefined
 )
 
-const validator = z
-  .object({
-    type: z.string().min(1, "Ce champ ne peut pas être vide"),
-    label: z.string().min(1, "Ce champ ne peut pas être vide"),
-    id: z.string().min(1, "Ce champ ne peut pas être vide"),
-    validation: z
-      .object({ min: z.any().optional(), max: z.any().optional() })
-      .optional(),
-  })
-  .superRefine((data, ctx) => {
-    // Validation que min est inférieur à max pour les champs numériques
-    if (data.type === "number") {
-      const min = data.validation?.min
-      const max = data.validation?.max
-      const minFilled = min !== undefined && min !== null && min !== ""
-      const maxFilled = max !== undefined && max !== null && max !== ""
-      if (minFilled && maxFilled && Number(min) >= Number(max)) {
+const validator = computed(() =>
+  z
+    .object({
+      type: z.string().min(1, "Ce champ ne peut pas être vide"),
+      label: z.string().min(1, "Ce champ ne peut pas être vide"),
+      id: z.string().min(1, "Ce champ ne peut pas être vide"),
+      validation: z
+        .object({ min: z.any().optional(), max: z.any().optional() })
+        .optional(),
+    })
+    .superRefine((data, ctx) => {
+      // Validation que min est inférieur à max pour les champs numériques
+      if (data.type === "number") {
+        const min = data.validation?.min
+        const max = data.validation?.max
+        const minFilled = min !== undefined && min !== null && min !== ""
+        const maxFilled = max !== undefined && max !== null && max !== ""
+        if (minFilled && maxFilled && Number(min) >= Number(max)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Le minimum doit être inférieur au maximum",
+            path: ["validationNumericLimits"],
+          })
+        }
+      }
+
+      // Validation d'unicité de l'ID parmi tous les champs du formulaire
+      const ownId = isEditMode.value ? props.payload?.id : undefined
+      if (
+        data.id &&
+        data.id !== ownId &&
+        (props.allFieldIds ?? []).includes(data.id)
+      ) {
         ctx.addIssue({
           code: "custom",
-          message: "Le minimum doit être inférieur au maximum",
-          path: ["validationNumericLimits"],
+          message: "Cet identifiant est déjà utilisé",
+          path: ["id"],
         })
       }
-    }
-  })
+    })
+)
 const formErrors = ref<any>()
 
 const typeOptions = computed(() =>
@@ -136,7 +153,7 @@ const onVocabularyChange = (code: string) => {
 
 const saveField = () => {
   try {
-    validator.parse(payload.value)
+    validator.value.parse(payload.value)
     const emitValue = { ...payload.value }
     if (isEditMode.value) {
       emit("edit", emitValue)
@@ -195,6 +212,25 @@ watch(
   }
 )
 
+const autoFillId = () => {
+  if (props.payload || payload.value.id || !payload.value.label) return
+  const slug = payload.value.label
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^[_0-9]+/, "")
+    .replace(/_+$/g, "")
+  const taken = props.allFieldIds ?? []
+  let suffix = Math.floor(Math.random() * 900 + 100)
+  let candidate = slug ? `${slug}_${suffix}` : String(suffix)
+  while (taken.includes(candidate)) {
+    suffix = Math.floor(Math.random() * 900 + 100)
+    candidate = slug ? `${slug}_${suffix}` : String(suffix)
+  }
+  payload.value.id = candidate
+}
+
 const close = () => {
   if (formErrors.value?.fieldErrors) formErrors.value.fieldErrors = undefined
   emit("close")
@@ -218,6 +254,7 @@ const close = () => {
           v-model="payload.label"
           :required="true"
           label="Titre"
+          @blur="autoFillId"
         />
       </DsfrInputGroup>
       <DsfrInputGroup :error-message="formErrors?.fieldErrors?.id?.[0]">

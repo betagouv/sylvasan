@@ -66,6 +66,13 @@ const activePageFields = computed(() => {
     .filter((f): f is SurveyField => f !== undefined)
 })
 
+const allFieldIds = computed(() =>
+  (schema.value.fields ?? []).flatMap((f) => [
+    f.id,
+    ...(f.fields?.map((sf) => sf.id) ?? []),
+  ])
+)
+
 const previewSchema = computed<SurveySchema>(() => ({
   ...schema.value,
   fields: activePageFields.value,
@@ -355,6 +362,7 @@ const updatePageTitle = (title: any, index: number) => {
                 :key="`card-${field.id}`"
                 :field="field"
                 :field-ids="activePageFields.map((f) => f.id)"
+                :all-field-ids="allFieldIds"
                 @move-up="moveFieldUp(field.id)"
                 @move-down="moveFieldDown(field.id)"
                 @delete="removeField(field.id)"
@@ -388,6 +396,7 @@ const updatePageTitle = (title: any, index: number) => {
         @add="(f) => addField(f)"
         :opened="modalOpened"
         :field-ids="activePageFields.map((f) => f.id)"
+        :all-field-ids="allFieldIds"
         @close="closeModal"
       />
     </div>
