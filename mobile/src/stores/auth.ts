@@ -4,6 +4,7 @@ import { Browser } from "@capacitor/browser"
 import { useApiFetch } from "../utils/data-fetching"
 import type { LoggedUser } from "@shared-types/api"
 import { useSurveysStore } from "./surveys"
+import { useResponsesStore } from "./responses"
 
 const ACCESS_KEY = "auth_access"
 const REFRESH_KEY = "auth_refresh"
@@ -87,9 +88,9 @@ export const useAuthStore = defineStore("auth", {
 
       await Promise.all([this.persist(), this.fetchUser()])
 
-      // Fetch les enquêtes
       const surveyStore = useSurveysStore()
-      await surveyStore.sync()
+      const responsesStore = useResponsesStore()
+      await Promise.all([surveyStore.sync(), responsesStore.sync()])
     },
 
     async refreshToken() {
@@ -99,8 +100,10 @@ export const useAuthStore = defineStore("auth", {
         .post({ refresh: this.refresh })
         .json()
 
-      if (!response.value?.ok) {
-        await this.logout()
+      if (!response.value) return false // erreur réseau — on conserve la session
+
+      if (!response.value.ok) {
+        await this.logout() // le serveur a rejeté le token — il est expiré ou invalide
         return false
       }
 
@@ -167,7 +170,8 @@ export const useAuthStore = defineStore("auth", {
       await Promise.all([this.persist(), this.fetchUser()])
 
       const surveyStore = useSurveysStore()
-      await surveyStore.sync()
+      const responsesStore = useResponsesStore()
+      await Promise.all([surveyStore.sync(), responsesStore.sync()])
     },
 
     async logout() {

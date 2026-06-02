@@ -4,12 +4,13 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "icons": "vue-dsfr-icons -s scripts/icons.js -t src/icon-collections.ts",
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "build-dev": "vue-tsc -b && vite build --mode development",
-    "build-emu": "vue-tsc -b && vite build --mode emulator",
-    "build-staging": "vue-tsc -b && vite build --mode staging",
-    "build-prod": "vue-tsc -b && vite build --mode production",
+    "build": "npm run icons && vue-tsc -b && vite build",
+    "build-dev": "npm run icons && vue-tsc -b && vite build --mode development",
+    "build-emu": "npm run icons && vue-tsc -b && vite build --mode emulator",
+    "build-staging": "npm run icons && vue-tsc -b && vite build --mode staging",
+    "build-prod": "npm run icons && vue-tsc -b && vite build --mode production",
     "preview": "vite preview",
     "test": "vitest"
   },
@@ -37,12 +38,15 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@iconify-json/ri": "^1.2.10",
     "@types/node": "^25.6.0",
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/test-utils": "^2.4.10",
     "@vue/tsconfig": "^0.9.1",
+    "chalk": "^5.6.2",
     "jsdom": "^29.0.2",
     "typescript": "~6.0.3",
+    "typescript-eslint": "^8.60.1",
     "vite": "^8.0.13",
     "vitest": "^4.1.4",
     "vue-tsc": "^3.3.0"

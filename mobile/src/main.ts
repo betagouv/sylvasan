@@ -9,6 +9,14 @@ import VueDsfr from "@gouvminint/vue-dsfr"
 
 import { createPinia } from "pinia"
 
+import { addCollection } from "@iconify/vue"
+import collections from "./icon-collections"
+
+// Register all icons before mounting the app
+for (const collection of collections) {
+  addCollection(collection)
+}
+
 import "@ionic/vue/css/core.css"
 // import "@ionic/vue/css/normalize.css"
 // import "@ionic/vue/css/structure.css"
