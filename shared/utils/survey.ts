@@ -49,7 +49,7 @@ export const resolveFieldValue = (
 
   if (field?.vocabulary) {
     const vocabSet = vocabularies.find((v) => v.code === field.vocabulary)
-    const entry = vocabSet?.entries.find((e) => e.code === String(raw))
+    const entry = vocabSet?.entries?.find((e) => e.code === String(raw))
     return entry ? `${raw} – ${entry.label}` : String(raw)
   }
 
