@@ -109,7 +109,7 @@ export interface VocabularySet {
   id: number
   code: string
   name: string
-  entries: VocabularyEntry[]
+  entries?: VocabularyEntry[]
 }
 
 export interface MapValue {

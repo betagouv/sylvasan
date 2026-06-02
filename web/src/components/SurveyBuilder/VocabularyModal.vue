@@ -30,11 +30,11 @@ const opened = ref(false)
           <code class="bg-slate-100 px-1 rounded">{{
             props.vocabulary.code
           }}</code>
-          · {{ props.vocabulary.entries.length }} entrée(s)
+          · {{ (props.vocabulary.entries ?? []).length }} entrée(s)
         </p>
         <div class="overflow-y-auto max-h-96 border border-slate-200 rounded">
           <div
-            v-for="entry in props.vocabulary.entries"
+            v-for="entry in props.vocabulary.entries ?? []"
             :key="entry.code"
             class="flex gap-3 px-3 py-2 border-b border-slate-100 last:border-b-0"
           >
@@ -44,7 +44,7 @@ const opened = ref(false)
             <span class="text-sm">{{ entry.label }}</span>
           </div>
           <p
-            v-if="!props.vocabulary.entries.length"
+            v-if="!(props.vocabulary.entries ?? []).length"
             class="px-3 py-2 text-sm text-gray-400 italic"
           >
             Aucune entrée active

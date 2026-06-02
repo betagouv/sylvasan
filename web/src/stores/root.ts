@@ -7,6 +7,7 @@ import { useApiFetch } from "../utils/data-fetching"
 export const useRootStore = defineStore("root", () => {
   const loggedUser = ref<LoggedUser | null>(null)
   const vocabularies = ref<VocabularySet[]>([])
+  const vocabularyDetails = ref<Record<string, VocabularySet>>({})
   const initialDataLoaded = ref<boolean>(false)
 
   const fetchCsrfToken = async () => {
@@ -27,6 +28,12 @@ export const useRootStore = defineStore("root", () => {
     vocabularies.value = data.value
   }
 
+  const fetchVocabularyDetail = async (code: string) => {
+    if (vocabularyDetails.value[code]) return
+    const { data, response } = await useApiFetch(`/vocabularies/${code}/`).json()
+    if (response.value?.ok) vocabularyDetails.value[code] = data.value
+  }
+
   const fetchInitialData: () => Promise<undefined> = async () => {
     await fetchCsrfToken()
     await Promise.all([fetchLoggedUser(), fetchVocabularies()])
@@ -37,6 +44,8 @@ export const useRootStore = defineStore("root", () => {
     setLoggedUser,
     loggedUser,
     vocabularies,
+    vocabularyDetails,
+    fetchVocabularyDetail,
     initialDataLoaded,
     fetchInitialData,
   }

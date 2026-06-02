@@ -65,9 +65,7 @@ const vocabularySelectOptions = computed(() =>
 
 const resolvedVocabulary = computed(() =>
   selectedVocabularyCode.value
-    ? rootStore.vocabularies.find(
-        (v) => v.code === selectedVocabularyCode.value
-      )
+    ? rootStore.vocabularyDetails[selectedVocabularyCode.value]
     : undefined
 )
 
@@ -149,6 +147,7 @@ const onOptionsSourceChange = (source: string | number | boolean) => {
 const onVocabularyChange = (code: string) => {
   selectedVocabularyCode.value = code
   payload.value.vocabulary = code || undefined
+  if (code) rootStore.fetchVocabularyDetail(code)
 }
 
 const saveField = () => {
@@ -200,6 +199,7 @@ watch(
       payload.value = JSON.parse(JSON.stringify(props.payload))
       optionsSource.value = props.payload.vocabulary ? "vocabulary" : "manual"
       selectedVocabularyCode.value = props.payload.vocabulary ?? ""
+      if (props.payload.vocabulary) rootStore.fetchVocabularyDetail(props.payload.vocabulary)
       await nextTick()
       conditionSegment.value?.loadCondition(props.payload.condition)
     } else {
