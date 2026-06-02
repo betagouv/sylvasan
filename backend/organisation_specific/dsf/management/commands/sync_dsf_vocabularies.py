@@ -58,10 +58,16 @@ class Command(BaseCommand):
             type=str,
             help="Synchronise uniquement un référentiel spécifique (par code)",
         )
+        parser.add_argument(
+            "--all",
+            action="store_true",
+            help="Synchronise tous les référentiels disponibles dans metadsf",
+        )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
         only_vocab = options.get("vocabulary")
+        sync_all = options["all"]
 
         if "dsf_ref" not in settings.DATABASES:
             self.stderr.write(
@@ -75,14 +81,52 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR("Organisation DSF introuvable. Créez-la d'abord via l'admin."))
             return
 
-        vocabs_to_sync = [v for v in VOCABULARIES if v["code"] == only_vocab] if only_vocab else VOCABULARIES
-
-        if not vocabs_to_sync:
-            self.stderr.write(self.style.WARNING(f"Aucun vocabulaire trouvé pour le code '{only_vocab}'"))
-            return
+        if sync_all:
+            vocabs_to_sync = self._fetch_all_unites()
+            self.stdout.write(f"{len(vocabs_to_sync)} référentiels trouvés dans metadsf")
+        elif only_vocab:
+            vocabs_to_sync = [v for v in VOCABULARIES if v["code"] == only_vocab]
+            if not vocabs_to_sync:
+                # Also try fetching directly from metadsf if not in VOCABULARIES constant
+                vocabs_to_sync = self._fetch_all_unites(unite=only_vocab)
+            if not vocabs_to_sync:
+                self.stderr.write(self.style.WARNING(f"Aucun référentiel trouvé pour le code '{only_vocab}'"))
+                return
+        else:
+            vocabs_to_sync = VOCABULARIES
 
         for vocab_def in vocabs_to_sync:
             self._sync_vocabulary(dsf, vocab_def, dry_run)
+
+    def _fetch_all_unites(self, unite: str | None = None) -> list[dict]:
+        with connections["dsf_ref"].cursor() as cursor:
+            if unite:
+                cursor.execute(
+                    """
+                    SELECT unite, libelle
+                    FROM metadsf.abunite
+                    WHERE unite = %s
+                    """,
+                    [unite],
+                )
+            else:
+                cursor.execute(
+                    """
+                    SELECT unite, libelle
+                    FROM metadsf.abunite
+                    ORDER BY unite
+                    """
+                )
+            rows = cursor.fetchall()
+
+        return [
+            {
+                "code": row[0],
+                "name": row[1],
+                "unite": row[0],
+            }
+            for row in rows
+        ]
 
     def _sync_vocabulary(self, organisation, vocab_def, dry_run):
         code = vocab_def["code"]

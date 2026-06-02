@@ -9,6 +9,8 @@ urlpatterns = [
     path("api/surveys/<int:pk>", views.SurveyRetrieveAPIView.as_view(), name="survey_retrieve"),
     path("api/mobile/surveys/", views.SurveyResponderListAPIView.as_view(), name="survey_responder_retrieve"),
     path("api/vocabularies/", views.VocabularySetListView.as_view(), name="vocabulary_set_list"),
+    path("api/vocabularies/<str:code>/", views.VocabularySetDetailView.as_view(), name="vocabulary_set_detail"),
+    path("api/mobile/vocabularies/", views.MobileVocabularySetListView.as_view(), name="mobile_vocabulary_set_list"),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

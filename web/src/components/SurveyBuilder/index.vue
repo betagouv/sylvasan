@@ -14,7 +14,12 @@ import { storeToRefs } from "pinia"
 import { useRootStore } from "../../stores/root"
 import MapField from "../MapField.vue"
 
-const { vocabularies } = storeToRefs(useRootStore())
+const rootStore = useRootStore()
+const { vocabularies, vocabularyDetails } = storeToRefs(rootStore)
+
+const previewVocabularies = computed(() =>
+  vocabularies.value.map((v) => vocabularyDetails.value[v.code] ?? v)
+)
 
 const schema = defineModel<SurveySchema>({ required: true })
 
@@ -413,7 +418,7 @@ const updatePageTitle = (title: any, index: number) => {
         <SurveyRenderer
           :schema="previewSchema"
           :allowSubmit="false"
-          :vocabularies="vocabularies"
+          :vocabularies="previewVocabularies"
           :mapComponent="MapField"
         />
       </div>

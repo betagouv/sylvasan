@@ -36,7 +36,7 @@ export const useVocabulariesStore = defineStore("vocabularies", {
     async sync() {
       this.syncing = true
       try {
-        const { data, response } = await useApiFetch("/vocabularies/")
+        const { data, response } = await useApiFetch("/mobile/vocabularies/")
           .get()
           .json()
         if (response.value?.ok) {

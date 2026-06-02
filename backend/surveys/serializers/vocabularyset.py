@@ -9,6 +9,14 @@ class VocabularyEntrySerializer(serializers.ModelSerializer):
         fields = ("code", "label", "position")
 
 
+class VocabularySetDisplaySerializer(serializers.ModelSerializer):
+    """Sans les entrées — pour les listes."""
+
+    class Meta:
+        model = VocabularySet
+        fields = ("id", "code", "name")
+
+
 class VocabularySetSerializer(serializers.ModelSerializer):
     entries = VocabularyEntrySerializer(many=True, read_only=True)
 

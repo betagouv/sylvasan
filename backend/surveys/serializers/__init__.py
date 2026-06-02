@@ -1,2 +1,2 @@
 from .survey import FullSurveySerializer, SurveyDisplaySerializer, SurveySerializer
-from .vocabularyset import VocabularyEntrySerializer, VocabularySetSerializer
+from .vocabularyset import VocabularyEntrySerializer, VocabularySetDisplaySerializer, VocabularySetSerializer

@@ -5,7 +5,7 @@ export default { name: "FieldCard" }
 </script>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, watchEffect } from "vue"
 import type { DsfrButtonProps } from "@gouvminint/vue-dsfr"
 import type { SurveyField } from "@shared-types/survey"
 import { typeWidgetMapping } from "./mappings"
@@ -26,10 +26,12 @@ const icon = computed(() => widgetData.value?.icon)
 const label = computed(() => widgetData.value?.label)
 
 const resolvedVocabulary = computed(() =>
-  field.vocabulary
-    ? rootStore.vocabularies.find((v) => v.code === field.vocabulary)
-    : undefined
+  field.vocabulary ? rootStore.vocabularyDetails[field.vocabulary] : undefined
 )
+
+watchEffect(() => {
+  if (field.vocabulary) rootStore.fetchVocabularyDetail(field.vocabulary)
+})
 
 const { field, fieldIds, allFieldIds } = defineProps<{
   field: SurveyField
@@ -157,7 +159,7 @@ const formatDate = (isoString: string): string => {
         <div v-if="resolvedVocabulary" class="flex align-center">
           <p>
             {{ resolvedVocabulary.code }} — {{ resolvedVocabulary.name }} ({{
-              resolvedVocabulary.entries.length
+              resolvedVocabulary.entries?.length
             }}
             options)
           </p>

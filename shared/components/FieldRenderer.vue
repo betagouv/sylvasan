@@ -44,13 +44,13 @@ const resolvedVocab = computed(() =>
 )
 
 const selectOptions = computed(() =>
-  resolvedVocab.value
+  resolvedVocab.value && resolvedVocab.value.entries
     ? resolvedVocab.value.entries.map((e) => ({ text: e.label, value: e.code }))
     : props.field.ui?.choices
 )
 
 const radioOptions = computed(() =>
-  resolvedVocab.value
+  resolvedVocab.value && resolvedVocab.value.entries
     ? resolvedVocab.value.entries.map((e) => ({
         label: e.label,
         value: e.code,
@@ -59,7 +59,7 @@ const radioOptions = computed(() =>
 )
 
 const autocompleteEntries = computed((): VocabularyEntry[] => {
-  if (resolvedVocab.value) return resolvedVocab.value.entries
+  if (resolvedVocab.value?.entries) return resolvedVocab.value.entries
   if (props.field.ui?.choices) {
     return (props.field.ui.choices as any[]).map((c) => ({
       code: String(c.value ?? ""),
