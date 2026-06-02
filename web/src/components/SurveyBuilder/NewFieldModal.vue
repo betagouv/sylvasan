@@ -242,7 +242,7 @@ const close = () => {
     <div class="md:flex gap-6">
       <DsfrSelect
         @update:modelValue="(value: FieldWidget) => assignWidgetAndType(value)"
-        value="input"
+        :model-value="payload.ui?.widget ?? 'input'"
         :error-message="formErrors?.fieldErrors?.type?.[0]"
         label="Type"
         :options="typeOptions"
