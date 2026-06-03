@@ -180,32 +180,56 @@ class DsfOAuthWebLoginView(APIView):
 
 
 def _upsert_user_from_claims(claims: dict) -> tuple:
-    external_id = claims["sub"]
+    # Le serveur DSF peut retourner des valeurs avec des espaces superflus — on normalise
+    external_id = claims["sub"].strip()
     user_info = claims.get("user_info", {})
-    codes_da = claims.get("codes_da", [])
-    echelon = user_info.get("echelon", "")
+    codes_da = [c.strip() for c in claims.get("codes_da", [])]
+    echelon = user_info.get("echelon", "").strip()
+    email = user_info.get("email", "").strip()
 
     logger.info(
         "Upserting DSF user — sub=%s email=%s prenom=%s nom=%s echelon=%s codes_da=%s",
         external_id,
-        user_info.get("email"),
+        email,
         user_info.get("prenom"),
         user_info.get("nom"),
         echelon,
         codes_da,
     )
 
-    user, created = User.objects.update_or_create(
-        external_id=external_id,
-        source=UserSource.DSF,
-        defaults={
-            "username": external_id,
-            "email": user_info.get("email", ""),
-            "first_name": user_info.get("prenom", ""),
-            "last_name": user_info.get("nom", ""),
-            "dsf_last_claims": claims,
-        },
-    )
+    # Lookup priority:
+    # 1) DSF user with this external_id (returning user)
+    # 2) Any existing user with this email (first DSF login — link local account to DSF identity)
+    user = User.objects.filter(external_id=external_id, source=UserSource.DSF).first()
+    if user is None and email:
+        user = User.objects.filter(email=email).first()
+        if user:
+            logger.info(
+                "Linking existing user to DSF identity — user_id=%s username=%s email=%s sub=%s",
+                user.id,
+                user.username,
+                email,
+                external_id,
+            )
+
+    dsf_fields = {
+        "external_id": external_id,
+        "source": UserSource.DSF,
+        "username": external_id,
+        "email": email,
+        "first_name": user_info.get("prenom", ""),
+        "last_name": user_info.get("nom", ""),
+        "dsf_last_claims": claims,
+    }
+
+    if user is not None:
+        for field, value in dsf_fields.items():
+            setattr(user, field, value)
+        user.save()
+        created = False
+    else:
+        user = User.objects.create(**dsf_fields)
+        created = True
 
     logger.info(
         "DSF user %s — user_id=%s username=%s",
