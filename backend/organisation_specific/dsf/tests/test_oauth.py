@@ -83,6 +83,43 @@ class TestDsfOAuthAppCallback(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(User.objects.filter(external_id="CO12345", source=UserSource.DSF).count(), 1)
 
+    def test_sub_with_trailing_space_matches_existing_dsf_user(self):
+        """
+        Le serveur DSF peut retourner un sub avec des espaces superflus (ex : "CO12345 ").
+        Le sub doit être normalisé avant la recherche pour retrouver l'utilisateur existant
+        et ne pas créer de doublon ni lever une UniqueViolation sur l'email.
+        """
+        UserFactory.create(external_id="CO12345", source=UserSource.DSF, username="CO12345", email="agent@example.com")
+
+        claims_with_space = {**MOCK_CLAIMS, "sub": "CO12345 "}  # espace après l'id
+        fetch_patch, parse_patch = _mock_oauth(claims_with_space)
+        with fetch_patch, parse_patch:
+            response = self.client.post(reverse(self.URL), {"code": "c", "nonce": "n"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(User.objects.filter(external_id="CO12345").count(), 1)
+
+    def test_links_existing_local_account_by_email(self):
+        """
+        Si un compte local existe déjà avec le même email que celui retourné par DSF,
+        le compte est mis à jour (source=DSF, external_id) au lieu d'en créer un nouveau.
+        Cela évite la violation de contrainte unique sur l'email.
+        """
+        existing = UserFactory.create(email="agent@example.com", source=UserSource.LOCAL)
+        original_id = existing.id
+
+        fetch_patch, parse_patch = _mock_oauth()
+        with fetch_patch, parse_patch:
+            response = self.client.post(reverse(self.URL), {"code": "c", "nonce": "n"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Aucun doublon créé
+        self.assertEqual(User.objects.filter(email="agent@example.com").count(), 1)
+        # C'est bien le compte existant qui a été mis à jour, pas un nouveau
+        updated = User.objects.get(email="agent@example.com")
+        self.assertEqual(updated.id, original_id)
+        self.assertEqual(updated.external_id, "CO12345")
+
     def test_assigns_membership_on_login(self):
         OrganisationFactory.create(name="DSF")
         fetch_patch, parse_patch = _mock_oauth()
@@ -91,6 +128,35 @@ class TestDsfOAuthAppCallback(APITestCase):
 
         user = User.objects.get(external_id="CO12345")
         self.assertTrue(Membership.objects.filter(user=user, membership_type=MembershipType.RESPONDER).exists())
+
+    def test_all_roles_with_nonexistent_echelon_returns_200_and_creates_national_memberships(self):
+        """
+        Quand le DSF retourne tous les codes et un échelon inconnu,
+        l'authentification réussit (200) et les adhésions nationales sont créées sans pôle.
+        """
+        OrganisationFactory.create(name="DSF")
+        claims = {
+            "sub": "CO99999",
+            "user_info": {
+                "nom": "MARTIN",
+                "email": "martin@example.com",
+                "grade": None,
+                "prenom": "Martin",
+                "echelon": "NON_EXISTENT",
+                "categorie": "E",
+            },
+            "codes_da": ["SYLV-CREECAMPNAT-T", "SYLV-CREECAMPECH-T", "SYLV-EDIT-T"],
+        }
+        fetch_patch, parse_patch = _mock_oauth(claims)
+        with fetch_patch, parse_patch:
+            response = self.client.post(reverse(self.URL), {"code": "c", "nonce": "n"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user = User.objects.get(external_id="CO99999")
+        admin_m = Membership.objects.get(user=user, membership_type=MembershipType.ADMIN)
+        responder_m = Membership.objects.get(user=user, membership_type=MembershipType.RESPONDER)
+        self.assertIsNone(admin_m.pole)
+        self.assertIsNone(responder_m.pole)
 
 
 @override_settings(**DSF_SETTINGS)
@@ -237,6 +303,25 @@ class TestAssignMembership(APITestCase):
     def test_missing_pole_skips_scoped_role(self):
         _assign_membership(self.user, self.org, "ECH001", ["SYLV-CREECAMPECH-T"])
         self.assertEqual(Membership.objects.filter(user=self.user, organisation=self.org).count(), 0)
+
+    def test_all_roles_with_nonexistent_echelon_creates_national_memberships(self):
+        """
+        Quand tous les codes sont présents et que l'échelon ne correspond à aucun pôle,
+        les codes nationaux (SYLV-CREECAMPNAT-T, SYLV-EDIT-T) ont la priorité :
+        les adhésions ADMIN et RESPONDER sont créées sans pôle.
+        """
+        _assign_membership(
+            self.user,
+            self.org,
+            "NON_EXISTENT",
+            ["SYLV-CREECAMPNAT-T", "SYLV-CREECAMPECH-T", "SYLV-EDIT-T"],
+        )
+        admin_m = Membership.objects.get(user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN)
+        responder_m = Membership.objects.get(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER
+        )
+        self.assertIsNone(admin_m.pole)
+        self.assertIsNone(responder_m.pole)
 
     def test_stale_role_removed(self):
         MembershipFactory.create(user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN)
