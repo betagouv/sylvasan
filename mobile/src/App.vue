@@ -12,8 +12,11 @@ const authStore = useAuthStore()
 const toast = useToastStore()
 const router = useRouter()
 let urlOpenListener: PluginListenerHandle | null = null
+let oauthHandled = false
 
 const handleOAuthCallback = async (url: string) => {
+  if (oauthHandled) return
+  oauthHandled = true
   const loading = await loadingController.create({ message: "Connexion en cours…" })
   await loading.present()
 

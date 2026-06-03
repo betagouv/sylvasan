@@ -142,7 +142,11 @@ class DsfOAuthWebCallbackView(APIView):
             logger.error("Web OAuth failed: sub missing in claims — full_claims=%s", claims)
             return redirect(f"{settings.DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT}/s-identifier?error=missing_sub")
 
-        user, _ = _upsert_user_from_claims(claims)
+        try:
+            user, _ = _upsert_user_from_claims(claims)
+        except Exception:
+            logger.exception("Web OAuth user upsert failed — sub=%s", claims.get("sub"))
+            return redirect(f"{settings.DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT}/s-identifier?error=upsert_failed")
 
         logger.info(
             "Web OAuth success — user_id=%s username=%s email=%s",
@@ -183,7 +187,7 @@ def _upsert_user_from_claims(claims: dict) -> tuple:
     # Le serveur DSF peut retourner des valeurs avec des espaces superflus — on normalise
     external_id = claims["sub"].strip()
     user_info = claims.get("user_info", {})
-    codes_da = [c.strip() for c in claims.get("codes_da", [])]
+    codes_da = [str(c).strip() for c in claims.get("codes_da", [])]
     echelon = user_info.get("echelon", "").strip()
     email = user_info.get("email", "").strip()
 

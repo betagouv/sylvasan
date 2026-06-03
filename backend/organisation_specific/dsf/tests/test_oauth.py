@@ -105,7 +105,7 @@ class TestDsfOAuthAppCallback(APITestCase):
         le compte est mis à jour (source=DSF, external_id) au lieu d'en créer un nouveau.
         Cela évite la violation de contrainte unique sur l'email.
         """
-        existing = UserFactory.create(email="agent@example.com", source="local")
+        existing = UserFactory.create(email="agent@example.com", source=UserSource.LOCAL)
         original_id = existing.id
 
         fetch_patch, parse_patch = _mock_oauth()
