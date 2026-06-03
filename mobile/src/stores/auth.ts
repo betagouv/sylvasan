@@ -54,12 +54,12 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async clearStorage() {
+      // DSF_NONCE_KEY et DSF_STATE_KEY sont gérés exclusivement par le flux OAuth
+      // (loginWithDsf / handleDsfCallback) et ne doivent pas être effacés ici.
       await Promise.all([
         Preferences.remove({ key: ACCESS_KEY }),
         Preferences.remove({ key: REFRESH_KEY }),
         Preferences.remove({ key: USER_KEY }),
-        Preferences.remove({ key: DSF_NONCE_KEY }),
-        Preferences.remove({ key: DSF_STATE_KEY }),
       ])
     },
 
@@ -161,7 +161,14 @@ export const useAuthStore = defineStore("auth", {
         body: JSON.stringify({ code, nonce }),
       })
 
-      if (!res.ok) throw new Error("DSF OAuth exchange failed")
+      if (!res.ok) {
+        let detail = `HTTP ${res.status}`
+        try {
+          const body = await res.json()
+          if (body.error) detail = body.error
+        } catch {}
+        throw new Error(`DSF OAuth exchange failed — ${detail}`)
+      }
 
       const data = await res.json()
       this.access = data.access
