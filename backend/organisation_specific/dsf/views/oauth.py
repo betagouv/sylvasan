@@ -55,7 +55,14 @@ class DsfOAuthAppCallbackView(APIView):
             logger.error("Sub missing in claims")
             return Response({"error": "Identifiant manquant dans le token DSF"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        user, echelon = _upsert_user_from_claims(claims)
+        try:
+            user, echelon = _upsert_user_from_claims(claims)
+        except Exception:
+            logger.exception("DSF OAuth user upsert failed for sub=%s", claims.get("sub"))
+            return Response(
+                {"error": "Erreur lors de la création ou mise à jour de l'utilisateur"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         refresh = RefreshToken.for_user(user)
         return Response(
