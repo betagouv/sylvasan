@@ -38,10 +38,9 @@ class DsfOAuthAppCallbackView(APIView):
         redirect_uri = settings.DSF_OAUTH2_REDIRECT_APP_URI
 
         logger.info(
-            "App OAuth callback received — code_present=%s nonce_present=%s redirect_uri=%s",
+            "App OAuth callback received — code_present=%s nonce_present=%s",
             bool(code),
             bool(nonce),
-            redirect_uri,
         )
 
         if not code or not nonce:
