@@ -54,12 +54,12 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async clearStorage() {
+      // DSF_NONCE_KEY et DSF_STATE_KEY sont gérés exclusivement par le flux OAuth
+      // (loginWithDsf / handleDsfCallback) et ne doivent pas être effacés ici.
       await Promise.all([
         Preferences.remove({ key: ACCESS_KEY }),
         Preferences.remove({ key: REFRESH_KEY }),
         Preferences.remove({ key: USER_KEY }),
-        Preferences.remove({ key: DSF_NONCE_KEY }),
-        Preferences.remove({ key: DSF_STATE_KEY }),
       ])
     },
 
