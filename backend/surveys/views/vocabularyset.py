@@ -18,7 +18,7 @@ def _active_entries_prefetch():
 def _accessible_vocab_queryset(user):
     """VocabularySets visibles par l'utilisateur (son organisation ou partagés)."""
     org_ids = user.memberships.values_list("organisation_id", flat=True)
-    return VocabularySet.objects.filter(Q(organisation__in=org_ids) | Q(organisation__isnull=True))
+    return VocabularySet.objects.filter(Q(organisation__in=org_ids) | Q(organisation__isnull=True)).order_by("code")
 
 
 class VocabularySetListView(ListAPIView):
