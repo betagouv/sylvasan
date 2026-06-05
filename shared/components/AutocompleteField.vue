@@ -8,6 +8,7 @@ const props = defineProps<{
   required?: boolean
   disabled?: boolean
   hint?: string
+  placeholder?: string
 }>()
 
 const modelValue = defineModel<string>()
@@ -113,6 +114,7 @@ const onKeydown = (e: KeyboardEvent) => {
             :label-visible="true"
             :hint="hint"
             :disabled="disabled"
+            :placeholder="placeholder"
             autocomplete="off"
             @focus="onFocus"
             @blur="onBlur"

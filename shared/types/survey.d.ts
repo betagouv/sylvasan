@@ -53,6 +53,8 @@ export interface FieldUI {
   inactiveText?: string
   // Pour le type array
   addLabel?: string
+  // Pour le type select
+  unselectedText?: string
 }
 
 export interface SurveyField {

@@ -125,6 +125,7 @@ const mapValue = computed({
         :required="field.required ?? false"
         v-model="modelValue"
         :disabled="disabled"
+        :defaultUnselectedText="field.ui?.unselectedText"
       />
     </DsfrInputGroup>
 
@@ -194,6 +195,7 @@ const mapValue = computed({
       :required="field.required ?? false"
       :hint="field.ui?.hint"
       :disabled="disabled"
+      :placeholder="field.ui?.placeholder"
       v-model="autocompleteValue"
     />
 
