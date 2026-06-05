@@ -6,6 +6,8 @@ import { Network } from "@capacitor/network"
 import type { PluginListenerHandle } from "@capacitor/core"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
 import ignStyle from "../assets/ign-style.json"
+import { useMapPins } from "../composables/useMapPins"
+import ResponsePinCard from "../components/ResponsePinCard.vue"
 
 const centerOfFrance: [number, number] = [2.35, 46.8]
 
@@ -13,8 +15,10 @@ const ready = ref(false)
 const isOnline = ref(false)
 const tilesLoaded = ref(false)
 const mapContainer = ref<HTMLDivElement | null>(null)
-let map: maplibregl.Map | null = null
+const mapRef = ref<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
+
+const { selectedPin } = useMapPins(mapRef)
 
 const getUserPosition = (): Promise<[number, number] | null> =>
   new Promise((resolve) => {
@@ -27,8 +31,8 @@ const getUserPosition = (): Promise<[number, number] | null> =>
   })
 
 const destroyMap = () => {
-  map?.remove()
-  map = null
+  mapRef.value?.remove()
+  mapRef.value = null
   tilesLoaded.value = false
 }
 
@@ -36,7 +40,7 @@ const initMap = () => {
   if (!mapContainer.value) return
   destroyMap()
 
-  map = new maplibregl.Map({
+  const m = new maplibregl.Map({
     container: mapContainer.value,
     style: ignStyle as StyleSpecification,
     center: centerOfFrance,
@@ -45,16 +49,18 @@ const initMap = () => {
     attributionControl: false,
   })
 
-  map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left")
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right")
+  m.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left")
+  m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right")
 
-  map.once("idle", () => {
+  m.once("idle", () => {
     tilesLoaded.value = true
   })
 
   getUserPosition().then((pos) => {
-    if (pos && map) map.flyTo({ center: pos, zoom: 13 })
+    if (pos && mapRef.value) mapRef.value.flyTo({ center: pos, zoom: 13 })
   })
+
+  mapRef.value = m
 }
 
 watch(isOnline, async (online, wasOnline) => {
@@ -104,7 +110,7 @@ onBeforeUnmount(() => {
         <p class="text-sm mb-0!">Carte indisponible hors connexion</p>
       </div>
 
-      <!-- En ligne : carte + spinner de chargement des tuiles -->
+      <!-- En ligne : carte + spinner de chargement des tuiles + fiche -->
       <div v-else class="relative h-full">
         <div ref="mapContainer" class="w-full h-full" />
 
@@ -115,6 +121,14 @@ onBeforeUnmount(() => {
           >
             <ion-spinner name="crescent" style="width: 2rem; height: 2rem" />
           </div>
+        </Transition>
+
+        <Transition name="slide-up">
+          <ResponsePinCard
+            v-if="selectedPin"
+            :pin="selectedPin"
+            @close="selectedPin = null"
+          />
         </Transition>
       </div>
     </ion-content>
@@ -133,6 +147,16 @@ ion-content {
   transition: opacity 0.4s ease;
 }
 .fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(1rem);
   opacity: 0;
 }
 </style>
