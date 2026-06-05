@@ -199,7 +199,8 @@ watch(
       payload.value = JSON.parse(JSON.stringify(props.payload))
       optionsSource.value = props.payload.vocabulary ? "vocabulary" : "manual"
       selectedVocabularyCode.value = props.payload.vocabulary ?? ""
-      if (props.payload.vocabulary) rootStore.fetchVocabularyDetail(props.payload.vocabulary)
+      if (props.payload.vocabulary)
+        rootStore.fetchVocabularyDetail(props.payload.vocabulary)
       await nextTick()
       conditionSegment.value?.loadCondition(props.payload.condition)
     } else {
@@ -337,14 +338,25 @@ const close = () => {
 
     <div v-else-if="payload.ui?.widget === 'select'">
       <h6 class="fr-text--md">Options</h6>
-      <DsfrRadioButtonSet
-        name="options-source-select"
-        :options="optionsSourceOptions"
-        :model-value="optionsSource"
-        :inline="true"
-        @update:model-value="onOptionsSourceChange"
-        class="mb-4"
-      />
+      <div class="flex">
+        <DsfrRadioButtonSet
+          name="options-source-select"
+          :options="optionsSourceOptions"
+          :model-value="optionsSource"
+          :inline="true"
+          @update:model-value="onOptionsSourceChange"
+          class="mb-4"
+        />
+        <div class="grow"></div>
+        <DsfrInputGroup>
+          <DsfrInput
+            label-visible
+            v-model="payload.ui.unselectedText"
+            label="Text option vide"
+          />
+        </DsfrInputGroup>
+        <div class="grow"></div>
+      </div>
       <div
         v-if="optionsSource === 'vocabulary'"
         class="flex items-center gap-2"
@@ -378,14 +390,25 @@ const close = () => {
 
     <div v-else-if="payload.ui?.widget === 'autocomplete'">
       <h6 class="fr-text--md">Options</h6>
-      <DsfrRadioButtonSet
-        name="options-source-autocomplete"
-        :options="optionsSourceOptions"
-        :model-value="optionsSource"
-        :inline="true"
-        @update:model-value="onOptionsSourceChange"
-        class="mb-4"
-      />
+      <div class="flex">
+        <DsfrRadioButtonSet
+          name="options-source-autocomplete"
+          :options="optionsSourceOptions"
+          :model-value="optionsSource"
+          :inline="true"
+          @update:model-value="onOptionsSourceChange"
+          class="mb-4"
+        />
+        <div class="grow"></div>
+        <DsfrInputGroup>
+          <DsfrInput
+            label-visible
+            v-model="payload.ui.placeholder"
+            label="Placeholder"
+          />
+        </DsfrInputGroup>
+        <div class="grow"></div>
+      </div>
       <div
         v-if="optionsSource === 'vocabulary'"
         class="flex items-center gap-2"

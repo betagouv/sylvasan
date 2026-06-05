@@ -105,6 +105,9 @@
             "textarea": {
               "type": "boolean"
             },
+            "unselectedText": {
+              "type": "string"
+            },
             "widget": {
               "enum": [
                 "input",
