@@ -36,13 +36,13 @@ function getSurveyTitle(response: LocalResponse | ResponseFull): string {
 
 export function useMapPins(mapRef: ShallowRef<maplibregl.Map | null>) {
   const { allResponses } = storeToRefs(useResponsesStore())
-  const { getSurveyById } = useSurveysStore()
+  const { getSurveyById } = storeToRefs(useSurveysStore())
 
   const selectedPin = ref<PinData | null>(null)
 
   const pins = computed<PinData[]>(() =>
     allResponses.value.flatMap((response) => {
-      const schema = getSchema(response, getSurveyById)
+      const schema = getSchema(response, getSurveyById.value)
       if (!schema) return []
 
       const mapField = schema.fields.find((f) => f.ui?.widget === "map")
