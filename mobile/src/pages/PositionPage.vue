@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue"
+import {
+  ref,
+  shallowRef,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+} from "vue"
 import { IonPage, IonContent, IonSpinner, IonIcon } from "@ionic/vue"
 import { cloudOfflineOutline } from "ionicons/icons"
 import { Network } from "@capacitor/network"
@@ -15,7 +22,7 @@ const ready = ref(false)
 const isOnline = ref(false)
 const tilesLoaded = ref(false)
 const mapContainer = ref<HTMLDivElement | null>(null)
-const mapRef = ref<maplibregl.Map | null>(null)
+const mapRef = shallowRef<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
 
 const { selectedPin } = useMapPins(mapRef)
@@ -49,18 +56,24 @@ const initMap = () => {
     attributionControl: false,
   })
 
-  m.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left")
-  m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right")
+  m.addControl(
+    new maplibregl.AttributionControl({ compact: true }),
+    "bottom-left"
+  )
+  m.addControl(
+    new maplibregl.NavigationControl({ showCompass: false }),
+    "bottom-right"
+  )
 
   m.once("idle", () => {
     tilesLoaded.value = true
   })
 
+  mapRef.value = m
+
   getUserPosition().then((pos) => {
     if (pos && mapRef.value) mapRef.value.flyTo({ center: pos, zoom: 13 })
   })
-
-  mapRef.value = m
 }
 
 watch(isOnline, async (online, wasOnline) => {
@@ -112,7 +125,10 @@ onBeforeUnmount(() => {
 
       <!-- En ligne : carte + spinner de chargement des tuiles + fiche -->
       <div v-else class="relative h-full">
-        <div ref="mapContainer" class="w-full h-full" />
+        <div
+          ref="mapContainer"
+          :class="{ 'w-full': true, 'h-full': true, hidden: !tilesLoaded }"
+        />
 
         <Transition name="fade">
           <div

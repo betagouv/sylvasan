@@ -1,5 +1,5 @@
 import { ref, computed, watch, onBeforeUnmount } from "vue"
-import type { Ref } from "vue"
+import type { ShallowRef } from "vue"
 import maplibregl from "maplibre-gl"
 import { storeToRefs } from "pinia"
 import { useResponsesStore } from "../stores/responses"
@@ -22,7 +22,9 @@ function getSchema(
   getSurveyById: (id: number) => any
 ): SurveySchema | null {
   if ("localId" in response) {
-    return getSurveyById((response as LocalResponse).surveyId)?.jsonSchema ?? null
+    return (
+      getSurveyById((response as LocalResponse).surveyId)?.jsonSchema ?? null
+    )
   }
   return (response as any).survey?.jsonSchema ?? null
 }
@@ -32,7 +34,7 @@ function getSurveyTitle(response: LocalResponse | ResponseFull): string {
   return (response as any).survey?.title ?? ""
 }
 
-export function useMapPins(mapRef: Ref<maplibregl.Map | null>) {
+export function useMapPins(mapRef: ShallowRef<maplibregl.Map | null>) {
   const { allResponses } = storeToRefs(useResponsesStore())
   const { getSurveyById } = useSurveysStore()
 
@@ -47,18 +49,27 @@ export function useMapPins(mapRef: Ref<maplibregl.Map | null>) {
       if (!mapField) return []
 
       const value = (response.data as Record<string, any>)[mapField.id]
-      if (!value || typeof value.lat !== "number" || typeof value.lon !== "number") return []
+      if (
+        !value ||
+        typeof value.lat !== "number" ||
+        typeof value.lon !== "number"
+      )
+        return []
 
       const isLocal = "localId" in response
-      return [{
-        responseId: isLocal ? (response as LocalResponse).localId : (response as ResponseFull).id,
-        isLocal,
-        lat: value.lat,
-        lon: value.lon,
-        surveyTitle: getSurveyTitle(response),
-        date: response.creationDate,
-        status: response.status,
-      }]
+      return [
+        {
+          responseId: isLocal
+            ? (response as LocalResponse).localId
+            : (response as ResponseFull).id,
+          isLocal,
+          lat: value.lat,
+          lon: value.lon,
+          surveyTitle: getSurveyTitle(response),
+          date: response.creationDate,
+          status: response.status,
+        },
+      ]
     })
   )
 
@@ -72,13 +83,16 @@ export function useMapPins(mapRef: Ref<maplibregl.Map | null>) {
   const syncMarkers = (mapInstance: maplibregl.Map) => {
     clearMarkers()
     for (const pin of pins.value) {
-      const marker = new maplibregl.Marker()
+      const marker = new maplibregl.Marker({
+        color: "#000091", // --blue-france-sun-113
+      })
         .setLngLat([pin.lon, pin.lat])
         .addTo(mapInstance)
 
       marker.getElement().addEventListener("click", (e) => {
         e.stopPropagation()
-        selectedPin.value = selectedPin.value?.responseId === pin.responseId ? null : pin
+        selectedPin.value =
+          selectedPin.value?.responseId === pin.responseId ? null : pin
       })
 
       markers.push(marker)
@@ -88,7 +102,9 @@ export function useMapPins(mapRef: Ref<maplibregl.Map | null>) {
   watch(mapRef, (mapInstance) => {
     if (mapInstance) {
       syncMarkers(mapInstance)
-      mapInstance.on("click", () => { selectedPin.value = null })
+      mapInstance.on("click", () => {
+        selectedPin.value = null
+      })
     } else {
       clearMarkers()
       selectedPin.value = null
