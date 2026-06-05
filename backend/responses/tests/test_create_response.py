@@ -159,13 +159,13 @@ class TestCreateResponse(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @authenticate
-    def test_pole_responder_cannot_create_response_for_org_level_survey(self):
+    def test_pole_responder_can_create_response_for_org_level_survey(self):
         """
-        Un·e RESPONDER de pôle ne peut pas répondre à une enquête au niveau organisation (sans pôle)
+        Un·e RESPONDER de pôle peut répondre à une enquête au niveau organisation (sans pôle)
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
-        survey = SurveyFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=None)
         MembershipFactory(
             user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER
         )
@@ -174,7 +174,7 @@ class TestCreateResponse(APITestCase):
             response_payload(survey),
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @authenticate
     def test_pole_responder_cannot_create_response_for_other_pole_survey(self):
