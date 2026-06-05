@@ -65,7 +65,7 @@ const onSurveySelected = (id: number) => {
 
     <!-- Bouton central en dehors de ion-tab-bar pour éviter le clipping du shadow DOM -->
     <button
-      class="tab-center-button fixed rounded-full flex"
+      class="tab-center-button fixed rounded-full flex bg-[#000091]!"
       @click="surveyListOpen = true"
     >
       <ion-icon :icon="addOutline" />
