@@ -171,6 +171,14 @@ const formatDate = (isoString: string): string => {
         <div v-else-if="field.ui?.choices">
           {{ field.ui.choices.length }} options
         </div>
+        <div class="flex gap-2" v-if="field.ui?.widget === 'select' && field.ui?.unselectedText">
+          <div class="text-gray-500 text-medium">Option vide</div>
+          <div>{{ field.ui.unselectedText }}</div>
+        </div>
+        <div class="flex gap-2" v-if="field.ui?.widget === 'autocomplete' && field.ui?.placeholder">
+          <div class="text-gray-500 text-medium">Placeholder</div>
+          <div>{{ field.ui.placeholder }}</div>
+        </div>
       </div>
 
       <!-- Champ Checkbox -->

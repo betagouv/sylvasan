@@ -352,7 +352,7 @@ const close = () => {
           <DsfrInput
             label-visible
             v-model="payload.ui.unselectedText"
-            label="Text option vide"
+            label="Texte option vide"
           />
         </DsfrInputGroup>
         <div class="grow"></div>
