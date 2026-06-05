@@ -58,9 +58,11 @@ class SurveyResponderListAPIView(ListAPIView):
             user=user, membership_type=MembershipType.RESPONDER, pole__isnull=True
         ).values_list("organisation_id", flat=True)
 
-        pole_memberships = Membership.objects.filter(
-            user=user, membership_type=MembershipType.RESPONDER, pole__isnull=False
-        ).values("pole_id", "organisation_id")
+        pole_memberships = list(
+            Membership.objects.filter(user=user, membership_type=MembershipType.RESPONDER, pole__isnull=False).values(
+                "pole_id", "organisation_id"
+            )
+        )
 
         pole_ids = [m["pole_id"] for m in pole_memberships]
         pole_org_ids = [m["organisation_id"] for m in pole_memberships]
