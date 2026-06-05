@@ -24,5 +24,9 @@ class CanCreateResponse(permissions.BasePermission):
         if qs.filter(pole__isnull=True).exists():
             return True
 
-        # Un·e RESPONDER au niveau d'un pôle ne peut répondre qu'aux enquêtes de ce pôle
-        return survey.pole is not None and qs.filter(pole=survey.pole).exists()
+        # Un·e RESPONDER au niveau d'un pôle peut répondre :
+        # - aux enquêtes de son pôle spécifique
+        # - aux enquêtes au niveau organisation (sans pôle)
+        if survey.pole is None:
+            return qs.filter(pole__isnull=False).exists()
+        return qs.filter(pole=survey.pole).exists()

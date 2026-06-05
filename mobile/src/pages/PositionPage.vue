@@ -127,7 +127,7 @@ onBeforeUnmount(() => {
       <div v-else class="relative h-full">
         <div
           ref="mapContainer"
-          :class="{ 'w-full': true, 'h-full': true, hidden: !tilesLoaded }"
+          :class="{ 'w-full': true, 'h-full': true, invisible: !tilesLoaded }"
         />
 
         <Transition name="fade">

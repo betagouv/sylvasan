@@ -60,14 +60,15 @@ class TestListSurvey(APITestCase):
         self.assertEqual(json_response[0]["id"], survey.id)
 
     @authenticate
-    def test_pole_member_sees_only_their_pole_surveys(self):
+    def test_pole_member_sees_pole_and_org_level_surveys(self):
         """
-        Un membre d'un pôle voit uniquement les enquêtes de ce pôle, pas les enquêtes au niveau organisation
+        Un RESPONDER rattaché à un pôle voit les enquêtes de ce pôle
+        ET les enquêtes au niveau organisation (sans pôle)
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
         pole_survey = SurveyFactory(organisation=org, pole=pole)
-        SurveyFactory(organisation=org, pole=None)
+        org_survey = SurveyFactory(organisation=org, pole=None)
         MembershipFactory(
             user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER
         )
@@ -75,9 +76,9 @@ class TestListSurvey(APITestCase):
         response = self.client.get(reverse("survey_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        json_response = response.json()
-        self.assertEqual(len(json_response), 1)
-        self.assertEqual(json_response[0]["id"], pole_survey.id)
+        ids = [s["id"] for s in response.json()]
+        self.assertIn(pole_survey.id, ids)
+        self.assertIn(org_survey.id, ids)
 
     @authenticate
     def test_pole_member_cannot_see_other_pole_surveys(self):

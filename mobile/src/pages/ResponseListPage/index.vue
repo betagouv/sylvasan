@@ -20,8 +20,17 @@ import type { ResponseFull, LocalResponse } from "@shared-types/response"
 const responsesStore = useResponsesStore()
 const surveysStore = useSurveysStore()
 
-const draftResponses = computed(() => responsesStore.drafts)
-const allResponses = computed(() => responsesStore.allResponses)
+const byDateDesc = (
+  a: LocalResponse | ResponseFull,
+  b: LocalResponse | ResponseFull
+) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime()
+
+const draftResponses = computed(() =>
+  [...responsesStore.drafts].sort(byDateDesc)
+)
+const allResponses = computed(() =>
+  [...responsesStore.allResponses].sort(byDateDesc)
+)
 const nondraftResponses = computed(() =>
   allResponses.value.filter((x) => x.status !== "draft")
 )

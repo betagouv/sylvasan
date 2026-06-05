@@ -15,8 +15,16 @@ class SurveyQuerySetMixin:
 
         org_ids = Membership.objects.filter(user=user, pole__isnull=True).values_list("organisation_id", flat=True)
         pole_ids = Membership.objects.filter(user=user, pole__isnull=False).values_list("pole_id", flat=True)
+        # Les RESPONDER rattachés à un pôle voient aussi les enquêtes au niveau organisation
+        responder_pole_org_ids = Membership.objects.filter(
+            user=user, pole__isnull=False, membership_type=MembershipType.RESPONDER
+        ).values_list("organisation_id", flat=True)
 
-        return Survey.objects.filter(Q(organisation_id__in=org_ids) | Q(pole_id__in=pole_ids))
+        return Survey.objects.filter(
+            Q(organisation_id__in=org_ids)
+            | Q(pole_id__in=pole_ids)
+            | Q(organisation_id__in=responder_pole_org_ids, pole__isnull=True)
+        ).distinct()
 
 
 class SurveyListCreateAPIView(SurveyQuerySetMixin, ListCreateAPIView):
@@ -50,11 +58,20 @@ class SurveyResponderListAPIView(ListAPIView):
             user=user, membership_type=MembershipType.RESPONDER, pole__isnull=True
         ).values_list("organisation_id", flat=True)
 
-        pole_ids = Membership.objects.filter(
-            user=user, membership_type=MembershipType.RESPONDER, pole__isnull=False
-        ).values_list("pole_id", flat=True)
+        pole_memberships = list(
+            Membership.objects.filter(user=user, membership_type=MembershipType.RESPONDER, pole__isnull=False).values(
+                "pole_id", "organisation_id"
+            )
+        )
 
-        return Survey.objects.filter(Q(organisation_id__in=org_ids) | Q(pole_id__in=pole_ids))
+        pole_ids = [m["pole_id"] for m in pole_memberships]
+        pole_org_ids = [m["organisation_id"] for m in pole_memberships]
+
+        return Survey.objects.filter(
+            Q(organisation_id__in=org_ids)
+            | Q(pole_id__in=pole_ids)
+            | Q(organisation_id__in=pole_org_ids, pole__isnull=True)
+        ).distinct()
 
 
 class SurveyRetrieveAPIView(SurveyQuerySetMixin, RetrieveAPIView):

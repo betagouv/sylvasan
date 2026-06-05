@@ -101,9 +101,9 @@ class TestRetrieveSurvey(APITestCase):
         self.assertEqual(response.json()["id"], survey.id)
 
     @authenticate
-    def test_pole_responder_cannot_retrieve_org_level_survey(self):
+    def test_pole_responder_can_retrieve_org_level_survey(self):
         """
-        Un·e RESPONDER de pôle ne peut pas accéder à une enquête au niveau organisation (sans pôle)
+        Un·e RESPONDER de pôle peut accéder à une enquête au niveau organisation (sans pôle)
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
@@ -114,7 +114,8 @@ class TestRetrieveSurvey(APITestCase):
 
         response = self.client.get(survey_url(survey.id), format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["id"], survey.id)
 
     @authenticate
     def test_pole_responder_cannot_retrieve_survey_from_other_pole(self):
@@ -362,9 +363,9 @@ class TestSurveyResponderList(APITestCase):
         self.assertIn(survey.id, ids)
 
     @authenticate
-    def test_pole_responder_cannot_see_org_level_surveys(self):
+    def test_pole_responder_sees_org_level_surveys(self):
         """
-        Un·e RESPONDER de pôle ne voit pas les enquêtes au niveau organisation (sans pôle)
+        Un·e RESPONDER de pôle voit aussi les enquêtes au niveau organisation (sans pôle)
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
@@ -377,7 +378,7 @@ class TestSurveyResponderList(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ids = [s["id"] for s in response.json()]
-        self.assertNotIn(org_survey.id, ids)
+        self.assertIn(org_survey.id, ids)
 
     @authenticate
     def test_pole_responder_cannot_see_other_pole_surveys(self):
