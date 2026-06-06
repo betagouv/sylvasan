@@ -38,6 +38,7 @@ export interface FieldValidation {
   min?: number | string
   max?: number | string
   required_if?: Condition
+  numberType?: "integer" | "float"
   // Pour le type array
   minItems?: number
   maxItems?: number

@@ -331,6 +331,16 @@ const close = () => {
                 label-visible
               />
             </div>
+            <div>
+              <DsfrRadioButtonSet
+                :options="[
+                  { label: 'Nombre réel', value: 'float' },
+                  { label: 'Nombre entier', value: 'integer' },
+                ]"
+                name="radio-number-type"
+                v-model="payload.validation.numberType"
+              />
+            </div>
           </div>
         </DsfrInputGroup>
       </div>

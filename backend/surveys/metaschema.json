@@ -154,6 +154,13 @@
             "minLength": {
               "type": "integer"
             },
+            "numberType": {
+              "enum": [
+                "integer",
+                "float"
+              ],
+              "type": "string"
+            },
             "required_if": {
               "$ref": "#/$defs/condition"
             }
