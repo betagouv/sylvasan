@@ -147,7 +147,7 @@ const formatDate = (isoString: string): string => {
           </div>
           <div class="flex gap-2" v-if="field.validation?.numberType">
             <div class="text-gray-500 text-medium">Type</div>
-            <div>{{ field.validation.numberType }}</div>
+            <div>{{ field.validation.numberType === 'integer' ? 'Nombre entier' : 'Nombre réel' }}</div>
           </div>
         </div>
       </div>
