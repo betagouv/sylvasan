@@ -114,6 +114,7 @@ const mapValue = computed({
         :min="field.validation?.min"
         :max="field.validation?.max"
         :disabled="disabled"
+        :step="field.validation?.numberType === 'integer' ? 1 : field.validation?.numberType === 'float' ? 'any' : undefined"
       />
     </DsfrInputGroup>
 

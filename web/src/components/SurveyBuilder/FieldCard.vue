@@ -145,6 +145,10 @@ const formatDate = (isoString: string): string => {
             <div class="text-gray-500 text-medium">Valeur max.</div>
             <div>{{ field.validation.max }}</div>
           </div>
+          <div class="flex gap-2" v-if="field.validation?.numberType">
+            <div class="text-gray-500 text-medium">Type</div>
+            <div>{{ field.validation.numberType === 'integer' ? 'Nombre entier' : 'Nombre réel' }}</div>
+          </div>
         </div>
       </div>
 
@@ -171,11 +175,17 @@ const formatDate = (isoString: string): string => {
         <div v-else-if="field.ui?.choices">
           {{ field.ui.choices.length }} options
         </div>
-        <div class="flex gap-2" v-if="field.ui?.widget === 'select' && field.ui?.unselectedText">
+        <div
+          class="flex gap-2"
+          v-if="field.ui?.widget === 'select' && field.ui?.unselectedText"
+        >
           <div class="text-gray-500 text-medium">Option vide</div>
           <div>{{ field.ui.unselectedText }}</div>
         </div>
-        <div class="flex gap-2" v-if="field.ui?.widget === 'autocomplete' && field.ui?.placeholder">
+        <div
+          class="flex gap-2"
+          v-if="field.ui?.widget === 'autocomplete' && field.ui?.placeholder"
+        >
           <div class="text-gray-500 text-medium">Placeholder</div>
           <div>{{ field.ui.placeholder }}</div>
         </div>
