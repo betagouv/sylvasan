@@ -207,6 +207,7 @@ REST_FRAMEWORK = {
     ),
     "JSON_UNDERSCOREIZE": {
         "no_underscore_before_number": True,
+        "ignore_fields": ("data",),
     },
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",

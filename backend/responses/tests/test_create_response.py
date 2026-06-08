@@ -266,7 +266,7 @@ class TestCreateResponseWithImages(APITestCase):
         response = self._post_with_images(_image_survey(), "Blue.jpg")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        photo_data = response.json()["data"]["photoArbre"]
+        photo_data = response.json()["data"]["photo_arbre"]
         self.assertEqual(len(photo_data), 1)
         self.assertIn("id", photo_data[0])
         self.assertNotIn("file", photo_data[0])
