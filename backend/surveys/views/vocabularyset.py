@@ -1,11 +1,11 @@
 from django.db.models import Prefetch, Q
 
-from organisations.models import Membership, MembershipType
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from surveys.models import Survey, VocabularyEntry, VocabularySet
+from surveys.models import VocabularyEntry, VocabularySet
 from surveys.serializers import VocabularySetDisplaySerializer, VocabularySetSerializer
+from surveys.views.survey import _responder_survey_queryset
 
 
 def _active_entries_prefetch():
@@ -54,14 +54,7 @@ class MobileVocabularySetListView(ListAPIView):
     def get_queryset(self):
         user = self.request.user
 
-        org_ids = Membership.objects.filter(
-            user=user, membership_type=MembershipType.RESPONDER, pole__isnull=True
-        ).values_list("organisation_id", flat=True)
-        pole_ids = Membership.objects.filter(
-            user=user, membership_type=MembershipType.RESPONDER, pole__isnull=False
-        ).values_list("pole_id", flat=True)
-
-        surveys = Survey.objects.filter(Q(organisation_id__in=org_ids) | Q(pole_id__in=pole_ids)).only("json_schema")
+        surveys = _responder_survey_queryset(user).only("json_schema")
 
         vocabulary_codes = set()
         for survey in surveys:

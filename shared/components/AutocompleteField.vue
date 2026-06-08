@@ -17,6 +17,18 @@ const query = ref("")
 const isOpen = ref(false)
 const highlightedIndex = ref(-1)
 const listRef = ref<HTMLUListElement | null>(null)
+const containerRef = ref<HTMLElement | null>(null)
+const dropdownStyle = ref({ top: "0px", left: "0px", width: "0px" })
+
+const updateDropdownPosition = () => {
+  const rect = containerRef.value?.getBoundingClientRect()
+  if (!rect) return
+  dropdownStyle.value = {
+    top: `${rect.bottom}px`,
+    left: `${rect.left}px`,
+    width: `${rect.width}px`,
+  }
+}
 
 const normalize = (s: string) =>
   s
@@ -54,6 +66,7 @@ if (modelValue.value) {
 const onFocus = () => {
   query.value = selectedLabel.value
   isOpen.value = true
+  updateDropdownPosition()
 }
 
 // @mousedown.prevent dans la liste maintient le focus dans l'input, blur n'est
@@ -104,7 +117,7 @@ const onKeydown = (e: KeyboardEvent) => {
 
 <template>
   <DsfrInputGroup>
-    <div class="relative">
+    <div ref="containerRef" class="relative">
       <div class="flex items-end">
         <div class="grow">
           <DsfrInput
@@ -129,27 +142,31 @@ const onKeydown = (e: KeyboardEvent) => {
         </div>
         <v-icon icon="ri-search-line" class="mb-3 mx-2" />
       </div>
-      <ul
-        v-if="isOpen && filtered.length"
-        ref="listRef"
-        class="absolute z-50 bg-white border border-slate-200 rounded shadow-md max-h-60 overflow-y-auto w-full pl-0!"
-        role="listbox"
-      >
-        <li
-          v-for="(entry, i) in filtered"
-          :key="entry.code"
-          class="px-4 pt-4! pb-4! cursor-pointer fr-text--sm mb-0! list-none"
-          :class="i === highlightedIndex ? 'bg-blue-50' : 'hover:bg-slate-100'"
-          role="option"
-          :aria-selected="i === highlightedIndex"
-          @mousedown.prevent="select(entry)"
-        >
-          <span class="font-medium">{{ entry.label }}</span>
-          <span class="text-gray-400 ml-2 font-mono text-xs">{{
-            entry.code
-          }}</span>
-        </li>
-      </ul>
     </div>
   </DsfrInputGroup>
+
+  <Teleport to="body">
+    <ul
+      v-if="isOpen && filtered.length"
+      ref="listRef"
+      :style="dropdownStyle"
+      class="fixed z-[9999] bg-white border border-slate-200 rounded shadow-md max-h-60 overflow-y-auto pl-0!"
+      role="listbox"
+    >
+      <li
+        v-for="(entry, i) in filtered"
+        :key="entry.code"
+        class="px-4 pt-4! pb-4! cursor-pointer fr-text--sm mb-0! list-none"
+        :class="i === highlightedIndex ? 'bg-blue-50' : 'hover:bg-slate-100'"
+        role="option"
+        :aria-selected="i === highlightedIndex"
+        @mousedown.prevent="select(entry)"
+      >
+        <span class="font-medium">{{ entry.label }}</span>
+        <span class="text-gray-400 ml-2 font-mono text-xs">{{
+          entry.code
+        }}</span>
+      </li>
+    </ul>
+  </Teleport>
 </template>

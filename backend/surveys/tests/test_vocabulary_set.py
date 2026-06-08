@@ -1,7 +1,7 @@
 from django.urls import reverse
 
 from common.utils import authenticate
-from organisations.factories import MembershipFactory, OrganisationFactory
+from organisations.factories import MembershipFactory, OrganisationFactory, PoleFactory
 from organisations.models import MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -177,6 +177,26 @@ class TestMobileVocabularySetList(APITestCase):
         """
         org = OrganisationFactory()
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        vocab = VocabularySetFactory(organisation=None)
+        SurveyFactory(organisation=org, json_schema=self._schema_with_vocabulary(vocab.code))
+
+        response = self.client.get(reverse("mobile_vocabulary_set_list"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        codes = [v["code"] for v in response.json()]
+        self.assertIn(vocab.code, codes)
+
+    @authenticate
+    def test_returns_vocabularies_referenced_in_user_pole_role_surveys(self):
+        """
+        Un·e utilisateur·ice ayant un rôle de réponse pour un pôle peut voir les vocabulaires
+        référencés dans les enquêtes sans pôle
+        """
+        pole = PoleFactory()
+        org = pole.organisation
+        MembershipFactory(
+            user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER
+        )
         vocab = VocabularySetFactory(organisation=None)
         SurveyFactory(organisation=org, json_schema=self._schema_with_vocabulary(vocab.code))
 
