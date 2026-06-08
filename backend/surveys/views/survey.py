@@ -42,6 +42,29 @@ class SurveyListCreateAPIView(SurveyQuerySetMixin, ListCreateAPIView):
         serializer.save(created_by=self.request.user)
 
 
+def _responder_survey_queryset(user):
+    """Enquêtes auxquelles user peut répondre (rôle RESPONDER uniquement).
+    Les RESPONDER rattachés à un pôle voient aussi les enquêtes sans pôle de la même organisation."""
+    org_ids = Membership.objects.filter(
+        user=user, membership_type=MembershipType.RESPONDER, pole__isnull=True
+    ).values_list("organisation_id", flat=True)
+
+    pole_memberships = list(
+        Membership.objects.filter(user=user, membership_type=MembershipType.RESPONDER, pole__isnull=False).values(
+            "pole_id", "organisation_id"
+        )
+    )
+
+    pole_ids = [m["pole_id"] for m in pole_memberships]
+    pole_org_ids = [m["organisation_id"] for m in pole_memberships]
+
+    return Survey.objects.filter(
+        Q(organisation_id__in=org_ids)
+        | Q(pole_id__in=pole_ids)
+        | Q(organisation_id__in=pole_org_ids, pole__isnull=True)
+    ).distinct()
+
+
 class SurveyResponderListAPIView(ListAPIView):
     """
     Retourne seulement les enquêtes auxquelles l'utilisateur·ice connecté·e peut répondre.
@@ -52,26 +75,7 @@ class SurveyResponderListAPIView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-
-        org_ids = Membership.objects.filter(
-            user=user, membership_type=MembershipType.RESPONDER, pole__isnull=True
-        ).values_list("organisation_id", flat=True)
-
-        pole_memberships = list(
-            Membership.objects.filter(user=user, membership_type=MembershipType.RESPONDER, pole__isnull=False).values(
-                "pole_id", "organisation_id"
-            )
-        )
-
-        pole_ids = [m["pole_id"] for m in pole_memberships]
-        pole_org_ids = [m["organisation_id"] for m in pole_memberships]
-
-        return Survey.objects.filter(
-            Q(organisation_id__in=org_ids)
-            | Q(pole_id__in=pole_ids)
-            | Q(organisation_id__in=pole_org_ids, pole__isnull=True)
-        ).distinct()
+        return _responder_survey_queryset(self.request.user)
 
 
 class SurveyRetrieveAPIView(SurveyQuerySetMixin, RetrieveAPIView):
