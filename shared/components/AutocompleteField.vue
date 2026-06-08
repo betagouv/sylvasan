@@ -9,6 +9,7 @@ const props = defineProps<{
   disabled?: boolean
   hint?: string
   placeholder?: string
+  errorMessage?: string
 }>()
 
 const modelValue = defineModel<string>()
@@ -103,7 +104,7 @@ const onKeydown = (e: KeyboardEvent) => {
 </script>
 
 <template>
-  <DsfrInputGroup>
+  <DsfrInputGroup :class="errorMessage ? 'fr-input-group--error' : ''">
     <div class="relative">
       <div class="flex items-end">
         <div class="grow">
@@ -151,5 +152,6 @@ const onKeydown = (e: KeyboardEvent) => {
         </li>
       </ul>
     </div>
+    <p v-if="errorMessage" class="fr-error-text">{{ errorMessage }}</p>
   </DsfrInputGroup>
 </template>

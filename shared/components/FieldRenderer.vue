@@ -11,10 +11,12 @@ import type {
 import ArrayField from "./ArrayField.vue"
 import AutocompleteField from "./AutocompleteField.vue"
 import ImagesField from "./ImagesField.vue"
+import { validateField } from "@shared-utils/validateField"
 
 const props = defineProps<{
   field: SurveyField
   disabled?: boolean
+  readonly?: boolean
   vocabularies?: VocabularySet[]
   mapComponent?: Component
 }>()
@@ -83,11 +85,15 @@ const mapValue = computed({
     modelValue.value = val
   },
 })
+
+const errorMessage = computed(() =>
+  props.readonly || props.disabled ? null : validateField(props.field, modelValue.value)
+)
 </script>
 
 <template>
   <div>
-    <DsfrInputGroup v-if="field.ui?.widget === 'input'">
+    <DsfrInputGroup v-if="field.ui?.widget === 'input'" :error-message="errorMessage ?? undefined">
       <!-- Champ texte -->
       <DsfrInput
         v-model="modelValue"
@@ -98,11 +104,12 @@ const mapValue = computed({
         :placeholder="field.ui?.placeholder"
         :isTextarea="field.ui?.textarea"
         :disabled="disabled"
+        :is-invalid="!!errorMessage"
       />
     </DsfrInputGroup>
 
     <!-- Champ numérique -->
-    <DsfrInputGroup v-else-if="field.ui?.widget === 'number'">
+    <DsfrInputGroup v-else-if="field.ui?.widget === 'number'" :error-message="errorMessage ?? undefined">
       <DsfrInput
         v-model="modelValue"
         :label="field.label"
@@ -115,6 +122,7 @@ const mapValue = computed({
         :max="field.validation?.max"
         :disabled="disabled"
         :step="field.validation?.numberType === 'integer' ? 1 : field.validation?.numberType === 'float' ? 'any' : undefined"
+        :is-invalid="!!errorMessage"
       />
     </DsfrInputGroup>
 
@@ -127,6 +135,7 @@ const mapValue = computed({
         v-model="modelValue"
         :disabled="disabled"
         :defaultUnselectedText="field.ui?.unselectedText"
+        :error-message="errorMessage ?? undefined"
       />
     </DsfrInputGroup>
 
@@ -138,6 +147,7 @@ const mapValue = computed({
         :required="field.required ?? false"
         v-model="modelValue"
         :disabled="disabled"
+        :error-message="errorMessage ?? undefined"
       />
     </DsfrInputGroup>
 
@@ -163,11 +173,12 @@ const mapValue = computed({
         :required="field.required ?? false"
         v-model="modelValue"
         :disabled="disabled"
+        :error-message="errorMessage ?? undefined"
       />
     </DsfrInputGroup>
 
     <!-- Champ date -->
-    <DsfrInputGroup v-else-if="field.ui?.widget === 'date'">
+    <DsfrInputGroup v-else-if="field.ui?.widget === 'date'" :error-message="errorMessage ?? undefined">
       <DsfrInput
         v-model="modelValue"
         :label="field.label"
@@ -178,6 +189,7 @@ const mapValue = computed({
         :min="field.validation?.min"
         :max="field.validation?.max"
         :disabled="disabled"
+        :is-invalid="!!errorMessage"
       />
     </DsfrInputGroup>
 
@@ -197,6 +209,7 @@ const mapValue = computed({
       :hint="field.ui?.hint"
       :disabled="disabled"
       :placeholder="field.ui?.placeholder"
+      :error-message="errorMessage ?? undefined"
       v-model="autocompleteValue"
     />
 
