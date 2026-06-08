@@ -22,9 +22,6 @@ const isRemote = (res: LocalResponse | ResponseFull): res is ResponseFull =>
 
 const resolvedData = computed(() => response?.data ?? data ?? {})
 
-const fieldLabel = (fieldId: string): string =>
-  survey.jsonSchema.fields.find((f) => f.id === fieldId)?.label ?? fieldId
-
 const resolveValue = (fieldId: string, raw: unknown): string => {
   const field = survey.jsonSchema.fields.find((f) => f.id === fieldId)
   return resolveFieldValue(field, raw, vocabularySets)

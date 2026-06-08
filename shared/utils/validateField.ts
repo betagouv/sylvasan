@@ -90,7 +90,8 @@ export function validateResponse(
     if (field.fields && Array.isArray(data[field.id])) {
       const items = data[field.id] as Record<string, unknown>[]
       for (const item of items) {
-        for (const subField of field.fields) {
+        const subFields: SurveyField[] = field.fields!
+        for (const subField of subFields) {
           const subError = validateField(subField, item[subField.id] ?? null)
           if (subError) {
             const key = `${field.id}.${subField.id}`
