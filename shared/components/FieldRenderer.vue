@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useId } from "vue"
+import { computed, ref, useId } from "vue"
 import type { Component } from "vue"
 import type {
   SurveyField,
@@ -86,13 +86,24 @@ const mapValue = computed({
   },
 })
 
+const rootRef = ref<HTMLElement | null>(null)
+const touched = ref(false)
+
+const onFocusOut = (e: FocusEvent) => {
+  if (!rootRef.value?.contains(e.relatedTarget as Node)) {
+    touched.value = true
+  }
+}
+
 const errorMessage = computed(() =>
-  props.readonly || props.disabled ? null : validateField(props.field, modelValue.value)
+  touched.value && !props.readonly && !props.disabled
+    ? validateField(props.field, modelValue.value)
+    : null
 )
 </script>
 
 <template>
-  <div>
+  <div ref="rootRef" @focusout="onFocusOut">
     <DsfrInputGroup v-if="field.ui?.widget === 'input'" :error-message="errorMessage ?? undefined">
       <!-- Champ texte -->
       <DsfrInput
