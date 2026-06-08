@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue"
-import type { SurveyField, FieldWidget, FieldType } from "@shared-types/survey"
+import type { SurveyField, FieldWidget, FieldType, VocabularyEntry } from "@shared-types/survey"
+import AutocompleteField from "@shared-components/AutocompleteField.vue"
 import ConditionModalSegment from "./ConditionModalSegment.vue"
 import * as z from "zod"
 import { ZodError } from "zod"
@@ -62,6 +63,23 @@ const vocabularySelectOptions = computed(() =>
     value: v.code,
   }))
 )
+
+const useVocabularyAutocomplete = computed(
+  () => (vocabularySelectOptions.value?.length ?? 0) > 20
+)
+
+const vocabularyAutocompleteEntries = computed((): VocabularyEntry[] =>
+  rootStore.vocabularies?.map((v) => ({
+    code: v.code,
+    label: `${v.code} — ${v.name}`,
+    position: null,
+  })) ?? []
+)
+
+const vocabularyCodeModel = computed({
+  get: () => selectedVocabularyCode.value,
+  set: (code: string) => onVocabularyChange(code),
+})
 
 const resolvedVocabulary = computed(() =>
   selectedVocabularyCode.value
@@ -371,7 +389,15 @@ const close = () => {
         v-if="optionsSource === 'vocabulary'"
         class="flex items-center gap-2"
       >
+        <AutocompleteField
+          v-if="useVocabularyAutocomplete"
+          class="max-w-lg grow"
+          label="Référentiel"
+          :entries="vocabularyAutocompleteEntries"
+          v-model="vocabularyCodeModel"
+        />
         <DsfrSelect
+          v-else
           class="max-w-lg grow"
           label="Référentiel"
           :options="vocabularySelectOptions"
@@ -423,7 +449,15 @@ const close = () => {
         v-if="optionsSource === 'vocabulary'"
         class="flex items-center gap-2"
       >
+        <AutocompleteField
+          v-if="useVocabularyAutocomplete"
+          class="max-w-lg grow"
+          label="Référentiel"
+          :entries="vocabularyAutocompleteEntries"
+          v-model="vocabularyCodeModel"
+        />
         <DsfrSelect
+          v-else
           class="max-w-lg grow"
           label="Référentiel"
           :options="vocabularySelectOptions"
@@ -509,7 +543,15 @@ const close = () => {
         v-if="optionsSource === 'vocabulary'"
         class="flex items-center gap-2"
       >
+        <AutocompleteField
+          v-if="useVocabularyAutocomplete"
+          class="max-w-lg grow"
+          label="Référentiel"
+          :entries="vocabularyAutocompleteEntries"
+          v-model="vocabularyCodeModel"
+        />
         <DsfrSelect
+          v-else
           class="max-w-lg grow"
           label="Référentiel"
           :options="vocabularySelectOptions"
