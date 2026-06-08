@@ -28,6 +28,7 @@ import { useResponsesStore } from "../stores/responses"
 import { storeToRefs } from "pinia"
 import { useVocabulariesStore } from "../stores/vocabularies"
 import { saveImagesToFilesystem } from "../utils/imageStorage"
+import { validateResponse } from "@shared-utils/validateField"
 
 const props = defineProps<{
   id?: number
@@ -45,6 +46,11 @@ const dataReady = ref(false)
 const showSummary = ref(false)
 const summaryData = ref<Record<string, unknown>>({})
 const saving = ref(false)
+
+const summaryHasErrors = computed(() => {
+  const fields = survey.value?.jsonSchema?.fields ?? []
+  return Object.keys(validateResponse(fields, summaryData.value)).length > 0
+})
 
 const router = useIonRouter()
 const route = useRoute()
@@ -215,7 +221,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
               <DsfrButton
                 label="Sauvegarder"
                 icon="ri-cloud-line"
-                :disabled="saving"
+                :disabled="saving || summaryHasErrors"
                 @click="saveResponse(summaryData)"
               />
             </div>

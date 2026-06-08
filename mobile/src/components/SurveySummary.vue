@@ -5,6 +5,7 @@ import type { Survey, SurveyField, ImageItem } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
 import { resolveFieldValue } from "@shared-utils/survey"
+import { validateResponse } from "@shared-utils/validateField"
 import { useVocabulariesStore } from "../stores/vocabularies"
 import ImageViewer from "@shared-components/ImageViewer.vue"
 
@@ -45,6 +46,11 @@ const imageSrc = (item: ImageItem): string | null => {
   return null
 }
 
+// Only validate when showing the pre-submission summary, not for already-submitted responses
+const validationErrors = computed(() =>
+  response ? {} : validateResponse(survey.jsonSchema.fields, resolvedData.value)
+)
+
 const viewerOpen = ref(false)
 const viewerImages = ref<ImageItem[]>([])
 const viewerIndex = ref(0)
@@ -72,26 +78,26 @@ const openViewer = (images: ImageItem[], index: number) => {
     </div>
 
     <div class="p-4">
-      <div v-for="entry in Object.entries(resolvedData)" :key="entry[0]">
+      <div v-for="field in survey.jsonSchema.fields" :key="field.id">
         <p class="fr-text--sm font-bold text-stone-500 mb-0!">
-          {{ fieldLabel(entry[0]) }}
+          {{ field.label }}
         </p>
 
         <!-- Array field -->
-        <template v-if="isArrayField(entry[0]) && Array.isArray(entry[1])">
-          <p v-if="!entry[1].length" class="italic mb-0! text-stone-500">
+        <template v-if="isArrayField(field.id) && Array.isArray(resolvedData[field.id])">
+          <p v-if="!(resolvedData[field.id] as unknown[]).length" class="italic mb-0! text-stone-500">
             Non renseigné
           </p>
           <p v-else class="font-medium mb-2! text-stone-500">
-            {{ entry[1].length }} entrée(s) :
+            {{ (resolvedData[field.id] as unknown[]).length }} entrée(s) :
           </p>
           <div
-            v-for="(item, idx) in (entry[1] as Record<string, unknown>[])"
-            :key="`${entry[0]}-${idx}`"
+            v-for="(item, idx) in (resolvedData[field.id] as Record<string, unknown>[])"
+            :key="`${field.id}-${idx}`"
             class="border border-slate-200 rounded p-3 mb-2 bg-slate-50"
           >
             <div
-              v-for="subField in getSubFields(entry[0])"
+              v-for="subField in getSubFields(field.id)"
               :key="subField.id"
               class="flex gap-4"
             >
@@ -100,13 +106,9 @@ const openViewer = (images: ImageItem[], index: number) => {
               </p>
               <p
                 class="font-medium mb-0!"
-                v-if="
-                  resolveFieldValue(subField, item[subField.id], vocabularySets)
-                "
+                v-if="resolveFieldValue(subField, item[subField.id], vocabularySets)"
               >
-                {{
-                  resolveFieldValue(subField, item[subField.id], vocabularySets)
-                }}
+                {{ resolveFieldValue(subField, item[subField.id], vocabularySets) }}
               </p>
               <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
             </div>
@@ -114,16 +116,16 @@ const openViewer = (images: ImageItem[], index: number) => {
         </template>
 
         <!-- Champ images -->
-        <template v-else-if="isImageField(entry[0]) && Array.isArray(entry[1])">
-          <p v-if="!entry[1].length" class="italic mb-0! text-stone-500">
+        <template v-else-if="isImageField(field.id) && Array.isArray(resolvedData[field.id])">
+          <p v-if="!(resolvedData[field.id] as unknown[]).length" class="italic mb-0! text-stone-500">
             Non renseigné
           </p>
           <div v-else class="grid grid-cols-4 gap-2 my-2">
             <div
-              v-for="(img, idx) in (entry[1] as ImageItem[])"
+              v-for="(img, idx) in (resolvedData[field.id] as ImageItem[])"
               :key="idx"
               class="aspect-square rounded overflow-hidden border border-slate-200 cursor-pointer"
-              @click="openViewer(entry[1] as ImageItem[], idx)"
+              @click="openViewer(resolvedData[field.id] as ImageItem[], idx)"
             >
               <img
                 v-if="imageSrc(img)"
@@ -143,11 +145,15 @@ const openViewer = (images: ImageItem[], index: number) => {
 
         <!-- All other fields -->
         <template v-else>
-          <p class="font-medium mb-0!" v-if="resolveValue(entry[0], entry[1])">
-            {{ resolveValue(entry[0], entry[1]) }}
+          <p class="font-medium mb-0!" v-if="resolveValue(field.id, resolvedData[field.id])">
+            {{ resolveValue(field.id, resolvedData[field.id]) }}
           </p>
           <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
         </template>
+
+        <p v-if="validationErrors[field.id]" class="fr-error-text fr-text--sm mt-1! mb-0!">
+          {{ validationErrors[field.id] }}
+        </p>
 
         <hr class="p-1! mt-2!" />
       </div>
