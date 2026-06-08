@@ -40,13 +40,14 @@ const getSubFields = (fieldId: string): SurveyField[] =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.fields ?? []
 
 const imageSrc = (item: ImageItem): string | null => {
-  if ("type" in item) return (window as any).Capacitor?.convertFileSrc(item.path) ?? null
+  if ("type" in item)
+    return (window as any).Capacitor?.convertFileSrc(item.path) ?? null
   if ("file" in item) return `data:image/jpeg;base64,${item.file}`
   if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
   return null
 }
 
-// Only validate when showing the pre-submission summary, not for already-submitted responses
+// On montre la validation seulement lors que la réponse n'est pas sauvegardé dans le backend
 const validationErrors = computed(() =>
   response ? {} : validateResponse(survey.jsonSchema.fields, resolvedData.value)
 )
@@ -84,8 +85,13 @@ const openViewer = (images: ImageItem[], index: number) => {
         </p>
 
         <!-- Array field -->
-        <template v-if="isArrayField(field.id) && Array.isArray(resolvedData[field.id])">
-          <p v-if="!(resolvedData[field.id] as unknown[]).length" class="italic mb-0! text-stone-500">
+        <template
+          v-if="isArrayField(field.id) && Array.isArray(resolvedData[field.id])"
+        >
+          <p
+            v-if="!(resolvedData[field.id] as unknown[]).length"
+            class="italic mb-0! text-stone-500"
+          >
             Non renseigné
           </p>
           <p v-else class="font-medium mb-2! text-stone-500">
@@ -106,9 +112,13 @@ const openViewer = (images: ImageItem[], index: number) => {
               </p>
               <p
                 class="font-medium mb-0!"
-                v-if="resolveFieldValue(subField, item[subField.id], vocabularySets)"
+                v-if="
+                  resolveFieldValue(subField, item[subField.id], vocabularySets)
+                "
               >
-                {{ resolveFieldValue(subField, item[subField.id], vocabularySets) }}
+                {{
+                  resolveFieldValue(subField, item[subField.id], vocabularySets)
+                }}
               </p>
               <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
             </div>
@@ -116,8 +126,15 @@ const openViewer = (images: ImageItem[], index: number) => {
         </template>
 
         <!-- Champ images -->
-        <template v-else-if="isImageField(field.id) && Array.isArray(resolvedData[field.id])">
-          <p v-if="!(resolvedData[field.id] as unknown[]).length" class="italic mb-0! text-stone-500">
+        <template
+          v-else-if="
+            isImageField(field.id) && Array.isArray(resolvedData[field.id])
+          "
+        >
+          <p
+            v-if="!(resolvedData[field.id] as unknown[]).length"
+            class="italic mb-0! text-stone-500"
+          >
             Non renseigné
           </p>
           <div v-else class="grid grid-cols-4 gap-2 my-2">
@@ -145,13 +162,19 @@ const openViewer = (images: ImageItem[], index: number) => {
 
         <!-- All other fields -->
         <template v-else>
-          <p class="font-medium mb-0!" v-if="resolveValue(field.id, resolvedData[field.id])">
+          <p
+            class="font-medium mb-0!"
+            v-if="resolveValue(field.id, resolvedData[field.id])"
+          >
             {{ resolveValue(field.id, resolvedData[field.id]) }}
           </p>
           <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
         </template>
 
-        <p v-if="validationErrors[field.id]" class="fr-error-text fr-text--sm mt-1! mb-0!">
+        <p
+          v-if="validationErrors[field.id]"
+          class="fr-error-text fr-text--sm mt-1! mb-0!"
+        >
           {{ validationErrors[field.id] }}
         </p>
 
