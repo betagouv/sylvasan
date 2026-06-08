@@ -228,7 +228,7 @@ class TestRetrieveResponseWithImages(APITestCase):
         retrieve = self.client.get(response_url(create.json()["id"]), format="json")
 
         self.assertEqual(retrieve.status_code, status.HTTP_200_OK)
-        photo_data = retrieve.json()["data"]["photoArbre"]
+        photo_data = retrieve.json()["data"]["photo_arbre"]
         self.assertEqual(len(photo_data), 1)
         self.assertIn("id", photo_data[0])
         self.assertIn("thumbnail", photo_data[0])
@@ -255,7 +255,7 @@ class TestRetrieveResponseWithImages(APITestCase):
 
         retrieve = self.client.get(response_url(create.json()["id"]), format="json")
 
-        thumbnail = retrieve.json()["data"]["photoArbre"][0]["thumbnail"]
+        thumbnail = retrieve.json()["data"]["photo_arbre"][0]["thumbnail"]
         decoded = base64.b64decode(thumbnail)
         self.assertGreater(len(decoded), 0)
 
@@ -282,5 +282,83 @@ class TestRetrieveResponseWithImages(APITestCase):
 
         retrieve = self.client.get(response_url(create.json()["id"]), format="json")
 
-        file_url = retrieve.json()["data"]["photoArbre"][0]["fileUrl"]
+        file_url = retrieve.json()["data"]["photo_arbre"][0]["file_url"]
         self.assertTrue(file_url.startswith("http://hostname"))
+
+
+class TestResponseDataFieldNotCamelized(APITestCase):
+    """
+    Le champ "data" des réponses ne doit pas être transformé par le CamelCaseJSONRenderer.
+    Les clés correspondent aux IDs des champs du schéma, qui peuvent contenir des underscores
+    (ex. date_570). Les transformer en camelCase (date570) casserait l'interface.
+    """
+
+    @authenticate
+    def test_field_id_with_underscore_digit_is_preserved_on_retrieve(self):
+        """
+        Un identifiant de champ comme "date_570" est retourné tel quel, sans être
+        transformé en "date570" par le CamelCaseJSONRenderer.
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(
+            organisation=org,
+            json_schema={"fields": [{"id": "date_570", "type": "string", "label": "Date"}]},
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        survey_response = ResponseFactory(survey=survey, respondant=authenticate.user, data={"date_570": "2025-12-12"})
+
+        response = self.client.get(response_url(survey_response.id), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()["data"]
+        self.assertIn("date_570", data)
+        self.assertNotIn("date570", data)
+        self.assertEqual(data["date_570"], "2025-12-12")
+
+    @authenticate
+    def test_field_id_with_multiple_underscores_is_preserved_on_retrieve(self):
+        """
+        Un identifiant de champ comme "lieu_dit_commune" est retourné tel quel,
+        sans être transformé en "lieuDitCommune".
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(
+            organisation=org,
+            json_schema={"fields": [{"id": "lieu_dit_commune", "type": "string", "label": "Lieu-dit"}]},
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        survey_response = ResponseFactory(
+            survey=survey, respondant=authenticate.user, data={"lieu_dit_commune": "Les Granges"}
+        )
+
+        response = self.client.get(response_url(survey_response.id), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()["data"]
+        self.assertIn("lieu_dit_commune", data)
+        self.assertNotIn("lieuDitCommune", data)
+
+    @authenticate
+    def test_field_id_with_underscore_is_preserved_on_create(self):
+        """
+        Lors de la création, le champ "data" renvoyé dans le corps de la réponse 201
+        conserve les clés telles qu'envoyées, sans camelisation.
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(
+            organisation=org,
+            json_schema={"fields": [{"id": "nom_observateur", "type": "string", "label": "Nom"}]},
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        response = self.client.post(
+            reverse("response_list_create"),
+            {"survey": survey.id, "data": {"nom_observateur": "Alice"}},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = response.json()["data"]
+        self.assertIn("nom_observateur", data)
+        self.assertNotIn("nomObservateur", data)
+        self.assertEqual(data["nom_observateur"], "Alice")
