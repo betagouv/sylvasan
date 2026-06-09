@@ -8,6 +8,12 @@ type Pole = {
   name: string
 }
 
+type OrganisationWithPoles = {
+  id: number
+  name: string
+  poles: Pole[]
+}
+
 type Membership = {
   organisation: Organisation
   pole: Pole | null
@@ -20,6 +26,7 @@ type LoggedUser = {
   username: string
   id: number
   memberships: Membership[]
+  organisations: OrganisationWithPoles[]
   source: string
 }
 
@@ -42,6 +49,7 @@ export {
   LoggedUser,
   Membership,
   Organisation,
+  OrganisationWithPoles,
   Pole,
   Response,
   ResponseStatus,
