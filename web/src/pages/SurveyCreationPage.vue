@@ -47,22 +47,28 @@ const organisation = computed(() =>
 )
 
 // L'utilisateur a un rôle admin au niveau organisation (pole === null) pour l'org sélectionnée
-const hasOrgLevelAdmin = computed(() =>
-  adminMemberships.value?.some(
-    (m) => m.organisation.id === organisation.value && m.pole === null
-  ) ?? false
+const hasOrgLevelAdmin = computed(
+  () =>
+    adminMemberships.value?.some(
+      (m) => m.organisation.id === organisation.value && m.pole === null
+    ) ?? false
 )
 
 // Pôles auxquels l'utilisateur a un rôle admin explicite dans l'org sélectionnée
-const adminPoles = computed(() =>
-  adminMemberships.value
-    ?.filter((m) => m.organisation.id === organisation.value && m.pole !== null)
-    .map((m) => m.pole!) ?? []
+const adminPoles = computed(
+  () =>
+    adminMemberships.value
+      ?.filter(
+        (m) => m.organisation.id === organisation.value && m.pole !== null
+      )
+      .map((m) => m.pole!) ?? []
 )
 
 // Pôles de l'org sélectionnée issus du profil utilisateur (déjà chargés au login)
-const orgPoles = computed(() =>
-  store.loggedUser?.organizations.find((o) => o.id === organisation.value)?.poles ?? []
+const orgPoles = computed(
+  () =>
+    store.loggedUser?.organizations.find((o) => o.id === organisation.value)
+      ?.poles ?? []
 )
 
 const poleOptions = computed(() => {
@@ -197,7 +203,7 @@ const createSurvey = async () => {
       />
       <DsfrSelect
         v-if="showPoleSelect"
-        v-model="selectedPoleOption"
+        v-model.number="selectedPoleOption"
         class="max-w-sm"
         label="Pôle"
         :options="poleOptions"
