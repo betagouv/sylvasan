@@ -244,3 +244,53 @@ describe("validateResponse", () => {
     expect(errors).not.toHaveProperty("note")
   })
 })
+
+describe("validateResponse — sub-fields (array widget)", () => {
+  const arraySchema: SurveyField[] = [
+    field({
+      id: "observations",
+      type: "array",
+      ui: { widget: "array" },
+      fields: [
+        field({ id: "espece", type: "string", required: true }),
+        field({ id: "count", type: "number", ui: { widget: "number" }, validation: { min: 1 } }),
+      ],
+    }),
+  ]
+
+  it("returns no errors when all sub-fields are valid", () => {
+    const errors = validateResponse(arraySchema, {
+      observations: [{ espece: "Aigle", count: 3 }],
+    })
+    expect(errors).toEqual({})
+  })
+
+  it("reports a required sub-field error with composite key parentId.subFieldId", () => {
+    const errors = validateResponse(arraySchema, {
+      observations: [{ espece: "", count: 3 }],
+    })
+    expect(errors).toHaveProperty("observations.espece")
+  })
+
+  it("reports a constraint violation on a sub-field", () => {
+    const errors = validateResponse(arraySchema, {
+      observations: [{ espece: "Aigle", count: 0 }],
+    })
+    expect(errors).toHaveProperty("observations.count")
+  })
+
+  it("records only the first occurrence when multiple items fail the same sub-field", () => {
+    const errors = validateResponse(arraySchema, {
+      observations: [
+        { espece: "", count: 1 },
+        { espece: "", count: 1 },
+      ],
+    })
+    expect(Object.keys(errors).filter((k) => k === "observations.espece")).toHaveLength(1)
+  })
+
+  it("returns no sub-field errors when the array is empty", () => {
+    const errors = validateResponse(arraySchema, { observations: [] })
+    expect(errors).toEqual({})
+  })
+})

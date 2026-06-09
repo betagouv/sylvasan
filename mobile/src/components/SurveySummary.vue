@@ -5,7 +5,7 @@ import type { Survey, SurveyField, ImageItem } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
 import { resolveFieldValue } from "@shared-utils/survey"
-import { validateResponse } from "@shared-utils/validateField"
+import { validateResponse, validateField } from "@shared-utils/validateField"
 import { useVocabulariesStore } from "../stores/vocabularies"
 import ImageViewer from "@shared-components/ImageViewer.vue"
 
@@ -48,6 +48,14 @@ const imageSrc = (item: ImageItem): string | null => {
 const validationErrors = computed(() =>
   response ? {} : validateResponse(survey.jsonSchema.fields, resolvedData.value)
 )
+
+const getSubFieldError = (
+  subField: SurveyField,
+  value: unknown
+): string | null => {
+  if (response) return null
+  return validateField(subField, value ?? null)
+}
 
 const viewerOpen = ref(false)
 const viewerImages = ref<ImageItem[]>([])
@@ -99,25 +107,37 @@ const openViewer = (images: ImageItem[], index: number) => {
             :key="`${field.id}-${idx}`"
             class="border border-slate-200 rounded p-3 mb-2 bg-slate-50"
           >
-            <div
-              v-for="subField in getSubFields(field.id)"
-              :key="subField.id"
-              class="flex gap-4"
-            >
-              <p class="fr-text--sm text-stone-400 mb-0!">
-                {{ subField.label }}
-              </p>
+            <div v-for="subField in getSubFields(field.id)" :key="subField.id">
+              <div class="flex gap-4">
+                <p class="fr-text--sm text-stone-400 mb-0!">
+                  {{ subField.label }}
+                </p>
+                <p
+                  class="font-medium mb-0!"
+                  v-if="
+                    resolveFieldValue(
+                      subField,
+                      item[subField.id],
+                      vocabularySets
+                    )
+                  "
+                >
+                  {{
+                    resolveFieldValue(
+                      subField,
+                      item[subField.id],
+                      vocabularySets
+                    )
+                  }}
+                </p>
+                <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+              </div>
               <p
-                class="font-medium mb-0!"
-                v-if="
-                  resolveFieldValue(subField, item[subField.id], vocabularySets)
-                "
+                v-if="getSubFieldError(subField, item[subField.id])"
+                class="fr-error-text fr-text--sm mt-0! mb-2!"
               >
-                {{
-                  resolveFieldValue(subField, item[subField.id], vocabularySets)
-                }}
+                {{ getSubFieldError(subField, item[subField.id]) }}
               </p>
-              <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
             </div>
           </div>
         </template>

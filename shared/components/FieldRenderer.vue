@@ -16,7 +16,6 @@ import { validateField } from "@shared-utils/validateField"
 const props = defineProps<{
   field: SurveyField
   disabled?: boolean
-  readonly?: boolean
   forceValidate?: boolean
   vocabularies?: VocabularySet[]
   mapComponent?: Component
@@ -98,7 +97,7 @@ const onFocusOut = (e: FocusEvent) => {
 }
 
 const errorMessage = computed(() =>
-  touched.value && !props.readonly && !props.disabled
+  touched.value && !props.disabled
     ? validateField(props.field, modelValue.value)
     : null
 )
