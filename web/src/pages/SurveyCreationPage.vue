@@ -34,22 +34,29 @@ const adminMemberships = computed(() =>
 // dans la même organisation, ex. admin de deux pôles distincts)
 const uniqueAdminOrgs = computed(() => {
   const seen = new Set<number>()
-  return (adminMemberships.value ?? []).filter((m) => {
-    if (seen.has(m.organisation.id)) return false
-    seen.add(m.organisation.id)
-    return true
-  }).map((m) => m.organisation)
+  return (adminMemberships.value ?? [])
+    .filter((m) => {
+      if (seen.has(m.organisation.id)) return false
+      seen.add(m.organisation.id)
+      return true
+    })
+    .map((m) => m.organisation)
 })
 
 const orgOptions = computed(() =>
-  uniqueAdminOrgs.value.map((org) => ({ text: org.name, value: String(org.id) }))
+  uniqueAdminOrgs.value.map((org) => ({
+    text: org.name,
+    value: String(org.id),
+  }))
 )
 
 const selectedOrganisationId = ref<string>("")
 
 const organisation = computed(() => {
   if (uniqueAdminOrgs.value.length === 1) return uniqueAdminOrgs.value[0].id
-  return selectedOrganisationId.value ? Number(selectedOrganisationId.value) : undefined
+  return selectedOrganisationId.value
+    ? Number(selectedOrganisationId.value)
+    : undefined
 })
 
 // L'utilisateur a un rôle admin au niveau organisation (pole === null) pour l'org sélectionnée
@@ -99,7 +106,9 @@ const poleOptions = computed(() => {
 // Le sélecteur n'est affiché que s'il y a un vrai choix à faire
 const showPoleSelect = computed(() => poleOptions.value.length > 1)
 
-const selectedPoleOption = ref<string>("")
+const selectedPoleOption = ref<string>(
+  poleOptions.value.length === 1 ? poleOptions.value[0].value : ""
+)
 
 // Remise à zéro quand l'organisation change pour éviter une valeur obsolète
 watch(organisation, () => {

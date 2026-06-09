@@ -5,6 +5,7 @@ from common.utils import authenticate
 from organisations.factories import MembershipFactory, OrganisationFactory, PoleFactory
 from rest_framework import status
 from rest_framework.test import APITestCase
+from surveys.factories import VocabularySetFactory
 
 User = get_user_model()
 
@@ -131,3 +132,62 @@ class TestUserApi(APITestCase):
         org_ids = {o["id"] for o in response.json()["organisations"]}
         self.assertIn(org_a.id, org_ids)
         self.assertIn(org_b.id, org_ids)
+
+
+class TestUserApiVocabularies(APITestCase):
+    @authenticate
+    def test_me_returns_vocabularies_key(self):
+        """
+        L'endpoint /me inclut une clé 'vocabularies' même sans rôle ni vocabulaire
+        """
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("vocabularies", response.json())
+
+    @authenticate
+    def test_me_returns_shared_vocabularies_without_membership(self):
+        """
+        Un utilisateur sans rôle voit les vocabulaires partagés (organisation=None)
+        """
+        shared = VocabularySetFactory(organisation=None)
+        VocabularySetFactory(organisation=OrganisationFactory())  # non partagé, non accessible
+
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        codes = {v["code"] for v in response.json()["vocabularies"]}
+        self.assertIn(shared.code, codes)
+
+    @authenticate
+    def test_me_returns_org_vocabularies_for_member(self):
+        """
+        Un utilisateur avec un rôle dans une organisation voit les vocabulaires de cette organisation
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org)
+        org_vocab = VocabularySetFactory(organisation=org)
+        other_vocab = VocabularySetFactory(organisation=OrganisationFactory())
+
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        codes = {v["code"] for v in response.json()["vocabularies"]}
+        self.assertIn(org_vocab.code, codes)
+        self.assertNotIn(other_vocab.code, codes)
+
+    @authenticate
+    def test_me_vocabularies_contain_only_display_fields(self):
+        """
+        Les vocabulaires retournés par /me ne contiennent que id, code et name —
+        pas les entrées (représentation allégée, identique à l'endpoint /vocabularies/)
+        """
+        VocabularySetFactory(organisation=None)
+
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        vocab_data = response.json()["vocabularies"][0]
+        self.assertIn("id", vocab_data)
+        self.assertIn("code", vocab_data)
+        self.assertIn("name", vocab_data)
+        self.assertNotIn("entries", vocab_data)
