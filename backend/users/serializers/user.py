@@ -4,6 +4,8 @@ from organisations.models import Organisation, Pole
 from organisations.serializers import MembershipSerializer
 from organisations.serializers.organisation import FullOrganisationSerializer
 from rest_framework import serializers
+from surveys.serializers import VocabularySetDisplaySerializer
+from surveys.views.vocabularyset import _accessible_vocab_queryset
 
 from users.models import User
 
@@ -21,6 +23,7 @@ class UserDisplaySerializer(serializers.ModelSerializer):
 class SimpleUserSerializer(serializers.ModelSerializer):
     memberships = MembershipSerializer(many=True, read_only=True)
     organisations = serializers.SerializerMethodField()
+    vocabularies = serializers.SerializerMethodField()
 
     def get_organisations(self, obj):
         orgs = (
@@ -29,6 +32,9 @@ class SimpleUserSerializer(serializers.ModelSerializer):
             .prefetch_related(Prefetch("poles", queryset=Pole.objects.filter(is_active=True).order_by("name")))
         )
         return FullOrganisationSerializer(orgs, many=True).data
+
+    def get_vocabularies(self, obj):
+        return VocabularySetDisplaySerializer(_accessible_vocab_queryset(obj), many=True).data
 
     class Meta:
         model = User
@@ -39,5 +45,6 @@ class SimpleUserSerializer(serializers.ModelSerializer):
             "username",
             "memberships",
             "organisations",
+            "vocabularies",
             "source",
         )

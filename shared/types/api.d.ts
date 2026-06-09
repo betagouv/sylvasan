@@ -20,6 +20,12 @@ type Membership = {
   membershipType: string
 }
 
+type VocabularySet = {
+  id: number
+  code: string
+  name: string
+}
+
 type LoggedUser = {
   firstName: string
   lastName?: string
@@ -27,6 +33,7 @@ type LoggedUser = {
   id: number
   memberships: Membership[]
   organisations: OrganisationWithPoles[]
+  vocabularies: VocabularySet[]
   source: string
 }
 

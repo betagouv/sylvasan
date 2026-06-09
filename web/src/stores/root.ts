@@ -16,16 +16,12 @@ export const useRootStore = defineStore("root", () => {
 
   const setLoggedUser = (userData: LoggedUser | null) => {
     loggedUser.value = userData
+    vocabularies.value = userData?.vocabularies ?? []
   }
 
   const fetchLoggedUser = async () => {
     const { data } = await useApiFetch("/auth/me/").json()
     setLoggedUser(data.value)
-  }
-
-  const fetchVocabularies = async () => {
-    const { data } = await useApiFetch("/vocabularies/").json()
-    vocabularies.value = data.value
   }
 
   const fetchVocabularyDetail = async (code: string) => {
@@ -36,7 +32,7 @@ export const useRootStore = defineStore("root", () => {
 
   const fetchInitialData: () => Promise<undefined> = async () => {
     await fetchCsrfToken()
-    await Promise.all([fetchLoggedUser(), fetchVocabularies()])
+    await fetchLoggedUser()
     initialDataLoaded.value = true
   }
 
