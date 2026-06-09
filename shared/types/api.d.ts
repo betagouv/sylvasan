@@ -26,7 +26,7 @@ type LoggedUser = {
   username: string
   id: number
   memberships: Membership[]
-  organizations: OrganisationWithPoles[]
+  organisations: OrganisationWithPoles[]
   source: string
 }
 

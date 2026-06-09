@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from organisations.models import Organisation, Pole
+from organisations.models import Organisation
+from organisations.serializers.pole import PoleSerializer
 
 
 class OrganisationSerializer(serializers.ModelSerializer):
@@ -9,14 +10,8 @@ class OrganisationSerializer(serializers.ModelSerializer):
         fields = ("id", "name")
 
 
-class FullPoleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Pole
-        fields = ("id", "name")
-
-
 class FullOrganisationSerializer(serializers.ModelSerializer):
-    poles = FullPoleSerializer(many=True, read_only=True)
+    poles = PoleSerializer(many=True, read_only=True)
 
     class Meta:
         model = Organisation

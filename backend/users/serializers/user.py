@@ -20,9 +20,9 @@ class UserDisplaySerializer(serializers.ModelSerializer):
 
 class SimpleUserSerializer(serializers.ModelSerializer):
     memberships = MembershipSerializer(many=True, read_only=True)
-    organizations = serializers.SerializerMethodField()
+    organisations = serializers.SerializerMethodField()
 
-    def get_organizations(self, obj):
+    def get_organisations(self, obj):
         orgs = (
             Organisation.objects.filter(memberships__user=obj)
             .distinct()
@@ -38,6 +38,6 @@ class SimpleUserSerializer(serializers.ModelSerializer):
             "last_name",
             "username",
             "memberships",
-            "organizations",
+            "organisations",
             "source",
         )

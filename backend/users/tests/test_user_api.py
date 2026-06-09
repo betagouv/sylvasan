@@ -49,17 +49,17 @@ class TestUserApi(APITestCase):
         self.assertEqual(membership_data["membershipType"], membership.membership_type)
 
     @authenticate
-    def test_me_returns_organizations_key(self):
+    def test_me_returns_organisations_key(self):
         """
-        L'endpoint /me inclut une clé 'organizations' même sans rôle
+        L'endpoint /me inclut une clé 'organisations' même sans rôle
         """
         response = self.client.get(reverse("me"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("organizations", response.json())
-        self.assertEqual(response.json()["organizations"], [])
+        self.assertIn("organisations", response.json())
+        self.assertEqual(response.json()["organisations"], [])
 
     @authenticate
-    def test_me_returns_organizations_with_poles(self):
+    def test_me_returns_organisations_with_poles(self):
         """
         L'endpoint /me retourne les organisations de l'utilisateur avec leurs pôles
         """
@@ -71,10 +71,10 @@ class TestUserApi(APITestCase):
         response = self.client.get(reverse("me"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        organizations = response.json()["organizations"]
-        self.assertEqual(len(organizations), 1)
+        organisations = response.json()["organisations"]
+        self.assertEqual(len(organisations), 1)
 
-        org_data = organizations[0]
+        org_data = organisations[0]
         self.assertEqual(org_data["id"], org.id)
         self.assertEqual(org_data["name"], org.name)
 
@@ -83,7 +83,7 @@ class TestUserApi(APITestCase):
         self.assertIn(pole_b.id, pole_ids)
 
     @authenticate
-    def test_me_organizations_excludes_inactive_poles(self):
+    def test_me_organisations_excludes_inactive_poles(self):
         """
         Les pôles inactifs ne sont pas inclus dans la liste des pôles d'une organisation
         """
@@ -95,12 +95,12 @@ class TestUserApi(APITestCase):
         response = self.client.get(reverse("me"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        pole_ids = {p["id"] for p in response.json()["organizations"][0]["poles"]}
+        pole_ids = {p["id"] for p in response.json()["organisations"][0]["poles"]}
         self.assertIn(active_pole.id, pole_ids)
         self.assertNotIn(inactive_pole.id, pole_ids)
 
     @authenticate
-    def test_me_organizations_deduplicated_across_memberships(self):
+    def test_me_organisations_deduplicated_across_memberships(self):
         """
         Une organisation n'apparaît qu'une seule fois même si l'utilisateur
         a plusieurs rôles dans cette organisation
@@ -112,11 +112,11 @@ class TestUserApi(APITestCase):
         response = self.client.get(reverse("me"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        organizations = response.json()["organizations"]
-        self.assertEqual(len(organizations), 1)
+        organisations = response.json()["organisations"]
+        self.assertEqual(len(organisations), 1)
 
     @authenticate
-    def test_me_organizations_includes_all_user_orgs(self):
+    def test_me_organisations_includes_all_user_orgs(self):
         """
         Toutes les organisations de l'utilisateur sont retournées
         """
@@ -128,6 +128,6 @@ class TestUserApi(APITestCase):
         response = self.client.get(reverse("me"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        org_ids = {o["id"] for o in response.json()["organizations"]}
+        org_ids = {o["id"] for o in response.json()["organisations"]}
         self.assertIn(org_a.id, org_ids)
         self.assertIn(org_b.id, org_ids)

@@ -9,7 +9,7 @@
 </route>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import SurveyBuilder from "../components/SurveyBuilder/index.vue"
 import type { SurveySchema } from "@shared-types/survey"
 import { DsfrBreadcrumb } from "@gouvminint/vue-dsfr"
@@ -67,22 +67,24 @@ const adminPoles = computed(
 // Pôles de l'org sélectionnée issus du profil utilisateur (déjà chargés au login)
 const orgPoles = computed(
   () =>
-    store.loggedUser?.organizations.find((o) => o.id === organisation.value)
+    store.loggedUser?.organisations.find((o) => o.id === organisation.value)
       ?.poles ?? []
 )
 
+// Toutes les valeurs sont des strings pour éviter les problèmes de coercition du DsfrSelect :
+// "" = aucun pôle, "123" = pôle avec id 123
 const poleOptions = computed(() => {
-  const opts: { text: string; value: string | number }[] = []
+  const opts: { text: string; value: string }[] = []
   if (hasOrgLevelAdmin.value) {
     // Les admins org voient "Aucun pôle" + tous les pôles de l'organisation
-    opts.push({ text: "Aucun pôle (niveau organisation)", value: "" })
+    opts.push({ text: "Toues les pôles (niveau organisation)", value: "" })
     for (const p of orgPoles.value) {
-      opts.push({ text: p.name, value: p.id })
+      opts.push({ text: p.name, value: String(p.id) })
     }
   } else {
     // Les admins pôle voient uniquement leurs pôles explicites
     for (const p of adminPoles.value) {
-      opts.push({ text: p.name, value: p.id })
+      opts.push({ text: p.name, value: String(p.id) })
     }
   }
   return opts
@@ -91,13 +93,16 @@ const poleOptions = computed(() => {
 // Le sélecteur n'est affiché que s'il y a un vrai choix à faire
 const showPoleSelect = computed(() => poleOptions.value.length > 1)
 
-const selectedPoleOption = ref<string | number>("")
+const selectedPoleOption = ref<string>("")
+
+// Remise à zéro quand l'organisation change pour éviter une valeur obsolète
+watch(organisation, () => {
+  selectedPoleOption.value = ""
+})
 
 // null → enquête au niveau organisation ; number → enquête rattachée à un pôle
 const pole = computed(() =>
-  selectedPoleOption.value !== "" && selectedPoleOption.value !== undefined
-    ? Number(selectedPoleOption.value)
-    : null
+  selectedPoleOption.value !== "" ? Number(selectedPoleOption.value) : null
 )
 
 const validator = z.object({
@@ -203,7 +208,7 @@ const createSurvey = async () => {
       />
       <DsfrSelect
         v-if="showPoleSelect"
-        v-model.number="selectedPoleOption"
+        v-model="selectedPoleOption"
         class="max-w-sm"
         label="Pôle"
         :options="poleOptions"
