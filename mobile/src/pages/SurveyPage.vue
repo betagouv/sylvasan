@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue"
+import { computed, ref, watch, onMounted } from "vue"
 import { useRoute } from "vue-router"
 import { useSurveysStore } from "../stores/surveys"
 import { useToastStore } from "../stores/toast"
@@ -46,6 +46,12 @@ const dataReady = ref(false)
 const showSummary = ref(false)
 const summaryData = ref<Record<string, unknown>>({})
 const saving = ref(false)
+const forceValidate = ref(false)
+
+// Force validation immediately when a draft is opened (user already saw/filled the form)
+watch(prefillData, (val) => { if (val) forceValidate.value = true })
+// Force validation when going back from summary (user clicked "Modifier")
+watch(showSummary, (val, prev) => { if (!val && prev) forceValidate.value = true })
 
 const summaryHasErrors = computed(() => {
   const fields = survey.value?.jsonSchema?.fields ?? []
@@ -197,6 +203,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
             :allowSubmit="true"
             :schema="survey.jsonSchema"
             :prefillData="prefillData"
+            :forceValidate="forceValidate"
             :vocabularies="vocabularySets"
             :mapComponent="MapField"
             @done="onSurveyDone"

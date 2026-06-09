@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useId } from "vue"
+import { computed, ref, useId, watchEffect } from "vue"
 import type { Component } from "vue"
 import type {
   SurveyField,
@@ -17,6 +17,7 @@ const props = defineProps<{
   field: SurveyField
   disabled?: boolean
   readonly?: boolean
+  forceValidate?: boolean
   vocabularies?: VocabularySet[]
   mapComponent?: Component
 }>()
@@ -88,6 +89,7 @@ const mapValue = computed({
 
 const rootRef = ref<HTMLElement | null>(null)
 const touched = ref(false)
+watchEffect(() => { if (props.forceValidate) touched.value = true })
 
 const onFocusOut = (e: FocusEvent) => {
   if (!rootRef.value?.contains(e.relatedTarget as Node)) {
