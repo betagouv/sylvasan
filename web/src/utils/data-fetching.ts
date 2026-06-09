@@ -16,12 +16,17 @@ export const useApiFetch = createFetch({
 
       const headers = new Headers(options.headers || {})
 
+      // @vueuse/core set Content-Type sur defaultFetchOptions.headers (objet brut) avant d'appeler
+      // beforeFetch, puis fusionne les deux sources dans le fetch final via un spread :
+      //   { ...headersToObject(defaultFetchOptions.headers),   ← 'Content-Type' (majuscule, objet brut)
+      //     ...headersToObject(context.options.headers) }      ← 'content-type' (minuscule, Headers.entries())
+      // Chrome interprète les deux clés comme deux en-têtes Content-Type distincts.
+      // La solution : supprimer Content-Type de context.options.headers pour que defaultFetchOptions
+      // reste la seule source, et éviter le doublon.
+      headers.delete("Content-Type")
+
       // Ajout de l'entête nécessaire pour le CSRF si besoin
       if (isUnsafeMethod && csrfCookie) headers.set("X-CSRFToken", csrfCookie)
-
-      // JSON par défaut si non spécifié
-      if (!headers.has("Content-Type") && isUnsafeMethod)
-        headers.set("Content-Type", "application/json")
 
       options.headers = headers
 
