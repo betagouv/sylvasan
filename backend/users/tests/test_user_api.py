@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 
 from common.utils import authenticate
-from organisations.factories import MembershipFactory
+from organisations.factories import MembershipFactory, OrganisationFactory, PoleFactory
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -47,3 +47,87 @@ class TestUserApi(APITestCase):
         self.assertEqual(membership_data["organisation"]["name"], membership.organisation.name)
         self.assertIsNone(membership_data["pole"])
         self.assertEqual(membership_data["membershipType"], membership.membership_type)
+
+    @authenticate
+    def test_me_returns_organizations_key(self):
+        """
+        L'endpoint /me inclut une clé 'organizations' même sans rôle
+        """
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("organizations", response.json())
+        self.assertEqual(response.json()["organizations"], [])
+
+    @authenticate
+    def test_me_returns_organizations_with_poles(self):
+        """
+        L'endpoint /me retourne les organisations de l'utilisateur avec leurs pôles
+        """
+        org = OrganisationFactory()
+        pole_a = PoleFactory(organisation=org)
+        pole_b = PoleFactory(organisation=org)
+        MembershipFactory(user=authenticate.user, organisation=org)
+
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        organizations = response.json()["organizations"]
+        self.assertEqual(len(organizations), 1)
+
+        org_data = organizations[0]
+        self.assertEqual(org_data["id"], org.id)
+        self.assertEqual(org_data["name"], org.name)
+
+        pole_ids = {p["id"] for p in org_data["poles"]}
+        self.assertIn(pole_a.id, pole_ids)
+        self.assertIn(pole_b.id, pole_ids)
+
+    @authenticate
+    def test_me_organizations_excludes_inactive_poles(self):
+        """
+        Les pôles inactifs ne sont pas inclus dans la liste des pôles d'une organisation
+        """
+        org = OrganisationFactory()
+        active_pole = PoleFactory(organisation=org)
+        inactive_pole = PoleFactory(organisation=org, is_active=False)
+        MembershipFactory(user=authenticate.user, organisation=org)
+
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        pole_ids = {p["id"] for p in response.json()["organizations"][0]["poles"]}
+        self.assertIn(active_pole.id, pole_ids)
+        self.assertNotIn(inactive_pole.id, pole_ids)
+
+    @authenticate
+    def test_me_organizations_deduplicated_across_memberships(self):
+        """
+        Une organisation n'apparaît qu'une seule fois même si l'utilisateur
+        a plusieurs rôles dans cette organisation
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org)
+        MembershipFactory(user=authenticate.user, organisation=org)
+
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        organizations = response.json()["organizations"]
+        self.assertEqual(len(organizations), 1)
+
+    @authenticate
+    def test_me_organizations_includes_all_user_orgs(self):
+        """
+        Toutes les organisations de l'utilisateur sont retournées
+        """
+        org_a = OrganisationFactory()
+        org_b = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org_a)
+        MembershipFactory(user=authenticate.user, organisation=org_b)
+
+        response = self.client.get(reverse("me"), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        org_ids = {o["id"] for o in response.json()["organizations"]}
+        self.assertIn(org_a.id, org_ids)
+        self.assertIn(org_b.id, org_ids)
