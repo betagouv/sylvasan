@@ -46,6 +46,54 @@ const organisation = computed(() =>
     : selectedOrganisationId.value
 )
 
+// L'utilisateur a un rôle admin au niveau organisation (pole === null) pour l'org sélectionnée
+const hasOrgLevelAdmin = computed(() =>
+  adminMemberships.value?.some(
+    (m) => m.organisation.id === organisation.value && m.pole === null
+  ) ?? false
+)
+
+// Pôles auxquels l'utilisateur a un rôle admin explicite dans l'org sélectionnée
+const adminPoles = computed(() =>
+  adminMemberships.value
+    ?.filter((m) => m.organisation.id === organisation.value && m.pole !== null)
+    .map((m) => m.pole!) ?? []
+)
+
+// Pôles de l'org sélectionnée issus du profil utilisateur (déjà chargés au login)
+const orgPoles = computed(() =>
+  store.loggedUser?.organizations.find((o) => o.id === organisation.value)?.poles ?? []
+)
+
+const poleOptions = computed(() => {
+  const opts: { text: string; value: string | number }[] = []
+  if (hasOrgLevelAdmin.value) {
+    // Les admins org voient "Aucun pôle" + tous les pôles de l'organisation
+    opts.push({ text: "Aucun pôle (niveau organisation)", value: "" })
+    for (const p of orgPoles.value) {
+      opts.push({ text: p.name, value: p.id })
+    }
+  } else {
+    // Les admins pôle voient uniquement leurs pôles explicites
+    for (const p of adminPoles.value) {
+      opts.push({ text: p.name, value: p.id })
+    }
+  }
+  return opts
+})
+
+// Le sélecteur n'est affiché que s'il y a un vrai choix à faire
+const showPoleSelect = computed(() => poleOptions.value.length > 1)
+
+const selectedPoleOption = ref<string | number>("")
+
+// null → enquête au niveau organisation ; number → enquête rattachée à un pôle
+const pole = computed(() =>
+  selectedPoleOption.value !== "" && selectedPoleOption.value !== undefined
+    ? Number(selectedPoleOption.value)
+    : null
+)
+
 const validator = z.object({
   title: z.string().min(1, "Le titre est obligatoire"),
   fields: z.array(z.any()).min(1, "L'enquête doit contenir au moins un champ"),
@@ -75,7 +123,7 @@ const pageTitleModalOpened = ref(false)
 
 const payload = computed(() => ({
   organisation: organisation.value,
-  pole: null,
+  pole: pole.value,
   title: title.value,
   jsonSchema: schema.value,
   campaign: null,
@@ -146,6 +194,14 @@ const createSurvey = async () => {
         :required="true"
         :error-message="formErrors?.fieldErrors?.organisation?.[0]"
         @update:modelValue="clearFieldError('organisation')"
+      />
+      <DsfrSelect
+        v-if="showPoleSelect"
+        v-model="selectedPoleOption"
+        class="max-w-sm"
+        label="Pôle"
+        :options="poleOptions"
+        :required="!hasOrgLevelAdmin"
       />
     </div>
     <div class="my-6">
