@@ -12,6 +12,7 @@ const props = withDefaults(
     allowSubmit?: boolean
     prefillData?: Record<string, unknown>
     readonly?: boolean
+    forceValidate?: boolean
     vocabularies?: VocabularySet[]
     mapComponent?: Component
   }>(),
@@ -112,6 +113,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
           :field="field"
           v-model="formData[field.id]"
           :disabled="readonly"
+          :force-validate="forceValidate"
           :vocabularies="props.vocabularies"
           :mapComponent="mapComponent"
         />

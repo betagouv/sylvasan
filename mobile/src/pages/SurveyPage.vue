@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from "vue"
+import { computed, ref, watch, onMounted } from "vue"
 import { useRoute } from "vue-router"
 import { useSurveysStore } from "../stores/surveys"
 import { useToastStore } from "../stores/toast"
@@ -28,6 +28,7 @@ import { useResponsesStore } from "../stores/responses"
 import { storeToRefs } from "pinia"
 import { useVocabulariesStore } from "../stores/vocabularies"
 import { saveImagesToFilesystem } from "../utils/imageStorage"
+import { validateResponse } from "@shared-utils/validateField"
 
 const props = defineProps<{
   id?: number
@@ -45,6 +46,17 @@ const dataReady = ref(false)
 const showSummary = ref(false)
 const summaryData = ref<Record<string, unknown>>({})
 const saving = ref(false)
+const forceValidate = ref(false)
+
+// Force validation immediately when a draft is opened (user already saw/filled the form)
+watch(prefillData, (val) => { if (val) forceValidate.value = true })
+// Force validation when going back from summary (user clicked "Modifier")
+watch(showSummary, (val, prev) => { if (!val && prev) forceValidate.value = true })
+
+const summaryHasErrors = computed(() => {
+  const fields = survey.value?.jsonSchema?.fields ?? []
+  return Object.keys(validateResponse(fields, summaryData.value)).length > 0
+})
 
 const router = useIonRouter()
 const route = useRoute()
@@ -191,6 +203,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
             :allowSubmit="true"
             :schema="survey.jsonSchema"
             :prefillData="prefillData"
+            :forceValidate="forceValidate"
             :vocabularies="vocabularySets"
             :mapComponent="MapField"
             @done="onSurveyDone"
@@ -215,7 +228,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
               <DsfrButton
                 label="Sauvegarder"
                 icon="ri-cloud-line"
-                :disabled="saving"
+                :disabled="saving || summaryHasErrors"
                 @click="saveResponse(summaryData)"
               />
             </div>

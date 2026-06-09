@@ -9,6 +9,7 @@ const props = defineProps<{
   disabled?: boolean
   hint?: string
   placeholder?: string
+  errorMessage?: string
 }>()
 
 const modelValue = defineModel<string>()
@@ -116,7 +117,7 @@ const onKeydown = (e: KeyboardEvent) => {
 </script>
 
 <template>
-  <DsfrInputGroup>
+  <DsfrInputGroup :class="errorMessage ? 'fr-input-group--error' : ''">
     <div ref="containerRef" class="relative">
       <div class="flex items-end">
         <div class="grow">
@@ -143,6 +144,7 @@ const onKeydown = (e: KeyboardEvent) => {
         <v-icon icon="ri-search-line" class="mb-3 mx-2" />
       </div>
     </div>
+    <p v-if="errorMessage" class="fr-error-text">{{ errorMessage }}</p>
   </DsfrInputGroup>
 
   <Teleport to="body">

@@ -36,15 +36,16 @@ export const resolveFieldValue = (
     return ""
   }
 
-  if (
-    field?.ui?.widget === "map" &&
-    typeof raw === "object" &&
-    raw !== null &&
-    "lat" in raw &&
-    "lon" in raw
-  ) {
-    const { lat, lon } = raw as { lat: number; lon: number }
-    return `Latitude : ${lat}, longitude : ${lon}`
+  if (field?.ui?.widget === "map") {
+    if (
+      typeof raw === "object" &&
+      raw !== null &&
+      "lat" in raw &&
+      "lon" in raw
+    ) {
+      const { lat, lon } = raw as { lat: number; lon: number }
+      return `Latitude : ${lat}, longitude : ${lon}`
+    } else return ""
   }
 
   if (field?.vocabulary) {

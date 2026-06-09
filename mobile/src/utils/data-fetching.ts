@@ -35,7 +35,8 @@ export const useApiFetch = createFetch({
     async onFetchError(ctx) {
       const authStore = useAuthStore()
       const { refresh } = storeToRefs(useAuthStore())
-      const shouldRetry = ctx.response?.status === 401 && refresh.value
+      const isRefreshEndpoint = ctx.context.url?.toString().includes("/token/refresh/")
+      const shouldRetry = ctx.response?.status === 401 && refresh.value && !isRefreshEndpoint
 
       if (shouldRetry) {
         const refreshSuccessful = await authStore.refreshToken()
