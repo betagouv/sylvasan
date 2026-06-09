@@ -30,21 +30,27 @@ const adminMemberships = computed(() =>
   store.loggedUser?.memberships.filter((x) => x.membershipType === "admin")
 )
 
-const orgOptions = computed(
-  () =>
-    adminMemberships.value?.map((m) => ({
-      text: m.organisation.name,
-      value: m.organisation.id,
-    })) ?? []
+// Organisations uniques parmi les rôles admin (un utilisateur peut avoir plusieurs rôles
+// dans la même organisation, ex. admin de deux pôles distincts)
+const uniqueAdminOrgs = computed(() => {
+  const seen = new Set<number>()
+  return (adminMemberships.value ?? []).filter((m) => {
+    if (seen.has(m.organisation.id)) return false
+    seen.add(m.organisation.id)
+    return true
+  }).map((m) => m.organisation)
+})
+
+const orgOptions = computed(() =>
+  uniqueAdminOrgs.value.map((org) => ({ text: org.name, value: String(org.id) }))
 )
 
-const selectedOrganisationId = ref<number | undefined>()
+const selectedOrganisationId = ref<string>("")
 
-const organisation = computed(() =>
-  adminMemberships.value?.length === 1
-    ? adminMemberships.value[0].organisation.id
-    : selectedOrganisationId.value
-)
+const organisation = computed(() => {
+  if (uniqueAdminOrgs.value.length === 1) return uniqueAdminOrgs.value[0].id
+  return selectedOrganisationId.value ? Number(selectedOrganisationId.value) : undefined
+})
 
 // L'utilisateur a un rôle admin au niveau organisation (pole === null) pour l'org sélectionnée
 const hasOrgLevelAdmin = computed(
@@ -181,8 +187,8 @@ const createSurvey = async () => {
     />
     <h1 class="fr-h4">
       Créer une nouvelle enquête
-      <span v-if="adminMemberships?.length === 1"
-        >pour {{ adminMemberships[0].organisation.name }}</span
+      <span v-if="uniqueAdminOrgs.length === 1"
+        >pour {{ uniqueAdminOrgs[0].name }}</span
       >
     </h1>
     <div class="flex gap-8">
@@ -197,7 +203,7 @@ const createSurvey = async () => {
         />
       </DsfrInputGroup>
       <DsfrSelect
-        v-if="adminMemberships && adminMemberships.length > 1"
+        v-if="uniqueAdminOrgs.length > 1"
         v-model="selectedOrganisationId"
         class="max-w-sm"
         label="Organisation"
