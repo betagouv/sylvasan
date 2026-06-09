@@ -310,7 +310,7 @@ const updatePageTitle = (title: any, index: number) => {
 
 <template>
   <div class="grid grid-cols-12 gap-4" ref="tabsRef">
-    <div class="col-span-12 sm:col-span-6 md:col-span-7 lg:col-span-8">
+    <div class="col-span-12 md:col-span-6 md:col-span-7 lg:col-span-8">
       <DsfrTabs
         v-model="activeTab"
         tab-list-name="Pages de l'enquête"
@@ -407,7 +407,9 @@ const updatePageTitle = (title: any, index: number) => {
     </div>
 
     <!-- Aperçu -->
-    <div class="col-span-12 sm:col-span-6 md:col-span-5 lg:col-span-4">
+    <div
+      class="hidden md:block col-span-12 sm:col-span-6 md:col-span-5 lg:col-span-4"
+    >
       <div
         v-if="activePageFields.length"
         class="border rounded border-slate-300 p-4"

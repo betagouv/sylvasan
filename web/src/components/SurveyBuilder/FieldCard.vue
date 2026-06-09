@@ -86,225 +86,253 @@ const formatDate = (isoString: string): string => {
 </script>
 
 <template>
-  <div class="rounded bg-white border border-slate-50 p-4 flex gap-6">
-    <div class="flex flex-col gap-2 items-center justify-center">
-      <DsfrButton
-        icon-only
-        @click="emit('moveUp')"
-        tertiary
-        :size="depth && depth > 0 ? 'sm' : ''"
-        icon="ri-arrow-up-line"
-      />
-      <DsfrButton
-        icon-only
-        @click="emit('moveDown')"
-        tertiary
-        :size="depth && depth > 0 ? 'sm' : ''"
-        icon="ri-arrow-down-line"
-      />
-    </div>
-    <div class="flex flex-col grow border-r border-slate-300 pr-4">
-      <div class="flex gap-2 items-end mb-4">
+  <div>
+    <div
+      class="rounded bg-white border border-slate-50 p-4 flex gap-6 max-w-[100%]"
+    >
+      <div class="flex flex-col gap-2 items-center justify-center">
+        <DsfrButton
+          icon-only
+          @click="emit('moveUp')"
+          tertiary
+          :size="depth && depth > 0 ? 'sm' : ''"
+          icon="ri-arrow-up-line"
+        />
+        <DsfrButton
+          icon-only
+          @click="emit('moveDown')"
+          tertiary
+          :size="depth && depth > 0 ? 'sm' : ''"
+          icon="ri-arrow-down-line"
+        />
+      </div>
+      <div
+        class="flex flex-col grow border-r border-slate-300 pr-4 max-w-[80%]"
+      >
+        <div class="flex gap-2 items-end mb-4">
+          <div
+            :class="`border border-slate-100 px-1 rounded-full pt-1 field-${widgetData?.widget}`"
+          >
+            <v-icon :icon="icon" />
+          </div>
+          <h3
+            class="fr-text--sm mb-0! min-w-0 truncate max-w-[30%]"
+            :title="field.label"
+          >
+            {{ field.label }}
+          </h3>
+          <p class="fr-text--sm mb-0! text-gray-500 shrink-0 max-w-[30%]">
+            {{ label }}
+          </p>
+          <p
+            class="mb-0! fr-text--sm italic text-gray-500 shrink-0"
+            v-if="field.required"
+          >
+            *Champ requis
+          </p>
+          <div class="grow"></div>
+          <div
+            class="font-mono text-gray-400 truncate max-w-[30%]"
+            :title="field.id"
+          >
+            {{ field.id }}
+          </div>
+        </div>
+
+        <div v-if="field.condition" class="flex items-center">
+          <div>
+            <DsfrTag small label="Visibilité conditionnelle" />
+          </div>
+          <DsfrTooltip :content="conditionsText(field.condition)" />
+        </div>
+
+        <!-- Champ text / numérique -->
         <div
-          :class="`border border-slate-100 px-1 rounded-full pt-1 field-${widgetData?.widget}`"
+          v-if="field.ui?.widget === 'input' || field.ui?.widget === 'number'"
         >
-          <v-icon :icon="icon" />
+          <div class="flex gap-2" v-if="field.ui?.placeholder">
+            <div class="text-gray-500 text-medium">Placeholder</div>
+            <div>{{ field.ui.placeholder }}</div>
+          </div>
+          <div class="flex gap-2" v-if="field.ui?.hint">
+            <div class="text-gray-500 text-medium">Aide</div>
+            <div>{{ field.ui.hint }}</div>
+          </div>
+          <div v-if="field.ui?.widget === 'number'">
+            <div class="flex gap-2" v-if="field.validation?.min">
+              <div class="text-gray-500 text-medium">Valeur min.</div>
+              <div>{{ field.validation.min }}</div>
+            </div>
+            <div class="flex gap-2" v-if="field.validation?.max">
+              <div class="text-gray-500 text-medium">Valeur max.</div>
+              <div>{{ field.validation.max }}</div>
+            </div>
+            <div class="flex gap-2" v-if="field.validation?.numberType">
+              <div class="text-gray-500 text-medium">Type</div>
+              <div>
+                {{
+                  field.validation.numberType === "integer"
+                    ? "Nombre entier"
+                    : "Nombre réel"
+                }}
+              </div>
+            </div>
+          </div>
         </div>
-        <h3 class="fr-text--sm mb-0!">{{ field.label }}</h3>
-        <p class="fr-text--sm mb-0! text-gray-500">{{ label }}</p>
-        <p class="mb-0! fr-text--sm italic text-gray-500" v-if="field.required">
-          *Champ requis
-        </p>
-        <div class="grow"></div>
-        <div class="font-mono text-gray-400">{{ field.id }}</div>
-      </div>
 
-      <div v-if="field.condition" class="flex items-center">
-        <div>
-          <DsfrTag small label="Visibilité conditionnelle" />
+        <!-- Champ select / radio / autocomplete -->
+        <div
+          v-if="
+            field.ui?.widget === 'select' ||
+            field.ui?.widget === 'radio' ||
+            field.ui?.widget === 'autocomplete'
+          "
+        >
+          <div v-if="resolvedVocabulary" class="flex align-center">
+            <p>
+              {{ resolvedVocabulary.code }} — {{ resolvedVocabulary.name }} ({{
+                resolvedVocabulary.entries?.length
+              }}
+              options)
+            </p>
+            <VocabularyModal
+              class="ml-3 -mt-2"
+              :vocabulary="resolvedVocabulary"
+            />
+          </div>
+          <div v-else-if="field.ui?.choices">
+            {{ field.ui.choices.length }} options
+          </div>
+          <div
+            class="flex gap-2"
+            v-if="field.ui?.widget === 'select' && field.ui?.unselectedText"
+          >
+            <div class="text-gray-500 text-medium">Option vide</div>
+            <div>{{ field.ui.unselectedText }}</div>
+          </div>
+          <div
+            class="flex gap-2"
+            v-if="field.ui?.widget === 'autocomplete' && field.ui?.placeholder"
+          >
+            <div class="text-gray-500 text-medium">Placeholder</div>
+            <div>{{ field.ui.placeholder }}</div>
+          </div>
         </div>
-        <DsfrTooltip :content="conditionsText(field.condition)" />
-      </div>
 
-      <!-- Champ text / numérique -->
-      <div v-if="field.ui?.widget === 'input' || field.ui?.widget === 'number'">
-        <div class="flex gap-2" v-if="field.ui?.placeholder">
-          <div class="text-gray-500 text-medium">Placeholder</div>
-          <div>{{ field.ui.placeholder }}</div>
+        <!-- Champ Checkbox -->
+        <div v-if="field.ui?.widget === 'checkboxes'">
+          <div class="flex gap-2" v-if="field.ui?.choices">
+            <div>{{ field.ui.choices.length }} options</div>
+          </div>
         </div>
-        <div class="flex gap-2" v-if="field.ui?.hint">
-          <div class="text-gray-500 text-medium">Aide</div>
-          <div>{{ field.ui.hint }}</div>
-        </div>
-        <div v-if="field.ui?.widget === 'number'">
+
+        <!-- Champ Date -->
+        <div v-if="field.ui?.widget === 'date'">
+          <div class="flex gap-2" v-if="field.ui?.hint">
+            <div class="text-gray-500 text-medium">Aide</div>
+            <div>{{ field.ui.hint }}</div>
+          </div>
           <div class="flex gap-2" v-if="field.validation?.min">
-            <div class="text-gray-500 text-medium">Valeur min.</div>
-            <div>{{ field.validation.min }}</div>
+            <div class="text-gray-500 text-medium">Date min</div>
+            <div v-if="typeof field.validation.min === 'string'">
+              {{ formatDate(field.validation.min) }}
+            </div>
           </div>
           <div class="flex gap-2" v-if="field.validation?.max">
-            <div class="text-gray-500 text-medium">Valeur max.</div>
-            <div>{{ field.validation.max }}</div>
-          </div>
-          <div class="flex gap-2" v-if="field.validation?.numberType">
-            <div class="text-gray-500 text-medium">Type</div>
-            <div>{{ field.validation.numberType === 'integer' ? 'Nombre entier' : 'Nombre réel' }}</div>
+            <div class="text-gray-500 text-medium">Date max</div>
+            <div v-if="typeof field.validation.max === 'string'">
+              {{ formatDate(field.validation.max) }}
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Champ select / radio / autocomplete -->
-      <div
-        v-if="
-          field.ui?.widget === 'select' ||
-          field.ui?.widget === 'radio' ||
-          field.ui?.widget === 'autocomplete'
-        "
-      >
-        <div v-if="resolvedVocabulary" class="flex align-center">
-          <p>
-            {{ resolvedVocabulary.code }} — {{ resolvedVocabulary.name }} ({{
-              resolvedVocabulary.entries?.length
-            }}
-            options)
-          </p>
-          <VocabularyModal
-            class="ml-3 -mt-2"
-            :vocabulary="resolvedVocabulary"
-          />
-        </div>
-        <div v-else-if="field.ui?.choices">
-          {{ field.ui.choices.length }} options
-        </div>
-        <div
-          class="flex gap-2"
-          v-if="field.ui?.widget === 'select' && field.ui?.unselectedText"
-        >
-          <div class="text-gray-500 text-medium">Option vide</div>
-          <div>{{ field.ui.unselectedText }}</div>
-        </div>
-        <div
-          class="flex gap-2"
-          v-if="field.ui?.widget === 'autocomplete' && field.ui?.placeholder"
-        >
-          <div class="text-gray-500 text-medium">Placeholder</div>
-          <div>{{ field.ui.placeholder }}</div>
-        </div>
-      </div>
-
-      <!-- Champ Checkbox -->
-      <div v-if="field.ui?.widget === 'checkboxes'">
-        <div class="flex gap-2" v-if="field.ui?.choices">
-          <div>{{ field.ui.choices.length }} options</div>
-        </div>
-      </div>
-
-      <!-- Champ Date -->
-      <div v-if="field.ui?.widget === 'date'">
-        <div class="flex gap-2" v-if="field.ui?.hint">
-          <div class="text-gray-500 text-medium">Aide</div>
-          <div>{{ field.ui.hint }}</div>
-        </div>
-        <div class="flex gap-2" v-if="field.validation?.min">
-          <div class="text-gray-500 text-medium">Date min</div>
-          <div v-if="typeof field.validation.min === 'string'">
-            {{ formatDate(field.validation.min) }}
+        <!-- Champ Carte -->
+        <div v-if="field.ui?.widget === 'map'">
+          <div class="flex gap-2" v-if="field.ui?.hint">
+            <div class="text-gray-500 text-medium">Aide</div>
+            <div>{{ field.ui.hint }}</div>
           </div>
         </div>
-        <div class="flex gap-2" v-if="field.validation?.max">
-          <div class="text-gray-500 text-medium">Date max</div>
-          <div v-if="typeof field.validation.max === 'string'">
-            {{ formatDate(field.validation.max) }}
+
+        <!-- Champ Images -->
+        <div v-if="field.ui?.widget === 'image'">
+          <div class="flex gap-2" v-if="field.ui?.hint">
+            <div class="text-gray-500 text-medium">Aide</div>
+            <div>{{ field.ui.hint }}</div>
           </div>
         </div>
-      </div>
 
-      <!-- Champ Carte -->
-      <div v-if="field.ui?.widget === 'map'">
-        <div class="flex gap-2" v-if="field.ui?.hint">
-          <div class="text-gray-500 text-medium">Aide</div>
-          <div>{{ field.ui.hint }}</div>
-        </div>
-      </div>
+        <!-- Champ Liste d'objets -->
+        <div v-if="field.ui?.widget === 'array'">
+          <div class="flex gap-2 mb-1" v-if="field.ui?.addLabel">
+            <div class="text-gray-500 text-medium">Titre du bouton d'ajout</div>
+            <div>{{ field.ui.addLabel }}</div>
+          </div>
+          <div class="flex gap-2 mb-1" v-if="field.validation?.minItems">
+            <div class="text-gray-500 text-medium">No. min d'éléments</div>
+            <div>{{ field.validation.minItems }}</div>
+          </div>
+          <div class="flex gap-2 mb-1" v-if="field.validation?.maxItems">
+            <div class="text-gray-500 text-medium">No. max d'éléments</div>
+            <div>{{ field.validation.maxItems }}</div>
+          </div>
 
-      <!-- Champ Images -->
-      <div v-if="field.ui?.widget === 'image'">
-        <div class="flex gap-2" v-if="field.ui?.hint">
-          <div class="text-gray-500 text-medium">Aide</div>
-          <div>{{ field.ui.hint }}</div>
-        </div>
-      </div>
+          <!-- Sub-fields list -->
+          <div class="bg-slate-50 rounded border border-slate-200 p-3 mt-2">
+            <p class="fr-text--sm text-gray-500 mb-2!">
+              Sous-champs ({{ field.fields?.length ?? 0 }})
+            </p>
 
-      <!-- Champ Liste d'objets -->
-      <div v-if="field.ui?.widget === 'array'">
-        <div class="flex gap-2 mb-1" v-if="field.ui?.addLabel">
-          <div class="text-gray-500 text-medium">Titre du bouton d'ajout</div>
-          <div>{{ field.ui.addLabel }}</div>
-        </div>
-        <div class="flex gap-2 mb-1" v-if="field.validation?.minItems">
-          <div class="text-gray-500 text-medium">No. min d'éléments</div>
-          <div>{{ field.validation.minItems }}</div>
-        </div>
-        <div class="flex gap-2 mb-1" v-if="field.validation?.maxItems">
-          <div class="text-gray-500 text-medium">No. max d'éléments</div>
-          <div>{{ field.validation.maxItems }}</div>
-        </div>
+            <div v-if="field.fields?.length" class="flex flex-col gap-2 mb-3">
+              <FieldCard
+                v-for="subField in field.fields"
+                :key="`subfield-${field.id}-${subField.id}`"
+                :field="subField"
+                :depth="(depth ?? 0) + 1"
+                @delete="emit('removeSubField', subField.id)"
+                @move-up="emit('moveSubFieldUp', subField.id)"
+                @move-down="emit('moveSubFieldDown', subField.id)"
+              />
+            </div>
 
-        <!-- Sub-fields list -->
-        <div class="bg-slate-50 rounded border border-slate-200 p-3 mt-2">
-          <p class="fr-text--sm text-gray-500 mb-2!">
-            Sous-champs ({{ field.fields?.length ?? 0 }})
-          </p>
-
-          <div v-if="field.fields?.length" class="flex flex-col gap-2 mb-3">
-            <FieldCard
-              v-for="subField in field.fields"
-              :key="`subfield-${field.id}-${subField.id}`"
-              :field="subField"
-              :depth="(depth ?? 0) + 1"
-              @delete="emit('removeSubField', subField.id)"
-              @move-up="emit('moveSubFieldUp', subField.id)"
-              @move-down="emit('moveSubFieldDown', subField.id)"
+            <DsfrButton
+              label="Ajouter un sous-champ"
+              icon="ri-add-circle-line"
+              secondary
+              size="sm"
+              @click="subFieldModalOpened = true"
             />
           </div>
 
-          <DsfrButton
-            label="Ajouter un sous-champ"
-            icon="ri-add-circle-line"
-            secondary
-            size="sm"
-            @click="subFieldModalOpened = true"
+          <!-- NewFieldModal restricted to non-array types -->
+          <NewFieldModal
+            :opened="subFieldModalOpened"
+            :exclude-widgets="['array']"
+            :field-ids="field.fields?.map((f) => f.id) ?? []"
+            :all-field-ids="allFieldIds"
+            @add="handleAddSubField"
+            @close="subFieldModalOpened = false"
           />
         </div>
+      </div>
 
-        <!-- NewFieldModal restricted to non-array types -->
-        <NewFieldModal
-          :opened="subFieldModalOpened"
-          :exclude-widgets="['array']"
-          :field-ids="field.fields?.map((f) => f.id) ?? []"
-          :all-field-ids="allFieldIds"
-          @add="handleAddSubField"
-          @close="subFieldModalOpened = false"
+      <div class="self-center end flex flex-col gap-2">
+        <DsfrButton
+          icon="ri-edit-line"
+          @click="editModalOpened = true"
+          secondary
+          icon-only
+          label="Modifier le champ"
+        />
+
+        <DsfrButton
+          icon="ri-delete-bin-line"
+          @click="confirmDeleteOpened = true"
+          secondary
+          icon-only
         />
       </div>
     </div>
-
-    <div class="self-center end flex flex-col gap-2">
-      <DsfrButton
-        icon="ri-edit-line"
-        @click="editModalOpened = true"
-        secondary
-        icon-only
-        label="Modifier le champ"
-      />
-
-      <DsfrButton
-        icon="ri-delete-bin-line"
-        @click="confirmDeleteOpened = true"
-        secondary
-        icon-only
-      />
-    </div>
-
     <NewFieldModal
       :opened="editModalOpened"
       :payload="field"
