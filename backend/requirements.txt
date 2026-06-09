@@ -1,8 +1,8 @@
 asgiref==3.11.1
 Authlib==1.7.2
 bcrypt==5.0.0
-boto3==1.43.15
-botocore==1.43.15
+boto3==1.43.18
+botocore==1.43.18
 certifi==2026.5.20
 cffi==2.0.0
 charset-normalizer==3.4.7
@@ -31,7 +31,7 @@ PyJWT==2.12.1
 python-dateutil==2.9.0.post0
 requests==2.34.2
 ruff==0.15.14
-s3transfer==0.17.0
+s3transfer==0.18.0
 sentry-sdk==2.60.0
 six==1.17.0
 sqlparse==0.5.5
