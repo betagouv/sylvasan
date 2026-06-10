@@ -13,6 +13,7 @@ import {
 import { closeOutline } from "ionicons/icons"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
 import { loadAllMapRecords } from "../composables/offlineMapMetadata"
+import { Geolocation } from "@capacitor/geolocation"
 import {
   registerOfflineProtocol,
   deregisterOfflineProtocol,
@@ -59,15 +60,15 @@ onMounted(async () => {
   }
 })
 
-const getUserPosition = (): Promise<[number, number] | null> =>
-  new Promise((resolve) => {
-    if (!("geolocation" in navigator)) return resolve(null)
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve([coords.longitude, coords.latitude]),
-      () => resolve(null),
-      { timeout: 5000, maximumAge: 60_000 }
-    )
-  })
+const getUserPosition = async (): Promise<[number, number] | null> => {
+  try {
+    await Geolocation.requestPermissions()
+    const pos = await Geolocation.getCurrentPosition({ timeout: 5000, maximumAge: 60_000 })
+    return [pos.coords.longitude, pos.coords.latitude]
+  } catch {
+    return null
+  }
+}
 
 // Cycle de vie de la carte
 

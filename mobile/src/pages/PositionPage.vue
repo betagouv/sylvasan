@@ -10,6 +10,7 @@ import {
 import { IonPage, IonContent, IonSpinner, IonIcon } from "@ionic/vue"
 import { cloudOfflineOutline } from "ionicons/icons"
 import { Network } from "@capacitor/network"
+import { Geolocation } from "@capacitor/geolocation"
 import type { PluginListenerHandle } from "@capacitor/core"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
 import ignStyle from "../assets/ign-style.json"
@@ -27,15 +28,15 @@ let networkListener: PluginListenerHandle | null = null
 
 const { selectedPin } = useMapPins(mapRef)
 
-const getUserPosition = (): Promise<[number, number] | null> =>
-  new Promise((resolve) => {
-    if (!("geolocation" in navigator)) return resolve(null)
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve([coords.longitude, coords.latitude]),
-      () => resolve(null),
-      { timeout: 5000, maximumAge: 60_000 }
-    )
-  })
+const getUserPosition = async (): Promise<[number, number] | null> => {
+  try {
+    await Geolocation.requestPermissions()
+    const pos = await Geolocation.getCurrentPosition({ timeout: 5000, maximumAge: 60_000 })
+    return [pos.coords.longitude, pos.coords.latitude]
+  } catch {
+    return null
+  }
+}
 
 const destroyMap = () => {
   mapRef.value?.remove()
