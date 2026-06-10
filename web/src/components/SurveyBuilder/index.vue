@@ -203,6 +203,7 @@ const addSubField = async (parentFieldId: string, subField: SurveyField) => {
         : f
     ),
   }
+  await forceTabsHeightRecalc()
 }
 
 const editSubField = (
@@ -246,9 +247,10 @@ const removeSubField = async (parentFieldId: string, subFieldId: string) => {
         : f
     ),
   }
+  await forceTabsHeightRecalc()
 }
 
-const moveSubFieldUp = (parentFieldId: string, subFieldId: string) => {
+const moveSubFieldUp = async (parentFieldId: string, subFieldId: string) => {
   schema.value = {
     ...schema.value,
     fields: schema.value.fields.map((f) => {
@@ -263,9 +265,10 @@ const moveSubFieldUp = (parentFieldId: string, subFieldId: string) => {
       return { ...f, fields: subFields }
     }),
   }
+  await forceTabsHeightRecalc()
 }
 
-const moveSubFieldDown = (parentFieldId: string, subFieldId: string) => {
+const moveSubFieldDown = async (parentFieldId: string, subFieldId: string) => {
   schema.value = {
     ...schema.value,
     fields: schema.value.fields.map((f) => {

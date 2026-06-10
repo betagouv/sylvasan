@@ -117,58 +117,60 @@ const onKeydown = (e: KeyboardEvent) => {
 </script>
 
 <template>
-  <DsfrInputGroup :class="errorMessage ? 'fr-input-group--error' : ''">
-    <div ref="containerRef" class="relative">
-      <div class="flex items-end">
-        <div class="grow">
-          <DsfrInput
-            v-model="query"
-            :label="label"
-            :required="required ?? false"
-            :label-visible="true"
-            :hint="hint"
-            :disabled="disabled"
-            :placeholder="placeholder"
-            autocomplete="off"
-            @focus="onFocus"
-            @blur="onBlur"
-            @keydown="onKeydown"
-            @update:model-value="
-              () => {
-                isOpen = true
-                highlightedIndex = -1
-              }
-            "
-          />
+  <div>
+    <DsfrInputGroup :class="errorMessage ? 'fr-input-group--error' : ''">
+      <div ref="containerRef" class="relative">
+        <div class="flex items-end">
+          <div class="grow">
+            <DsfrInput
+              v-model="query"
+              :label="label"
+              :required="required ?? false"
+              :label-visible="true"
+              :hint="hint"
+              :disabled="disabled"
+              :placeholder="placeholder"
+              autocomplete="off"
+              @focus="onFocus"
+              @blur="onBlur"
+              @keydown="onKeydown"
+              @update:model-value="
+                () => {
+                  isOpen = true
+                  highlightedIndex = -1
+                }
+              "
+            />
+          </div>
+          <v-icon icon="ri-search-line" class="mb-3 mx-2" />
         </div>
-        <v-icon icon="ri-search-line" class="mb-3 mx-2" />
       </div>
-    </div>
-    <p v-if="errorMessage" class="fr-error-text">{{ errorMessage }}</p>
-  </DsfrInputGroup>
+      <p v-if="errorMessage" class="fr-error-text">{{ errorMessage }}</p>
+    </DsfrInputGroup>
 
-  <Teleport to="body">
-    <ul
-      v-if="isOpen && filtered.length"
-      ref="listRef"
-      :style="dropdownStyle"
-      class="fixed z-[9999] bg-white border border-slate-200 rounded shadow-md max-h-60 overflow-y-auto pl-0!"
-      role="listbox"
-    >
-      <li
-        v-for="(entry, i) in filtered"
-        :key="entry.code"
-        class="px-4 pt-4! pb-4! cursor-pointer fr-text--sm mb-0! list-none"
-        :class="i === highlightedIndex ? 'bg-blue-50' : 'hover:bg-slate-100'"
-        role="option"
-        :aria-selected="i === highlightedIndex"
-        @mousedown.prevent="select(entry)"
+    <Teleport to="body">
+      <ul
+        v-if="isOpen && filtered.length"
+        ref="listRef"
+        :style="dropdownStyle"
+        class="fixed z-[9999] bg-white border border-slate-200 rounded shadow-md max-h-60 overflow-y-auto pl-0!"
+        role="listbox"
       >
-        <span class="font-medium">{{ entry.label }}</span>
-        <span class="text-gray-400 ml-2 font-mono text-xs">{{
-          entry.code
-        }}</span>
-      </li>
-    </ul>
-  </Teleport>
+        <li
+          v-for="(entry, i) in filtered"
+          :key="entry.code"
+          class="px-4 pt-4! pb-4! cursor-pointer fr-text--sm mb-0! list-none"
+          :class="i === highlightedIndex ? 'bg-blue-50' : 'hover:bg-slate-100'"
+          role="option"
+          :aria-selected="i === highlightedIndex"
+          @mousedown.prevent="select(entry)"
+        >
+          <span class="font-medium">{{ entry.label }}</span>
+          <span class="text-gray-400 ml-2 font-mono text-xs">{{
+            entry.code
+          }}</span>
+        </li>
+      </ul>
+    </Teleport>
+  </div>
 </template>
