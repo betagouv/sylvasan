@@ -14,6 +14,7 @@ import { closeOutline } from "ionicons/icons"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
 import { loadAllMapRecords } from "../composables/offlineMapMetadata"
 import { Geolocation } from "@capacitor/geolocation"
+import { Capacitor } from "@capacitor/core"
 import {
   registerOfflineProtocol,
   deregisterOfflineProtocol,
@@ -62,7 +63,7 @@ onMounted(async () => {
 
 const getUserPosition = async (): Promise<[number, number] | null> => {
   try {
-    await Geolocation.requestPermissions()
+    if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
     const pos = await Geolocation.getCurrentPosition({ timeout: 5000, maximumAge: 60_000 })
     return [pos.coords.longitude, pos.coords.latitude]
   } catch {

@@ -11,6 +11,7 @@ import { IonPage, IonContent, IonSpinner, IonIcon } from "@ionic/vue"
 import { cloudOfflineOutline } from "ionicons/icons"
 import { Network } from "@capacitor/network"
 import { Geolocation } from "@capacitor/geolocation"
+import { Capacitor } from "@capacitor/core"
 import type { PluginListenerHandle } from "@capacitor/core"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
 import ignStyle from "../assets/ign-style.json"
@@ -28,15 +29,6 @@ let networkListener: PluginListenerHandle | null = null
 
 const { selectedPin } = useMapPins(mapRef)
 
-const getUserPosition = async (): Promise<[number, number] | null> => {
-  try {
-    await Geolocation.requestPermissions()
-    const pos = await Geolocation.getCurrentPosition({ timeout: 5000, maximumAge: 60_000 })
-    return [pos.coords.longitude, pos.coords.latitude]
-  } catch {
-    return null
-  }
-}
 
 const destroyMap = () => {
   mapRef.value?.remove()
@@ -66,15 +58,21 @@ const initMap = () => {
     "bottom-right"
   )
 
-  m.once("idle", () => {
+  const geolocate = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true, timeout: 5000 },
+    trackUserLocation: true,
+    showAccuracyCircle: true,
+    fitBoundsOptions: { maxZoom: 13 },
+  })
+  m.addControl(geolocate, "bottom-right")
+
+  m.once("idle", async () => {
     tilesLoaded.value = true
+    if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
+    geolocate.trigger()
   })
 
   mapRef.value = m
-
-  getUserPosition().then((pos) => {
-    if (pos && mapRef.value) mapRef.value.flyTo({ center: pos, zoom: 13 })
-  })
 }
 
 watch(isOnline, async (online, wasOnline) => {
