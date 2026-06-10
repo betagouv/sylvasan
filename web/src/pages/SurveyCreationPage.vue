@@ -26,6 +26,9 @@ const toast = useToastStore()
 
 const title = ref("")
 
+// TODO : Ces fonctions liées aux organisations, poles et rôles
+// pourraient être des composables
+
 const adminMemberships = computed(() =>
   store.loggedUser?.memberships.filter((x) => x.membershipType === "admin")
 )
@@ -120,11 +123,25 @@ const pole = computed(() =>
   selectedPoleOption.value !== "" ? Number(selectedPoleOption.value) : null
 )
 
-const validator = z.object({
-  title: z.string().min(1, "Le titre est obligatoire"),
-  fields: z.array(z.any()).min(1, "L'enquête doit contenir au moins un champ"),
-  organisation: z.coerce.number("L'organisation est obligatoire"),
-})
+const validator = z
+  .object({
+    title: z.string().min(1, "Le titre est obligatoire"),
+    fields: z
+      .array(z.any())
+      .min(1, "L'enquête doit contenir au moins un champ"),
+    organisation: z.coerce.number("L'organisation est obligatoire"),
+    pole: z.number().nullable(),
+    hasOrgLevelAdmin: z.boolean(),
+  })
+  .superRefine(({ pole, hasOrgLevelAdmin }, ctx) => {
+    if (!hasOrgLevelAdmin && pole === null) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Le pôle est obligatoire",
+        path: ["pole"],
+      })
+    }
+  })
 
 const formErrors = ref<{
   formErrors: string[]
@@ -171,6 +188,8 @@ const createSurvey = async () => {
       title: title.value,
       fields: schema.value.fields,
       organisation: organisation.value,
+      pole: pole.value,
+      hasOrgLevelAdmin: hasOrgLevelAdmin.value,
     })
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
@@ -228,6 +247,8 @@ const createSurvey = async () => {
         label="Pôle"
         :options="poleOptions"
         :required="!hasOrgLevelAdmin"
+        :error-message="formErrors?.fieldErrors?.pole?.[0]"
+        @update:modelValue="clearFieldError('pole')"
       />
     </div>
     <div class="my-6">
