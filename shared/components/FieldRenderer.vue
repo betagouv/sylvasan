@@ -210,6 +210,7 @@ const errorMessage = computed(() =>
       :field="field"
       v-model="arrayModelValue"
       :disabled="disabled"
+      :force-validate="forceValidate"
       :vocabularies="props.vocabularies"
     />
 

@@ -12,6 +12,7 @@ const createEmptyItem = () =>
 const props = defineProps<{
   field: SurveyField
   disabled?: boolean
+  forceValidate?: boolean
   vocabularies?: VocabularySet[]
 }>()
 
@@ -103,6 +104,7 @@ watch(
           :field="subField"
           :model-value="item[subField.id]"
           :disabled="disabled"
+          :force-validate="forceValidate"
           :vocabularies="props.vocabularies"
           @update:model-value="updateItem(index, subField.id, $event)"
         />
