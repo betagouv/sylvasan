@@ -29,6 +29,7 @@ import { storeToRefs } from "pinia"
 import { useVocabulariesStore } from "../stores/vocabularies"
 import { saveImagesToFilesystem } from "../utils/imageStorage"
 import { validateResponse } from "@shared-utils/validateField"
+import { evaluateCondition } from "@shared-utils/survey"
 
 const props = defineProps<{
   id?: number
@@ -55,7 +56,12 @@ watch(showSummary, (val, prev) => { if (!val && prev) forceValidate.value = true
 
 const summaryHasErrors = computed(() => {
   const fields = survey.value?.jsonSchema?.fields ?? []
-  return Object.keys(validateResponse(fields, summaryData.value)).length > 0
+  const visibleFieldIds = new Set(
+    fields
+      .filter((f) => !f.condition || evaluateCondition(f.condition, summaryData.value))
+      .map((f) => f.id)
+  )
+  return Object.keys(validateResponse(fields, summaryData.value, visibleFieldIds)).length > 0
 })
 
 const router = useIonRouter()
