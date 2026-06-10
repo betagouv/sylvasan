@@ -4,7 +4,7 @@ import type { ResponseFull, LocalResponse } from "@shared-types/response"
 import type { Survey, SurveyField, ImageItem } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
-import { resolveFieldValue } from "@shared-utils/survey"
+import { resolveFieldValue, evaluateCondition } from "@shared-utils/survey"
 import { validateResponse, validateField } from "@shared-utils/validateField"
 import { useVocabulariesStore } from "../stores/vocabularies"
 import ImageViewer from "@shared-components/ImageViewer.vue"
@@ -44,9 +44,17 @@ const imageSrc = (item: ImageItem): string | null => {
   return null
 }
 
+const visibleFields = computed(() =>
+  survey.jsonSchema.fields.filter(
+    (f) => !f.condition || evaluateCondition(f.condition, resolvedData.value)
+  )
+)
+
+const visibleFieldIds = computed(() => new Set(visibleFields.value.map((f) => f.id)))
+
 // On montre la validation seulement lors que la réponse n'est pas sauvegardé dans le backend
 const validationErrors = computed(() =>
-  response ? {} : validateResponse(survey.jsonSchema.fields, resolvedData.value)
+  response ? {} : validateResponse(survey.jsonSchema.fields, resolvedData.value, visibleFieldIds.value)
 )
 
 const getSubFieldError = (
@@ -84,7 +92,7 @@ const openViewer = (images: ImageItem[], index: number) => {
     </div>
 
     <div class="p-4">
-      <div v-for="field in survey.jsonSchema.fields" :key="field.id">
+      <div v-for="field in visibleFields" :key="field.id">
         <p class="fr-text--sm font-bold text-stone-500 mb-0!">
           {{ field.label }}
         </p>
