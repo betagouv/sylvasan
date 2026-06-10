@@ -42,6 +42,7 @@ const { field, fieldIds, allFieldIds } = defineProps<{
 const emit = defineEmits([
   "delete",
   "edit",
+  "editSubField",
   "moveUp",
   "moveDown",
   "addSubField",
@@ -292,6 +293,7 @@ const formatDate = (isoString: string): string => {
                 @delete="emit('removeSubField', subField.id)"
                 @move-up="emit('moveSubFieldUp', subField.id)"
                 @move-down="emit('moveSubFieldDown', subField.id)"
+                @edit="(updatedSf) => emit('editSubField', updatedSf, subField)"
               />
             </div>
 

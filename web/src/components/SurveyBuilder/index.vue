@@ -205,6 +205,35 @@ const addSubField = async (parentFieldId: string, subField: SurveyField) => {
   }
 }
 
+const editSubField = (
+  parentFieldId: string,
+  updatedSubField: SurveyField,
+  oldSubField: SurveyField
+) => {
+  const idChanged = updatedSubField.id !== oldSubField.id
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((f) => {
+      if (f.id !== parentFieldId) return f
+      return {
+        ...f,
+        fields: (f.fields ?? []).map((sf) => {
+          if (sf.id === oldSubField.id) return updatedSubField
+          if (!idChanged) return sf
+          return {
+            ...sf,
+            condition: renameConditionField(
+              sf.condition,
+              oldSubField.id,
+              updatedSubField.id
+            ),
+          }
+        }),
+      }
+    }),
+  }
+}
+
 const removeSubField = async (parentFieldId: string, subFieldId: string) => {
   schema.value = {
     ...schema.value,
@@ -310,7 +339,7 @@ const updatePageTitle = (title: any, index: number) => {
 
 <template>
   <div class="grid grid-cols-12 gap-4" ref="tabsRef">
-    <div class="col-span-12 md:col-span-7 lg:col-span-8">
+    <div class="col-span-12 md:col-span-9">
       <DsfrTabs
         v-model="activeTab"
         tab-list-name="Pages de l'enquête"
@@ -372,6 +401,9 @@ const updatePageTitle = (title: any, index: number) => {
                 @move-down="moveFieldDown(field.id)"
                 @delete="removeField(field.id)"
                 @edit="(f) => editField(f, field)"
+                @edit-sub-field="
+                  (updatedSf, oldSf) => editSubField(field.id, updatedSf, oldSf)
+                "
                 @add-sub-field="(subField) => addSubField(field.id, subField)"
                 @remove-sub-field="
                   (subFieldId) => removeSubField(field.id, subFieldId)
@@ -407,9 +439,7 @@ const updatePageTitle = (title: any, index: number) => {
     </div>
 
     <!-- Aperçu -->
-    <div
-      class="hidden md:block col-span-12 sm:col-span-6 md:col-span-5 lg:col-span-4"
-    >
+    <div class="hidden md:block md:col-span-3">
       <div
         v-if="activePageFields.length"
         class="border rounded border-slate-300 p-4"
