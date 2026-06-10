@@ -203,6 +203,7 @@ const addSubField = async (parentFieldId: string, subField: SurveyField) => {
         : f
     ),
   }
+  await forceTabsHeightRecalc()
 }
 
 const editSubField = (
