@@ -55,7 +55,6 @@ const confirmDeleteOpened = ref(false)
 const editModalOpened = ref(false)
 const subFieldModalOpened = ref(false)
 
-
 const handleAddSubField = (subField: SurveyField) => {
   emit("addSubField", subField)
   subFieldModalOpened.value = false
@@ -67,6 +66,11 @@ const formatDate = (isoString: string): string => {
     month: "long",
     year: "numeric",
   })
+}
+
+const confirmFieldDeletion = () => {
+  emit("delete")
+  confirmDeleteOpened.value = false
 }
 </script>
 
@@ -336,7 +340,7 @@ const formatDate = (isoString: string): string => {
     <ConfirmDeleteModal
       :opened="confirmDeleteOpened"
       title="Supprimer le champ ?"
-      @confirm="emit('delete'); confirmDeleteOpened = false"
+      @confirm="confirmFieldDeletion"
       @close="confirmDeleteOpened = false"
     >
       <p>

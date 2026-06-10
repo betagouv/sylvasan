@@ -346,8 +346,8 @@ const updatePageTitle = (title: any, index: number) => {
   }
 }
 
-const confirmPageDeletion = () => {
-  deletePage(confirmDeletePageId.value!)
+const confirmPageDeletion = async () => {
+  await deletePage(confirmDeletePageId.value!)
   confirmDeletePageId.value = null
 }
 </script>
