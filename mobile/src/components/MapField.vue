@@ -69,12 +69,10 @@ const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
     fitBoundsOptions: { maxZoom: 17 },
   })
   m.addControl(geolocate, "bottom-right")
-  if (autoTrigger) {
-    m.once("load", async () => {
-      if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
-      geolocate.trigger()
-    })
-  }
+  m.once("load", async () => {
+    if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
+    if (autoTrigger) geolocate.trigger()
+  })
 }
 
 // Cycle de vie de la carte
