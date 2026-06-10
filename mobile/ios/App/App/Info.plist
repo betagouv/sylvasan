@@ -47,6 +47,10 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SylvaSan utilise votre position pour centrer la carte sur votre emplacement.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>SylvaSan utilise votre position pour centrer la carte sur votre emplacement.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
