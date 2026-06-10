@@ -131,10 +131,9 @@ const validator = z
       .min(1, "L'enquête doit contenir au moins un champ"),
     organisation: z.coerce.number("L'organisation est obligatoire"),
     pole: z.number().nullable(),
-    hasOrgLevelAdmin: z.boolean(),
   })
-  .superRefine(({ pole, hasOrgLevelAdmin }, ctx) => {
-    if (!hasOrgLevelAdmin && pole === null) {
+  .superRefine(({ pole }, ctx) => {
+    if (!hasOrgLevelAdmin.value && pole === null) {
       ctx.addIssue({
         code: "custom",
         message: "Le pôle est obligatoire",
@@ -189,7 +188,6 @@ const createSurvey = async () => {
       fields: schema.value.fields,
       organisation: organisation.value,
       pole: pole.value,
-      hasOrgLevelAdmin: hasOrgLevelAdmin.value,
     })
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
