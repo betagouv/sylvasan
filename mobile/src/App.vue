@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted } from "vue"
 import { IonApp, IonRouterOutlet, loadingController } from "@ionic/vue"
 import { App } from "@capacitor/app"
+import { Browser } from "@capacitor/browser"
 import type { PluginListenerHandle } from "@capacitor/core"
 import { useRouter } from "vue-router"
 import ToastContainer from "./components/ToastContainer.vue"
@@ -28,6 +29,7 @@ const handleOAuthCallback = async (url: string) => {
     toast.show(`Échec de la connexion DSF : ${message}`, "error", 8000)
     router.replace({ name: "LoginPage" })
   } finally {
+    oauthHandled = false
     await loading.dismiss()
   }
 }
@@ -35,6 +37,7 @@ const handleOAuthCallback = async (url: string) => {
 onMounted(async () => {
   urlOpenListener = await App.addListener("appUrlOpen", async ({ url }) => {
     if (!url.startsWith("sylvasan://oauth/callback")) return
+    await Browser.close()
     await handleOAuthCallback(url)
   })
 
