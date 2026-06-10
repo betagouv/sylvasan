@@ -14,11 +14,12 @@ const { choice } = defineProps(["choice"])
       </p>
     </div>
     <DsfrButton
+      type="button"
       tertiary
       size="sm"
       icon-only
       icon="ri-delete-bin-line"
-      @click="() => emit('delete', choice)"
+      @click.stop.prevent="() => emit('delete', choice)"
     />
   </div>
 </template>

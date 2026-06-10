@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue"
-import type { SurveyField, FieldWidget, FieldType, VocabularyEntry } from "@shared-types/survey"
+import type {
+  SurveyField,
+  FieldWidget,
+  FieldType,
+  VocabularyEntry,
+} from "@shared-types/survey"
 import AutocompleteField from "@shared-components/AutocompleteField.vue"
 import ConditionModalSegment from "./ConditionModalSegment.vue"
 import * as z from "zod"
@@ -68,12 +73,13 @@ const useVocabularyAutocomplete = computed(
   () => (vocabularySelectOptions.value?.length ?? 0) > 20
 )
 
-const vocabularyAutocompleteEntries = computed((): VocabularyEntry[] =>
-  rootStore.vocabularies?.map((v) => ({
-    code: v.code,
-    label: `${v.code} — ${v.name}`,
-    position: null,
-  })) ?? []
+const vocabularyAutocompleteEntries = computed(
+  (): VocabularyEntry[] =>
+    rootStore.vocabularies?.map((v) => ({
+      code: v.code,
+      label: `${v.code} — ${v.name}`,
+      position: null,
+    })) ?? []
 )
 
 const vocabularyCodeModel = computed({
@@ -566,20 +572,13 @@ const close = () => {
       </div>
       <template v-else>
         <div v-if="payload.ui.choices" class="grid grid-cols grid-cols-3 gap-4">
-          <div
+          <ChoiceCard
             v-for="choice in payload.ui.choices"
             :key="`choice-${choice.value}`"
             class="col-span-1 p-2 border border-slate-300 flex items-center gap-4"
-          >
-            <DsfrButton
-              tertiary
-              size="sm"
-              icon-only
-              icon="ri-delete-bin-line"
-              @click="() => removeOption(choice)"
-            />
-            <p class="mb-0!">{{ choice.label }} ({{ choice.value }})</p>
-          </div>
+            :choice="choice"
+            @delete="removeOption(choice)"
+          />
         </div>
         <RadioOption class="mt-4" @add="addOption" />
       </template>
