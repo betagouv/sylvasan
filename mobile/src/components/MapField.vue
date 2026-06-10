@@ -13,6 +13,8 @@ import {
 import { closeOutline } from "ionicons/icons"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
 import { loadAllMapRecords } from "../composables/offlineMapMetadata"
+import { Geolocation } from "@capacitor/geolocation"
+import { Capacitor } from "@capacitor/core"
 import {
   registerOfflineProtocol,
   deregisterOfflineProtocol,
@@ -59,15 +61,19 @@ onMounted(async () => {
   }
 })
 
-const getUserPosition = (): Promise<[number, number] | null> =>
-  new Promise((resolve) => {
-    if (!("geolocation" in navigator)) return resolve(null)
-    navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve([coords.longitude, coords.latitude]),
-      () => resolve(null),
-      { timeout: 5000, maximumAge: 60_000 }
-    )
+const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
+  const geolocate = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true, timeout: 5000 },
+    trackUserLocation: true,
+    showAccuracyCircle: true,
+    fitBoundsOptions: { maxZoom: 17 },
   })
+  m.addControl(geolocate, "bottom-right")
+  m.once("load", async () => {
+    if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
+    if (autoTrigger) geolocate.trigger()
+  })
+}
 
 // Cycle de vie de la carte
 
@@ -105,12 +111,7 @@ const initOnlineMap = (container: HTMLDivElement) => {
     "bottom-right"
   )
 
-  if (!modelValue.value) {
-    getUserPosition().then((pos) => {
-      if (pos && map) map.flyTo({ center: pos, zoom: 17 })
-    })
-  }
-
+  addGeolocateControl(map, !modelValue.value)
   mapInitialized.value = true
 }
 
@@ -166,6 +167,7 @@ const initOfflineMap = (container: HTMLDivElement) => {
     "bottom-right"
   )
 
+  addGeolocateControl(map, false)
   mapInitialized.value = true
 }
 
