@@ -61,13 +61,19 @@ onMounted(async () => {
   }
 })
 
-const getUserPosition = async (): Promise<[number, number] | null> => {
-  try {
-    if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
-    const pos = await Geolocation.getCurrentPosition({ timeout: 5000, maximumAge: 60_000 })
-    return [pos.coords.longitude, pos.coords.latitude]
-  } catch {
-    return null
+const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
+  const geolocate = new maplibregl.GeolocateControl({
+    positionOptions: { enableHighAccuracy: true, timeout: 5000 },
+    trackUserLocation: true,
+    showAccuracyCircle: true,
+    fitBoundsOptions: { maxZoom: 17 },
+  })
+  m.addControl(geolocate, "bottom-right")
+  if (autoTrigger) {
+    m.once("load", async () => {
+      if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
+      geolocate.trigger()
+    })
   }
 }
 
@@ -107,12 +113,7 @@ const initOnlineMap = (container: HTMLDivElement) => {
     "bottom-right"
   )
 
-  if (!modelValue.value) {
-    getUserPosition().then((pos) => {
-      if (pos && map) map.flyTo({ center: pos, zoom: 17 })
-    })
-  }
-
+  addGeolocateControl(map, !modelValue.value)
   mapInitialized.value = true
 }
 
@@ -168,6 +169,7 @@ const initOfflineMap = (container: HTMLDivElement) => {
     "bottom-right"
   )
 
+  addGeolocateControl(map, false)
   mapInitialized.value = true
 }
 
