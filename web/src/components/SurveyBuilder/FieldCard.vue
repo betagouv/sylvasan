@@ -6,10 +6,10 @@ export default { name: "FieldCard" }
 
 <script setup lang="ts">
 import { computed, ref, watchEffect } from "vue"
-import type { DsfrButtonProps } from "@gouvminint/vue-dsfr"
 import type { SurveyField } from "@shared-types/survey"
 import { typeWidgetMapping } from "./mappings"
 import type { WidgetData } from "./mappings"
+import ConfirmDeleteModal from "./ConfirmDeleteModal.vue"
 import NewFieldModal from "./NewFieldModal.vue"
 import { useRootStore } from "../../stores/root"
 import VocabularyModal from "./VocabularyModal.vue"
@@ -55,22 +55,6 @@ const confirmDeleteOpened = ref(false)
 const editModalOpened = ref(false)
 const subFieldModalOpened = ref(false)
 
-const confirmDeleteActions: DsfrButtonProps[] = [
-  {
-    label: "Supprimer",
-    onClick() {
-      emit("delete")
-      confirmDeleteOpened.value = false
-    },
-  },
-  {
-    label: "Annuler",
-    secondary: true,
-    onClick() {
-      confirmDeleteOpened.value = false
-    },
-  },
-]
 
 const handleAddSubField = (subField: SurveyField) => {
   emit("addSubField", subField)
@@ -349,18 +333,17 @@ const formatDate = (isoString: string): string => {
       @close="editModalOpened = false"
     />
 
-    <DsfrModal
+    <ConfirmDeleteModal
       :opened="confirmDeleteOpened"
       title="Supprimer le champ ?"
-      :is-alert="true"
-      :actions="confirmDeleteActions"
+      @confirm="emit('delete'); confirmDeleteOpened = false"
       @close="confirmDeleteOpened = false"
     >
       <p>
         Êtes-vous sûr de vouloir supprimer le champ «
         <strong>{{ field.label }}</strong> » ?
       </p>
-    </DsfrModal>
+    </ConfirmDeleteModal>
   </div>
 </template>
 

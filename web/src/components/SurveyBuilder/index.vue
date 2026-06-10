@@ -7,6 +7,7 @@ import type {
   Condition,
 } from "@shared-types/survey"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
+import ConfirmDeleteModal from "./ConfirmDeleteModal.vue"
 import NewFieldModal from "./NewFieldModal.vue"
 import FieldCard from "./FieldCard.vue"
 import { DsfrInput } from "@gouvminint/vue-dsfr"
@@ -324,6 +325,12 @@ const moveFieldDown = (fieldId: string) => {
 
 const closeModal = () => (modalOpened.value = false)
 
+const confirmDeletePageId = ref<string | null>(null)
+const confirmDeletePage = computed(
+  () =>
+    schema.value.pages?.find((p) => p.id === confirmDeletePageId.value) ?? null
+)
+
 // Ceci sert à re-render le composant DsfrTabs pour éviter des bugs liés à
 // l'ajout et suppression programmatique des tabs
 const tabsKey = computed(() =>
@@ -337,6 +344,11 @@ const updatePageTitle = (title: any, index: number) => {
       idx === index ? { ...page, title } : page
     ),
   }
+}
+
+const confirmPageDeletion = () => {
+  deletePage(confirmDeletePageId.value!)
+  confirmDeletePageId.value = null
 }
 </script>
 
@@ -362,7 +374,9 @@ const updatePageTitle = (title: any, index: number) => {
                 v-if="tabTitles.length > 1"
                 class="text-xs text-gray-400 hover:text-red-500 leading-none"
                 title="Supprimer cette page"
-                @click.stop="deletePage(schema.pages?.[index]?.id ?? '')"
+                @click.stop="
+                  confirmDeletePageId = schema.pages?.[index]?.id ?? null
+                "
               >
                 ✕
               </button>
@@ -458,6 +472,17 @@ const updatePageTitle = (title: any, index: number) => {
         />
       </div>
     </div>
+    <ConfirmDeleteModal
+      :opened="!!confirmDeletePageId"
+      title="Supprimer la page ?"
+      @confirm="confirmPageDeletion"
+      @close="confirmDeletePageId = null"
+    >
+      <p>
+        Êtes-vous sûr de vouloir supprimer la page «
+        <strong>{{ confirmDeletePage?.title }}</strong> » et tous ses champs ?
+      </p>
+    </ConfirmDeleteModal>
   </div>
 </template>
 
