@@ -149,6 +149,9 @@ class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
 
     ordering_fields = ["creation_date", "id"]
 
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("images")
+
     def get_filtered_queryset(self):
         queryset = self.get_queryset()
         return self.filter_queryset(queryset)
