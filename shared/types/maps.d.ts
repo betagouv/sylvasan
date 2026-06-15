@@ -20,7 +20,6 @@ export interface DownloadProgress {
   total: number
   failed: number
   bytesStored: number
-  etaSeconds: number
   percent: number
 }
 

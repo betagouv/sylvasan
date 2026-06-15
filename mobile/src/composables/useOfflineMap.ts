@@ -184,7 +184,6 @@ export const useOfflineMap = () => {
     total: 0,
     failed: 0,
     bytesStored: 0,
-    etaSeconds: 0,
     percent: 0,
   })
   const errorMessage = ref<string | null>(null)
@@ -223,13 +222,11 @@ export const useOfflineMap = () => {
       total: allTiles.length,
       failed: 0,
       bytesStored: 0,
-      etaSeconds: 0,
       percent: Math.round(
         ((allTiles.length - pendingTiles.length) / allTiles.length) * 100
       ),
     }
 
-    const startTime = Date.now()
     let completedSinceStart = 0
 
     // On ne traite qu'un numéro limité de tuiles
@@ -251,11 +248,6 @@ export const useOfflineMap = () => {
           progress.value.downloaded++
           progress.value.bytesStored += buffer.byteLength
 
-          const elapsed = (Date.now() - startTime) / 1000
-          const rate = completedSinceStart / elapsed
-          const remaining = pendingTiles.length - completedSinceStart
-          progress.value.etaSeconds =
-            rate > 0 ? Math.round(remaining / rate) : 0
           progress.value.percent = Math.round(
             (progress.value.downloaded / progress.value.total) * 100
           )
@@ -305,7 +297,6 @@ export const useOfflineMap = () => {
       total: 0,
       failed: 0,
       bytesStored: 0,
-      etaSeconds: 0,
       percent: 0,
     }
   }

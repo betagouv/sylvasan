@@ -30,14 +30,6 @@ const estimate = computed(() =>
 )
 const estimateMb = computed(() => (estimate.value.bytes / 1_000_000).toFixed(1))
 
-const etaLabel = computed(() => {
-  const s = progress.value.etaSeconds
-  if (s <= 0) return "…"
-  const m = Math.floor(s / 60)
-  const sec = s % 60
-  return m > 0 ? `${m}min ${sec}s` : `${sec}s`
-})
-
 const mbDownloaded = computed(() =>
   (progress.value.bytesStored / 1_000_000).toFixed(1)
 )
@@ -122,7 +114,6 @@ async function confirmSave() {
         <span class="text-3xl font-bold leading-none" style="color: #000091">
           {{ progress.percent }}&thinsp;%
         </span>
-        <span class="text-sm text-stone-500">ETA&nbsp;: {{ etaLabel }}</span>
       </div>
 
       <ion-progress-bar
@@ -134,9 +125,6 @@ async function confirmSave() {
       <div class="flex flex-col gap-1 text-sm">
         <span>{{ progress.downloaded }} / {{ progress.total }} tuiles</span>
         <span>{{ mbDownloaded }} Mo téléchargés</span>
-        <span v-if="progress.failed > 0" class="failed">
-          ⚠ {{ progress.failed }} erreurs (nouvelle tentative automatique)
-        </span>
       </div>
 
       <DsfrButton
@@ -230,9 +218,5 @@ async function confirmSave() {
   height: 6px;
   border-radius: 3px;
   margin-bottom: 0.75rem;
-}
-
-.failed {
-  color: var(--warning-425-625, #b34000);
 }
 </style>

@@ -6,9 +6,12 @@ import {
   IonHeader,
   IonToolbar,
   IonButtons,
+  IonButton,
+  IonIcon,
   IonMenuButton,
   IonTitle,
 } from "@ionic/vue"
+import { closeOutline } from "ionicons/icons"
 import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import MapDownloader from "../components/MapDownloader.vue"
@@ -105,6 +108,11 @@ onBeforeUnmount(() => {
         <ion-title>Téléchargez une zone</ion-title>
         <ion-buttons slot="start">
           <ion-menu-button />
+        </ion-buttons>
+        <ion-buttons slot="end">
+          <ion-button @click="router.back()">
+            <ion-icon slot="icon-only" :icon="closeOutline" />
+          </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
