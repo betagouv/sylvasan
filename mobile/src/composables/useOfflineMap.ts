@@ -227,7 +227,6 @@ export const useOfflineMap = () => {
       ),
     }
 
-    const startTime = Date.now()
     let completedSinceStart = 0
 
     // On ne traite qu'un numéro limité de tuiles
