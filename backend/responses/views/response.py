@@ -35,8 +35,7 @@ class ResponsePagination(LimitOffsetPagination):
     surveys = []
 
     def paginate_queryset(self, queryset, request, view=None):
-        original_queryset = view.get_queryset()
-        survey_ids = original_queryset.values_list("survey", flat=True).distinct().order_by()
+        survey_ids = queryset.values_list("survey_id", flat=True).distinct().order_by()
         self.surveys = Survey.objects.filter(id__in=survey_ids)
         return super().paginate_queryset(queryset, request, view)
 
@@ -65,21 +64,23 @@ class ResponseFilterSet(django_filters.FilterSet):
 class ResponseQuerySetMixin:
     def get_queryset(self):
         user = self.request.user
-        memberships = Membership.objects.filter(user=user)
+        memberships = list(Membership.objects.filter(user=user))
 
-        if not memberships.exists():
+        if not memberships:
             return Response.objects.none()
 
         query = Q()
         for membership in memberships:
             if membership.membership_type == MembershipType.RESPONDER:
                 query |= Q(respondant=user)
-            elif membership.pole is not None:
-                query |= Q(survey__pole=membership.pole)
+            elif membership.pole_id is not None:
+                query |= Q(survey__pole_id=membership.pole_id)
             else:
-                query |= Q(survey__organisation=membership.organisation)
+                query |= Q(survey__organisation_id=membership.organisation_id)
 
-        return Response.objects.filter(query).distinct().select_related("survey").prefetch_related("images")
+        return (
+            Response.objects.filter(query).distinct().select_related("survey", "survey__organisation", "survey__pole")
+        )
 
 
 class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
@@ -109,6 +110,9 @@ class ResponseRetrieveAPIView(ResponseQuerySetMixin, RetrieveAPIView):
     serializer_class = FullResponseSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("images")
+
 
 class ResponseFullListAPIView(ListAPIView):
     """
@@ -126,7 +130,11 @@ class ResponseFullListAPIView(ListAPIView):
         ).exists()
         if not has_responder_membership:
             return Response.objects.none()
-        return Response.objects.filter(respondant=user).select_related("survey").prefetch_related("images")
+        return (
+            Response.objects.filter(respondant=user)
+            .select_related("survey", "survey__organisation", "survey__pole")
+            .prefetch_related("images")
+        )
 
 
 class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
@@ -140,6 +148,9 @@ class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
     pagination_class = None
 
     ordering_fields = ["creation_date", "id"]
+
+    def get_queryset(self):
+        return super().get_queryset().prefetch_related("images")
 
     def get_filtered_queryset(self):
         queryset = self.get_queryset()
