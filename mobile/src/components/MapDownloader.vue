@@ -125,9 +125,6 @@ async function confirmSave() {
       <div class="flex flex-col gap-1 text-sm">
         <span>{{ progress.downloaded }} / {{ progress.total }} tuiles</span>
         <span>{{ mbDownloaded }} Mo téléchargés</span>
-        <span v-if="progress.failed > 0" class="failed">
-          ⚠ {{ progress.failed }} erreurs (nouvelle tentative automatique)
-        </span>
       </div>
 
       <DsfrButton
@@ -221,9 +218,5 @@ async function confirmSave() {
   height: 6px;
   border-radius: 3px;
   margin-bottom: 0.75rem;
-}
-
-.failed {
-  color: var(--warning-425-625, #b34000);
 }
 </style>
