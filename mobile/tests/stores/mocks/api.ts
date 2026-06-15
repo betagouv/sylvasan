@@ -38,6 +38,8 @@ export const setupApiMocks = ({
   surveysData = [],
   responsesOk = true,
   responsesData = [],
+  vocabulariesOk = true,
+  vocabulariesData = [],
 } = {}) => {
   ;(useApiFetch as ReturnType<typeof vi.fn>).mockImplementation(
     (url: string) => {
@@ -48,6 +50,8 @@ export const setupApiMocks = ({
       if (url === "/mobile/surveys/") return makeGetMock(surveyOk, surveysData)
       if (url === "/mobile/responses/")
         return makeGetMock(responsesOk, responsesData)
+      if (url === "/mobile/vocabularies/")
+        return makeGetMock(vocabulariesOk, vocabulariesData)
       throw new Error(`Unexpected useApiFetch call with URL: ${url}`)
     }
   )
