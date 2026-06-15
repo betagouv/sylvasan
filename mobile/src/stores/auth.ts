@@ -5,6 +5,7 @@ import { useApiFetch } from "../utils/data-fetching"
 import type { LoggedUser } from "@shared-types/api"
 import { useSurveysStore } from "./surveys"
 import { useResponsesStore } from "./responses"
+import { useVocabulariesStore } from "./vocabularies"
 
 const ACCESS_KEY = "auth_access"
 const REFRESH_KEY = "auth_refresh"
@@ -90,7 +91,12 @@ export const useAuthStore = defineStore("auth", {
 
       const surveyStore = useSurveysStore()
       const responsesStore = useResponsesStore()
-      await Promise.all([surveyStore.sync(), responsesStore.sync()])
+      const vocabulariesStore = useVocabulariesStore()
+      await Promise.all([
+        surveyStore.sync(),
+        responsesStore.sync(),
+        vocabulariesStore.sync(),
+      ])
     },
 
     async refreshToken() {
