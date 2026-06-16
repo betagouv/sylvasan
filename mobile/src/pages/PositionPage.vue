@@ -59,7 +59,8 @@ const initMap = () => {
 
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true, timeout: 5000 },
-    trackUserLocation: true,
+    trackUserLocation: false,
+    showUserLocation: true,
     showAccuracyCircle: true,
     fitBoundsOptions: { maxZoom: 13 },
   })

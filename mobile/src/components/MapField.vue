@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount } from "vue"
+import { useDebounceFn } from "@vueuse/core"
 import {
   IonModal,
   IonHeader,
@@ -46,6 +47,10 @@ const selectedMapId = ref("")
 const mapError = ref<string | null>(null)
 const mapInitialized = ref(false)
 const tilesLoaded = ref(false)
+const pickedPosition = ref<{ lat: number; lon: number } | null>(null)
+const latInput = ref("")
+const lonInput = ref("")
+let marker: maplibregl.Marker | null = null
 
 const modeOptions = [
   { label: "Carte en ligne", value: "online", icon: "ri-global-fill" },
@@ -66,7 +71,8 @@ onMounted(async () => {
 const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true, timeout: 5000 },
-    trackUserLocation: true,
+    trackUserLocation: false,
+    showUserLocation: true,
     showAccuracyCircle: true,
     fitBoundsOptions: { maxZoom: 17 },
   })
@@ -80,10 +86,66 @@ const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
 // Cycle de vie de la carte
 
 const destroyMap = () => {
+  marker?.remove()
+  marker = null
   map?.remove()
   map = null
   mapInitialized.value = false
   tilesLoaded.value = false
+  pickedPosition.value = null
+  latInput.value = ""
+  lonInput.value = ""
+}
+
+const updateMarker = (lng: number, lat: number) => {
+  if (!map) return
+  pickedPosition.value = {
+    lat: Math.round(lat * 1_000_000) / 1_000_000,
+    lon: Math.round(lng * 1_000_000) / 1_000_000,
+  }
+  if (marker) {
+    marker.setLngLat([lng, lat])
+  } else {
+    marker = new maplibregl.Marker({ color: "#000091" })
+      .setLngLat([lng, lat])
+      .addTo(map)
+  }
+}
+
+// Appelé depuis un clic sur la carte — met aussi à jour les inputs
+const placeMarker = (lng: number, lat: number) => {
+  updateMarker(lng, lat)
+  latInput.value = String(pickedPosition.value!.lat)
+  lonInput.value = String(pickedPosition.value!.lon)
+}
+
+// Appelé depuis les inputs — déplace le marqueur sans écraser ce que l'utilisateur tape
+const onCoordinatesInput = useDebounceFn(() => {
+  const lat = parseFloat(latInput.value)
+  const lon = parseFloat(lonInput.value)
+  if (
+    isNaN(lat) ||
+    isNaN(lon) ||
+    lat < -90 ||
+    lat > 90 ||
+    lon < -180 ||
+    lon > 180
+  )
+    return
+  updateMarker(lon, lat)
+  if (map) map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
+}, 500)
+
+const setupMapInteractions = (m: maplibregl.Map) => {
+  m.on("click", (e) => {
+    placeMarker(e.lngLat.lng, e.lngLat.lat)
+  })
+  m.once("idle", () => {
+    tilesLoaded.value = true
+    if (modelValue.value) {
+      placeMarker(modelValue.value.lon, modelValue.value.lat)
+    }
+  })
 }
 
 // Long / Lat et non pas Lat / Lon (https://maplibre.org/maplibre-gl-js/docs/API/classes/LngLat/)
@@ -115,9 +177,7 @@ const initOnlineMap = (container: HTMLDivElement) => {
   )
 
   addGeolocateControl(map, !modelValue.value)
-  map.once("idle", () => {
-    tilesLoaded.value = true
-  })
+  setupMapInteractions(map)
   mapInitialized.value = true
 }
 
@@ -174,9 +234,7 @@ const initOfflineMap = (container: HTMLDivElement) => {
   )
 
   addGeolocateControl(map, false)
-  map.once("idle", () => {
-    tilesLoaded.value = true
-  })
+  setupMapInteractions(map)
   mapInitialized.value = true
 }
 
@@ -210,12 +268,8 @@ const onModalDismiss = () => {
 }
 
 const confirm = () => {
-  if (!map) return
-  const { lat, lng } = map.getCenter()
-  modelValue.value = {
-    lat: Math.round(lat * 1_000_000) / 1_000_000,
-    lon: Math.round(lng * 1_000_000) / 1_000_000,
-  }
+  if (!pickedPosition.value) return
+  modelValue.value = pickedPosition.value
   opened.value = false
 }
 
@@ -319,7 +373,6 @@ onBeforeUnmount(() => {
             <DsfrAlert type="error" :title="mapError" />
           </div>
 
-          <!-- La carte + crosshair -->
           <div class="relative flex-1">
             <div ref="mapContainer" class="w-full h-full bg-gray-100" />
 
@@ -336,43 +389,51 @@ onBeforeUnmount(() => {
             </Transition>
 
             <div
-              v-if="tilesLoaded"
-              class="pointer-events-none absolute inset-0 flex items-center justify-center z-10"
-            >
-              <div class="relative w-10 h-10">
-                <div
-                  class="absolute top-1/2 left-0 w-full h-px bg-orange-600 shadow"
-                />
-                <div
-                  class="absolute left-1/2 top-0 h-full w-px bg-orange-600 shadow"
-                />
-                <div
-                  class="absolute top-1/2 left-1/2 w-2 h-2 rounded-full border-2 border-orange-600 bg-white"
-                  style="transform: translate(-50%, -50%)"
-                />
-              </div>
-            </div>
-
-            <div
               class="pointer-events-none absolute bottom-14 left-0 right-0 flex justify-center z-10"
               v-if="tilesLoaded"
             >
               <span
                 class="bg-black/50 text-white text-xs px-3 py-1.5 rounded-full"
               >
-                Déplacez la carte pour centrer la croix sur le point souhaité
+                {{
+                  pickedPosition
+                    ? "Appuyez sur la carte pour déplacer le marqueur"
+                    : "Appuyez sur la carte pour choisir une position"
+                }}
               </span>
             </div>
           </div>
 
           <!-- Footer -->
-          <div class="p-3 border-t border-gray-200 flex justify-end">
-            <DsfrButton
-              label="Confirmer la position"
-              icon="ri-check-line"
-              :disabled="!mapInitialized || !!mapError"
-              @click="confirm"
-            />
+          <div class="pt-0 pb-3 border-t border-gray-200">
+            <div class="flex gap-2 lat-lon">
+              <DsfrInputGroup>
+                <DsfrInput
+                  label="Latitude"
+                  placeholder="Latitude"
+                  inputmode="decimal"
+                  v-model="latInput"
+                  @update:model-value="onCoordinatesInput"
+                />
+              </DsfrInputGroup>
+              <DsfrInputGroup>
+                <DsfrInput
+                  label="Longitude"
+                  placeholder="Longitude"
+                  inputmode="decimal"
+                  v-model="lonInput"
+                  @update:model-value="onCoordinatesInput"
+                />
+              </DsfrInputGroup>
+            </div>
+            <div class="flex justify-end">
+              <DsfrButton
+                label="Confirmer la position"
+                icon="ri-check-line"
+                :disabled="!pickedPosition || !!mapError"
+                @click="confirm"
+              />
+            </div>
           </div>
         </div>
       </IonContent>
@@ -386,5 +447,8 @@ onBeforeUnmount(() => {
 }
 .fade-leave-to {
   opacity: 0;
+}
+.lat-lon :deep(.fr-input-group) {
+  box-sizing: border-box;
 }
 </style>
