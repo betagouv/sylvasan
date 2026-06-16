@@ -11,10 +11,13 @@
 <script setup lang="ts">
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../utils/data-fetching"
+import ProgressSpinner from "../components/ProgressSpinner.vue"
 
 const route = useRoute()
 
-const { data: survey } = useApiFetch(`/surveys/${route.params.id}`).json()
+const { data: survey, isFetching } = useApiFetch(
+  `/surveys/${route.params.id}`
+).json()
 </script>
 
 <template>
@@ -26,7 +29,10 @@ const { data: survey } = useApiFetch(`/surveys/${route.params.id}`).json()
         { text: `Enquête ${route.params.id}` },
       ]"
     />
-    <div v-if="survey" class="mb-4">
+    <div v-if="isFetching" class="flex justify-center my-20">
+      <ProgressSpinner />
+    </div>
+    <div v-else-if="survey" class="mb-4">
       <h1 class="fr-h4">Enquête « {{ survey.title }} »</h1>
       <div class="mb-4">
         <p class="fr-badge">
