@@ -115,16 +115,6 @@ ion-content::part(scroll) {
   padding: 0;
 }
 
-.tiles-loading-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.6);
-  z-index: 10;
-}
-
 .fade-leave-active {
   transition: opacity 0.4s ease;
 }

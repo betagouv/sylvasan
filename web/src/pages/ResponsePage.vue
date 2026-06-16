@@ -79,7 +79,7 @@ const openViewer = (images: ImageItem[], index: number) => {
       :links="[
         { to: '/dashboard', text: 'Dashboard' },
         { to: '/reponses', text: 'Réponses' },
-        { text: `Réponse « ${response?.survey.title || ''} »` },
+        { text: `Réponse « ${response?.survey?.title || ''} »` },
       ]"
     />
     <div v-if="isFetching" class="flex justify-center my-20">
