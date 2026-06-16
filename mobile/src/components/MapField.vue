@@ -47,6 +47,8 @@ const mapError = ref<string | null>(null)
 const mapInitialized = ref(false)
 const tilesLoaded = ref(false)
 const pickedPosition = ref<{ lat: number; lon: number } | null>(null)
+const latInput = ref("")
+const lonInput = ref("")
 let marker: maplibregl.Marker | null = null
 
 const modeOptions = [
@@ -89,9 +91,11 @@ const destroyMap = () => {
   mapInitialized.value = false
   tilesLoaded.value = false
   pickedPosition.value = null
+  latInput.value = ""
+  lonInput.value = ""
 }
 
-const placeMarker = (lng: number, lat: number) => {
+const updateMarker = (lng: number, lat: number) => {
   if (!map) return
   pickedPosition.value = {
     lat: Math.round(lat * 1_000_000) / 1_000_000,
@@ -104,6 +108,30 @@ const placeMarker = (lng: number, lat: number) => {
       .setLngLat([lng, lat])
       .addTo(map)
   }
+}
+
+// Appelé depuis un clic sur la carte — met aussi à jour les inputs
+const placeMarker = (lng: number, lat: number) => {
+  updateMarker(lng, lat)
+  latInput.value = String(pickedPosition.value!.lat)
+  lonInput.value = String(pickedPosition.value!.lon)
+}
+
+// Appelé depuis les inputs — déplace le marqueur sans écraser ce que l'utilisateur tape
+const onCoordinatesInput = () => {
+  const lat = parseFloat(latInput.value)
+  const lon = parseFloat(lonInput.value)
+  if (
+    isNaN(lat) ||
+    isNaN(lon) ||
+    lat < -90 ||
+    lat > 90 ||
+    lon < -180 ||
+    lon > 180
+  )
+    return
+  updateMarker(lon, lat)
+  if (map) map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
 }
 
 const setupMapInteractions = (m: maplibregl.Map) => {
@@ -343,7 +371,6 @@ onBeforeUnmount(() => {
             <DsfrAlert type="error" :title="mapError" />
           </div>
 
-          <!-- La carte + crosshair -->
           <div class="relative flex-1">
             <div ref="mapContainer" class="w-full h-full bg-gray-100" />
 
@@ -376,7 +403,27 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Footer -->
-          <div class="p-3 border-t border-gray-200 flex justify-end">
+          <div class="pt-0 pb-3 border-t border-gray-200">
+            <div class="flex gap-2 lat-lon">
+              <DsfrInputGroup>
+                <DsfrInput
+                  label="Latitude"
+                  placeholder="Latitude"
+                  inputmode="decimal"
+                  v-model="latInput"
+                  @update:model-value="onCoordinatesInput"
+                />
+              </DsfrInputGroup>
+              <DsfrInputGroup>
+                <DsfrInput
+                  label="Longitude"
+                  placeholder="Longitude"
+                  inputmode="decimal"
+                  v-model="lonInput"
+                  @update:model-value="onCoordinatesInput"
+                />
+              </DsfrInputGroup>
+            </div>
             <DsfrButton
               label="Confirmer la position"
               icon="ri-check-line"
@@ -396,5 +443,8 @@ onBeforeUnmount(() => {
 }
 .fade-leave-to {
   opacity: 0;
+}
+.lat-lon :deep(.fr-input-group) {
+  box-sizing: border-box;
 }
 </style>
