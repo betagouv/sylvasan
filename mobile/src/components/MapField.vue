@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount } from "vue"
+import { useDebounceFn } from "@vueuse/core"
 import {
   IonModal,
   IonHeader,
@@ -70,7 +71,8 @@ onMounted(async () => {
 const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true, timeout: 5000 },
-    trackUserLocation: true,
+    trackUserLocation: false,
+    showUserLocation: true,
     showAccuracyCircle: true,
     fitBoundsOptions: { maxZoom: 17 },
   })
@@ -118,7 +120,7 @@ const placeMarker = (lng: number, lat: number) => {
 }
 
 // Appelé depuis les inputs — déplace le marqueur sans écraser ce que l'utilisateur tape
-const onCoordinatesInput = () => {
+const onCoordinatesInput = useDebounceFn(() => {
   const lat = parseFloat(latInput.value)
   const lon = parseFloat(lonInput.value)
   if (
@@ -132,7 +134,7 @@ const onCoordinatesInput = () => {
     return
   updateMarker(lon, lat)
   if (map) map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
-}
+}, 500)
 
 const setupMapInteractions = (m: maplibregl.Map) => {
   m.on("click", (e) => {
