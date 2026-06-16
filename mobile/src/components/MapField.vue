@@ -426,12 +426,14 @@ onBeforeUnmount(() => {
                 />
               </DsfrInputGroup>
             </div>
-            <DsfrButton
-              label="Confirmer la position"
-              icon="ri-check-line"
-              :disabled="!pickedPosition || !!mapError"
-              @click="confirm"
-            />
+            <div class="flex justify-end">
+              <DsfrButton
+                label="Confirmer la position"
+                icon="ri-check-line"
+                :disabled="!pickedPosition || !!mapError"
+                @click="confirm"
+              />
+            </div>
           </div>
         </div>
       </IonContent>
