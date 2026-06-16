@@ -24,7 +24,7 @@ import type { OfflineMapRecord } from "@shared-types/maps"
 const route = useRoute()
 const mapContainer = ref<HTMLDivElement | null>(null)
 const record = ref<OfflineMapRecord | null>(null)
-const tilesLoading = ref(true)
+const tilesLoaded = ref(false)
 let map: maplibregl.Map | null = null
 
 onMounted(async () => {
@@ -70,7 +70,7 @@ onMounted(async () => {
 
   // Masquer le spinner une fois que toutes les tuiles sont chargées et rendues
   map.once("idle", () => {
-    tilesLoading.value = false
+    tilesLoaded.value = true
   })
 })
 
@@ -94,9 +94,17 @@ onBeforeUnmount(() => {
     <ion-content :scroll-y="false">
       <div class="w-full h-full relative">
         <div ref="mapContainer" class="w-full h-full" />
-        <div v-if="tilesLoading" class="tiles-loading-overlay">
-          <ion-spinner name="crescent" />
-        </div>
+        <Transition name="fade">
+          <div
+            v-if="!tilesLoaded"
+            class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/70 z-10 pointer-events-none"
+          >
+            <IonSpinner name="crescent" style="width: 2rem; height: 2rem" />
+            <span class="text-sm text-stone-500"
+              >Chargement de la carte en cours</span
+            >
+          </div>
+        </Transition>
       </div>
     </ion-content>
   </ion-page>
@@ -115,5 +123,12 @@ ion-content::part(scroll) {
   justify-content: center;
   background: rgba(255, 255, 255, 0.6);
   z-index: 10;
+}
+
+.fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
