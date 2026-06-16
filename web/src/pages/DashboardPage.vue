@@ -42,11 +42,6 @@ const userActions = [
     description: "Mettez à jour vos informations",
     link: { name: "/AccountPage" },
   },
-  {
-    title: "Guide utilisateur",
-    description: "",
-    link: { name: "/HomePage" },
-  },
 ]
 </script>
 

@@ -9,6 +9,7 @@ import {
   IonButton,
   IonContent,
   IonIcon,
+  IonSpinner,
 } from "@ionic/vue"
 import { closeOutline } from "ionicons/icons"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
@@ -44,6 +45,7 @@ const offlineMaps = ref<OfflineMapRecord[]>([])
 const selectedMapId = ref("")
 const mapError = ref<string | null>(null)
 const mapInitialized = ref(false)
+const tilesLoaded = ref(false)
 
 const modeOptions = [
   { label: "Carte en ligne", value: "online", icon: "ri-global-fill" },
@@ -81,6 +83,7 @@ const destroyMap = () => {
   map?.remove()
   map = null
   mapInitialized.value = false
+  tilesLoaded.value = false
 }
 
 // Long / Lat et non pas Lat / Lon (https://maplibre.org/maplibre-gl-js/docs/API/classes/LngLat/)
@@ -112,6 +115,9 @@ const initOnlineMap = (container: HTMLDivElement) => {
   )
 
   addGeolocateControl(map, !modelValue.value)
+  map.once("idle", () => {
+    tilesLoaded.value = true
+  })
   mapInitialized.value = true
 }
 
@@ -168,6 +174,9 @@ const initOfflineMap = (container: HTMLDivElement) => {
   )
 
   addGeolocateControl(map, false)
+  map.once("idle", () => {
+    tilesLoaded.value = true
+  })
   mapInitialized.value = true
 }
 
@@ -314,7 +323,20 @@ onBeforeUnmount(() => {
           <div class="relative flex-1">
             <div ref="mapContainer" class="w-full h-full bg-gray-100" />
 
+            <Transition name="fade">
+              <div
+                v-if="!tilesLoaded"
+                class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/70 z-10 pointer-events-none"
+              >
+                <IonSpinner name="crescent" style="width: 2rem; height: 2rem" />
+                <span class="text-sm text-stone-500"
+                  >Chargement de la carte en cours</span
+                >
+              </div>
+            </Transition>
+
             <div
+              v-if="tilesLoaded"
               class="pointer-events-none absolute inset-0 flex items-center justify-center z-10"
             >
               <div class="relative w-10 h-10">
@@ -333,6 +355,7 @@ onBeforeUnmount(() => {
 
             <div
               class="pointer-events-none absolute bottom-14 left-0 right-0 flex justify-center z-10"
+              v-if="tilesLoaded"
             >
               <span
                 class="bg-black/50 text-white text-xs px-3 py-1.5 rounded-full"
@@ -356,3 +379,12 @@ onBeforeUnmount(() => {
     </IonModal>
   </div>
 </template>
+
+<style scoped>
+.fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+.fade-leave-to {
+  opacity: 0;
+}
+</style>
