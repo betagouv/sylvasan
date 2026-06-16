@@ -46,6 +46,8 @@ const selectedMapId = ref("")
 const mapError = ref<string | null>(null)
 const mapInitialized = ref(false)
 const tilesLoaded = ref(false)
+const pickedPosition = ref<{ lat: number; lon: number } | null>(null)
+let marker: maplibregl.Marker | null = null
 
 const modeOptions = [
   { label: "Carte en ligne", value: "online", icon: "ri-global-fill" },
@@ -80,10 +82,40 @@ const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
 // Cycle de vie de la carte
 
 const destroyMap = () => {
+  marker?.remove()
+  marker = null
   map?.remove()
   map = null
   mapInitialized.value = false
   tilesLoaded.value = false
+  pickedPosition.value = null
+}
+
+const placeMarker = (lng: number, lat: number) => {
+  if (!map) return
+  pickedPosition.value = {
+    lat: Math.round(lat * 1_000_000) / 1_000_000,
+    lon: Math.round(lng * 1_000_000) / 1_000_000,
+  }
+  if (marker) {
+    marker.setLngLat([lng, lat])
+  } else {
+    marker = new maplibregl.Marker({ color: "#000091" })
+      .setLngLat([lng, lat])
+      .addTo(map)
+  }
+}
+
+const setupMapInteractions = (m: maplibregl.Map) => {
+  m.on("click", (e) => {
+    placeMarker(e.lngLat.lng, e.lngLat.lat)
+  })
+  m.once("idle", () => {
+    tilesLoaded.value = true
+    if (modelValue.value) {
+      placeMarker(modelValue.value.lon, modelValue.value.lat)
+    }
+  })
 }
 
 // Long / Lat et non pas Lat / Lon (https://maplibre.org/maplibre-gl-js/docs/API/classes/LngLat/)
@@ -115,9 +147,7 @@ const initOnlineMap = (container: HTMLDivElement) => {
   )
 
   addGeolocateControl(map, !modelValue.value)
-  map.once("idle", () => {
-    tilesLoaded.value = true
-  })
+  setupMapInteractions(map)
   mapInitialized.value = true
 }
 
@@ -174,9 +204,7 @@ const initOfflineMap = (container: HTMLDivElement) => {
   )
 
   addGeolocateControl(map, false)
-  map.once("idle", () => {
-    tilesLoaded.value = true
-  })
+  setupMapInteractions(map)
   mapInitialized.value = true
 }
 
@@ -210,12 +238,8 @@ const onModalDismiss = () => {
 }
 
 const confirm = () => {
-  if (!map) return
-  const { lat, lng } = map.getCenter()
-  modelValue.value = {
-    lat: Math.round(lat * 1_000_000) / 1_000_000,
-    lon: Math.round(lng * 1_000_000) / 1_000_000,
-  }
+  if (!pickedPosition.value) return
+  modelValue.value = pickedPosition.value
   opened.value = false
 }
 
@@ -336,31 +360,17 @@ onBeforeUnmount(() => {
             </Transition>
 
             <div
-              v-if="tilesLoaded"
-              class="pointer-events-none absolute inset-0 flex items-center justify-center z-10"
-            >
-              <div class="relative w-10 h-10">
-                <div
-                  class="absolute top-1/2 left-0 w-full h-px bg-orange-600 shadow"
-                />
-                <div
-                  class="absolute left-1/2 top-0 h-full w-px bg-orange-600 shadow"
-                />
-                <div
-                  class="absolute top-1/2 left-1/2 w-2 h-2 rounded-full border-2 border-orange-600 bg-white"
-                  style="transform: translate(-50%, -50%)"
-                />
-              </div>
-            </div>
-
-            <div
               class="pointer-events-none absolute bottom-14 left-0 right-0 flex justify-center z-10"
               v-if="tilesLoaded"
             >
               <span
                 class="bg-black/50 text-white text-xs px-3 py-1.5 rounded-full"
               >
-                Déplacez la carte pour centrer la croix sur le point souhaité
+                {{
+                  pickedPosition
+                    ? "Appuyez sur la carte pour déplacer le marqueur"
+                    : "Appuyez sur la carte pour choisir une position"
+                }}
               </span>
             </div>
           </div>
@@ -370,7 +380,7 @@ onBeforeUnmount(() => {
             <DsfrButton
               label="Confirmer la position"
               icon="ri-check-line"
-              :disabled="!mapInitialized || !!mapError"
+              :disabled="!pickedPosition || !!mapError"
               @click="confirm"
             />
           </div>
