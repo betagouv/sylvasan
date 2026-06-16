@@ -93,7 +93,7 @@ const poleOptions = computed(() => {
   const opts: { text: string; value: string }[] = []
   if (hasOrgLevelAdmin.value) {
     // Les admins org voient "Aucun pôle" + tous les pôles de l'organisation
-    opts.push({ text: "Toues les pôles (niveau organisation)", value: "" })
+    opts.push({ text: "Tous les pôles (niveau organisation)", value: "" })
     for (const p of orgPoles.value) {
       opts.push({ text: p.name, value: String(p.id) })
     }
