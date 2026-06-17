@@ -114,18 +114,31 @@ const submit = async () => {
         />
       </DsfrInputGroup>
 
-      <DsfrButton
-        :disabled="isFetching"
-        class="block! w-full!"
-        label="Se connecter"
-        @click="submit"
-      />
+      <div class="flex flex-col gap-2">
+        <DsfrButton
+          :disabled="isFetching"
+          class="block! w-full!"
+          label="Se connecter"
+          @click="submit"
+        />
 
-      <div class="mt-5! mb-2!"></div>
+        <a
+          href="/platform/reinitialisation-mot-de-passe"
+          class="fr-btn fr-btn--tertiary block! w-full! text-center!"
+        >
+          J'ai perdu mon mot de passe
+        </a>
+        <a
+          href="/creation-de-compte"
+          class="fr-btn fr-btn--tertiary block! w-full! text-center!"
+        >
+          Créer un compte Sylva-San
+        </a>
+      </div>
 
-      <a href="/platform/reinitialisation-mot-de-passe" class="mt-8!"
+      <!-- <a href="/platform/reinitialisation-mot-de-passe" class="mt-8!"
         >J'ai perdu mon mot de passe</a
-      >
+      > -->
       <hr class="mt-10! mb-4!" />
 
       <a

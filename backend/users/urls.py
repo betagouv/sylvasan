@@ -3,7 +3,7 @@ from django.urls import path
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
-from users.views import CsrfView, LoggedUserView, LoginView, LogoutView, TestAuthView
+from users.views import CsrfView, LoggedUserView, LoginView, LogoutView, TestAuthView, UserRegistrationView
 
 urlpatterns = [
     path("api/auth/test/", TestAuthView.as_view()),
@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/auth/me/", LoggedUserView.as_view(), name="me"),
     path("api/auth/login/", LoginView.as_view()),
     path("api/auth/logout/", LogoutView.as_view()),
+    path("api/auth/register/", UserRegistrationView.as_view(), name="register"),
     path("api/mobile/token/", TokenObtainPairView.as_view()),
     path("api/mobile/token/refresh/", TokenRefreshView.as_view()),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
