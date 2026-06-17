@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { watch } from "vue"
+import type { Component } from "vue"
 import type { SurveyField, VocabularySet } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
 import { getEmptyValue, evaluateCondition } from "../utils/survey"
@@ -14,6 +15,7 @@ const props = defineProps<{
   disabled?: boolean
   forceValidate?: boolean
   vocabularies?: VocabularySet[]
+  mapComponent?: Component
 }>()
 
 const modelValue = defineModel<Record<string, unknown>[]>({ default: () => [] })
@@ -106,6 +108,7 @@ watch(
           :disabled="disabled"
           :force-validate="forceValidate"
           :vocabularies="props.vocabularies"
+          :map-component="props.mapComponent"
           @update:model-value="updateItem(index, subField.id, $event)"
         />
       </template>
