@@ -121,6 +121,11 @@ const submit = async () => {
         @click="submit"
       />
 
+      <div class="mt-5! mb-2!"></div>
+
+      <a href="/platform/reinitialisation-mot-de-passe" class="mt-8!"
+        >J'ai perdu mon mot de passe</a
+      >
       <hr class="mt-10! mb-4!" />
 
       <a
