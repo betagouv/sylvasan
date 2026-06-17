@@ -102,96 +102,99 @@ const submit = async () => {
 <template>
   <div class="fr-container my-10">
     <h1>Créez votre compte</h1>
+    <div>
+      <div class="grid grid-cols-1 md:grid-cols-2 md:gap-16 lg:gap-24">
+        <div>
+          <div class="flex gap-4">
+            <DsfrInputGroup
+              class="flex-1"
+              :error-message="formErrors.fieldErrors.firstName?.[0]"
+            >
+              <DsfrInput
+                v-model="payload.firstName"
+                label="Prénom"
+                label-visible
+                :required="true"
+                @update:model-value="clearFieldError('firstName')"
+                @keyup.enter="submit"
+              />
+            </DsfrInputGroup>
+            <DsfrInputGroup
+              class="flex-1"
+              :error-message="formErrors.fieldErrors.lastName?.[0]"
+            >
+              <DsfrInput
+                v-model="payload.lastName"
+                label="Nom"
+                label-visible
+                @update:model-value="clearFieldError('lastName')"
+                @keyup.enter="submit"
+              />
+            </DsfrInputGroup>
+          </div>
 
-    <div class="max-w-lg">
-      <div class="flex gap-4">
-        <DsfrInputGroup
-          class="flex-1"
-          :error-message="formErrors.fieldErrors.firstName?.[0]"
-        >
-          <DsfrInput
-            v-model="payload.firstName"
-            label="Prénom"
-            label-visible
-            :required="true"
-            @update:model-value="clearFieldError('firstName')"
-            @keyup.enter="submit"
-          />
-        </DsfrInputGroup>
-        <DsfrInputGroup
-          class="flex-1"
-          :error-message="formErrors.fieldErrors.lastName?.[0]"
-        >
-          <DsfrInput
-            v-model="payload.lastName"
-            label="Nom"
-            label-visible
-            @update:model-value="clearFieldError('lastName')"
-            @keyup.enter="submit"
-          />
-        </DsfrInputGroup>
+          <DsfrInputGroup :error-message="formErrors.fieldErrors.username?.[0]">
+            <DsfrInput
+              v-model="payload.username"
+              label="Identifiant"
+              label-visible
+              :required="true"
+              @update:model-value="clearFieldError('username')"
+              @keyup.enter="submit"
+            />
+          </DsfrInputGroup>
+
+          <DsfrInputGroup :error-message="formErrors.fieldErrors.email?.[0]">
+            <DsfrInput
+              v-model="payload.email"
+              label="Adresse email"
+              label-visible
+              :required="true"
+              type="email"
+              @update:model-value="clearFieldError('email')"
+              @keyup.enter="submit"
+            />
+          </DsfrInputGroup>
+        </div>
+        <div class="mt-6 md:mt-0">
+          <DsfrInputGroup :error-message="formErrors.fieldErrors.password?.[0]">
+            <DsfrInput
+              v-model="payload.password"
+              label="Mot de passe"
+              label-visible
+              :required="true"
+              type="password"
+              @update:model-value="clearFieldError('password')"
+              @keyup.enter="submit"
+              hint="8 caractères minimum, ne doit pas être uniquement numérique ni trop similaire à vos informations personnelles"
+            />
+          </DsfrInputGroup>
+
+          <DsfrInputGroup
+            :error-message="formErrors.fieldErrors.passwordConfirm?.[0]"
+          >
+            <DsfrInput
+              v-model="payload.passwordConfirm"
+              label="Confirmer le mot de passe"
+              label-visible
+              :required="true"
+              type="password"
+              @update:model-value="clearFieldError('passwordConfirm')"
+              @keyup.enter="submit"
+            />
+          </DsfrInputGroup>
+        </div>
+      </div>
+      <div class="mt-8 flex justify-end">
+        <DsfrButton
+          :disabled="isFetching"
+          label="Créer mon compte"
+          @click="submit"
+          size="lg"
+        />
       </div>
 
-      <DsfrInputGroup :error-message="formErrors.fieldErrors.username?.[0]">
-        <DsfrInput
-          v-model="payload.username"
-          label="Identifiant"
-          label-visible
-          :required="true"
-          @update:model-value="clearFieldError('username')"
-          @keyup.enter="submit"
-        />
-      </DsfrInputGroup>
-
-      <DsfrInputGroup :error-message="formErrors.fieldErrors.email?.[0]">
-        <DsfrInput
-          v-model="payload.email"
-          label="Adresse email"
-          label-visible
-          :required="true"
-          type="email"
-          @update:model-value="clearFieldError('email')"
-          @keyup.enter="submit"
-        />
-      </DsfrInputGroup>
-
-      <hr />
-
-      <DsfrInputGroup :error-message="formErrors.fieldErrors.password?.[0]">
-        <DsfrInput
-          v-model="payload.password"
-          label="Mot de passe"
-          label-visible
-          :required="true"
-          type="password"
-          @update:model-value="clearFieldError('password')"
-          @keyup.enter="submit"
-        />
-      </DsfrInputGroup>
-
-      <DsfrInputGroup
-        :error-message="formErrors.fieldErrors.passwordConfirm?.[0]"
-      >
-        <DsfrInput
-          v-model="payload.passwordConfirm"
-          label="Confirmer le mot de passe"
-          label-visible
-          :required="true"
-          type="password"
-          @update:model-value="clearFieldError('passwordConfirm')"
-          @keyup.enter="submit"
-        />
-      </DsfrInputGroup>
-
-      <hr />
-      <DsfrButton
-        :disabled="isFetching"
-        class="block! w-full!"
-        label="Créer mon compte"
-        @click="submit"
-      />
-
-      <hr class="mt-10! mb-4!" />
+      <hr class="mt-6! mb-0!" />
 
       <p class="fr-text--sm text-center">
         Vous avez déjà un compte ?

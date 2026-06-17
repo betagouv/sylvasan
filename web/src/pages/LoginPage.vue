@@ -122,19 +122,18 @@ const submit = async () => {
             label="Se connecter"
             @click="submit"
           />
-
-          <a
-            href="/platform/reinitialisation-mot-de-passe"
-            class="fr-btn fr-btn--tertiary block! w-full! text-center!"
-          >
-            J'ai perdu mon mot de passe
-          </a>
           <a
             href="/creation-de-compte"
             class="fr-btn fr-btn--tertiary block! w-full! text-center!"
           >
             Créer un compte Sylva-San
           </a>
+
+          <p class="mt-4!">
+            <a href="/platform/reinitialisation-mot-de-passe">
+              J'ai perdu mon mot de passe
+            </a>
+          </p>
         </div>
       </div>
 
