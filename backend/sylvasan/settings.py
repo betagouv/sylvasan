@@ -179,13 +179,13 @@ LOGIN_URL = "/s-identifier"
 HOSTNAME = env("HOSTNAME")
 
 # Email
-# DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
-# CONTACT_EMAIL = env("CONTACT_EMAIL")
-# EMAIL_BACKEND = env("EMAIL_BACKEND")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+CONTACT_EMAIL = env("CONTACT_EMAIL")
+EMAIL_BACKEND = env("EMAIL_BACKEND")
 
-# if DEBUG and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
-#     EMAIL_HOST = "localhost"
-#     EMAIL_PORT = 1025
+if DEBUG and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+    EMAIL_HOST = "localhost"
+    EMAIL_PORT = 1025
 
 ANYMAIL = {
     "SENDINBLUE_API_KEY": env("BREVO_API_KEY", default=None),
@@ -301,6 +301,7 @@ SECURE_CSP = {
         "*.services.clever-cloud.com",
     ],
     "font-src": [
+        CSP.SELF,
         "https://data.geopf.fr",
     ],
     "script-src": [

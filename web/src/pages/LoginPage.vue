@@ -83,52 +83,70 @@ const submit = async () => {
   <div class="fr-container my-10">
     <h1>Se connecter</h1>
 
-    <div class="max-w-md">
-      <DsfrAlert
-        v-if="oauthError"
-        type="error"
-        title="Erreur"
-        :description="oauthError"
-        class="mb-6"
-      />
-
-      <DsfrInputGroup :error-message="formErrors?.fieldErrors?.username">
-        <DsfrInput
-          v-model="payload.username"
-          label="Identifiant ou adresse email"
-          labelVisible
-          @keyup.enter="submit"
+    <div class="grid grid-cols-1 md:grid-cols-2 md:gap-16 lg:gap-24">
+      <div>
+        <DsfrAlert
+          v-if="oauthError"
+          type="error"
+          title="Erreur"
+          :description="oauthError"
+          class="mb-6"
         />
-      </DsfrInputGroup>
 
-      <DsfrInputGroup
-        :error-message="formErrors?.fieldErrors?.password"
-        type="password"
-      >
-        <DsfrInput
-          v-model="payload.password"
-          label="Mot de passe"
-          labelVisible
+        <DsfrInputGroup :error-message="formErrors?.fieldErrors?.username">
+          <DsfrInput
+            v-model="payload.username"
+            label="Identifiant ou adresse email"
+            labelVisible
+            @keyup.enter="submit"
+          />
+        </DsfrInputGroup>
+
+        <DsfrInputGroup
+          :error-message="formErrors?.fieldErrors?.password"
           type="password"
-          @keyup.enter="submit"
-        />
-      </DsfrInputGroup>
+        >
+          <DsfrInput
+            v-model="payload.password"
+            label="Mot de passe"
+            labelVisible
+            type="password"
+            @keyup.enter="submit"
+          />
+        </DsfrInputGroup>
 
-      <DsfrButton
-        :disabled="isFetching"
-        class="block! w-full!"
-        label="Se connecter"
-        @click="submit"
-      />
+        <div class="flex flex-col gap-2">
+          <DsfrButton
+            :disabled="isFetching"
+            class="block! w-full!"
+            label="Se connecter"
+            @click="submit"
+          />
+          <a
+            href="/creation-de-compte"
+            class="fr-btn fr-btn--tertiary block! w-full! text-center!"
+          >
+            Créer un compte Sylva-San
+          </a>
 
-      <hr class="mt-10! mb-4!" />
+          <p class="mt-4!">
+            <a href="/platform/reinitialisation-mot-de-passe">
+              J'ai perdu mon mot de passe
+            </a>
+          </p>
+        </div>
+      </div>
 
-      <a
-        :href="dsfLoginUrl"
-        class="fr-btn fr-btn--secondary block! w-full! text-center!"
-      >
-        S'identifier avec un compte DSF
-      </a>
+      <div class="border border-gray-300 p-6">
+        <h3>Vous avez déjà un compte DSF&nbsp;?</h3>
+        <p>Connectez-vous avec vos identifiants du portail DSF.</p>
+        <a
+          :href="dsfLoginUrl"
+          class="fr-btn fr-btn--secondary block! w-full! text-center!"
+        >
+          S'identifier avec un compte DSF
+        </a>
+      </div>
     </div>
   </div>
 </template>
