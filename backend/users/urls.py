@@ -3,7 +3,15 @@ from django.urls import path
 
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 
-from users.views import CsrfView, LoggedUserView, LoginView, LogoutView, TestAuthView, UserRegistrationView
+from users.views import (
+    CsrfView,
+    EmailVerificationView,
+    LoggedUserView,
+    LoginView,
+    LogoutView,
+    TestAuthView,
+    UserRegistrationView,
+)
 
 urlpatterns = [
     path("api/auth/test/", TestAuthView.as_view()),
@@ -15,6 +23,11 @@ urlpatterns = [
     path("api/mobile/token/", TokenObtainPairView.as_view()),
     path("api/mobile/token/refresh/", TokenRefreshView.as_view()),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    path(
+        "verification-email/<uidb64>/<token>",
+        EmailVerificationView.as_view(),
+        name="email_verification",
+    ),
     # Urls concernant la gestion du mot de passe (comptes SylvaSan)
     path(
         "modification-mot-de-passe",

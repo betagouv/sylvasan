@@ -44,6 +44,8 @@ const oauthError = computed(() => {
     : null
 })
 
+const verificationFailed = computed(() => !!route.query.verification_failed)
+
 const payload = ref({
   username: "",
   password: "",
@@ -85,6 +87,13 @@ const submit = async () => {
 
     <div class="grid grid-cols-1 md:grid-cols-2 md:gap-16 lg:gap-24">
       <div>
+        <DsfrAlert
+          v-if="verificationFailed"
+          type="error"
+          title="Lien invalide"
+          description="Le lien de vérification est invalide ou expiré. Veuillez créer un nouveau compte."
+          class="mb-6"
+        />
         <DsfrAlert
           v-if="oauthError"
           type="error"

@@ -87,6 +87,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/EmailConfirmationSentPage': RouteRecordInfo<
+      '/EmailConfirmationSentPage',
+      '/email-de-confirmation-envoye',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/SurveyPage': RouteRecordInfo<
       '/SurveyPage',
       '/enquete/:id',
@@ -201,6 +208,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/PrivacyPolicyPage.vue': {
       routes:
         | '/PrivacyPolicyPage'
+      views:
+        | never
+    }
+    'src/pages/EmailConfirmationSentPage.vue': {
+      routes:
+        | '/EmailConfirmationSentPage'
       views:
         | never
     }

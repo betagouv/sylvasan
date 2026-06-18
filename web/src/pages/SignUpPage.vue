@@ -87,8 +87,7 @@ const submit = async () => {
   }
   await execute()
   if (statusCode.value === 201) {
-    toast.show("Compte créé. Vous pouvez maintenant vous connecter.", "success")
-    router.push({ name: "/LoginPage" })
+    router.push({ name: "/EmailConfirmationSentPage" })
     return
   }
   if (statusCode.value === 400 && apiErrorBody.value) {
@@ -135,6 +134,7 @@ const submit = async () => {
 
           <DsfrInputGroup :error-message="formErrors.fieldErrors.username?.[0]">
             <DsfrInput
+              class="max-w-xs"
               v-model="payload.username"
               label="Identifiant"
               label-visible
