@@ -342,6 +342,28 @@ class TestResponseFullList(APITestCase):
         self.assertNotIn(other_response.id, ids)
 
 
+class TestInactiveResponsesExclues(APITestCase):
+    @authenticate
+    def test_reponse_inactive_non_retournee_dans_la_liste(self):
+        """
+        Une réponse désactivée (is_active=False) n'est pas retournée par l'endpoint de liste,
+        même si l'utilisateur·ice a normalement accès à cette réponse
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        reponse_active = ResponseFactory(survey=survey)
+        reponse_inactive = ResponseFactory(survey=survey)
+        reponse_inactive.deactivate()
+
+        response = self.client.get(reverse("response_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [r["id"] for r in response.json()["results"]]
+        self.assertIn(reponse_active.id, ids)
+        self.assertNotIn(reponse_inactive.id, ids)
+
+
 class TestFilterResponses(APITestCase):
     def get_ids(self, response):
         return [r["id"] for r in response.json()["results"]]

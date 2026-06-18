@@ -10,7 +10,7 @@ from surveys.factories import SurveyFactory
 
 
 def survey_url(survey_id):
-    return reverse("survey_retrieve", kwargs={"pk": survey_id})
+    return reverse("survey_retrieve_delete", kwargs={"pk": survey_id})
 
 
 class TestRetrieveSurvey(APITestCase):
@@ -248,6 +248,23 @@ class TestRetrieveSurvey(APITestCase):
         other_survey = SurveyFactory()
 
         response = self.client.get(survey_url(other_survey.id), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class TestEnqueteInactiveExclue(APITestCase):
+    @authenticate
+    def test_enquete_inactive_retourne_404(self):
+        """
+        Une enquête désactivée (is_active=False) retourne une 404,
+        même pour un·e utilisateur·ice qui y aurait normalement accès
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        survey.deactivate()
+
+        response = self.client.get(survey_url(survey.id), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
