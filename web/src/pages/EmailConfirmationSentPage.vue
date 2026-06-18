@@ -12,8 +12,15 @@
 <script setup lang="ts"></script>
 
 <template>
-  <div class="fr-container my-10">
-    <div class="">
+  <div class="fr-container mb-10">
+    <DsfrBreadcrumb
+      :links="[
+        { to: '/', text: 'Accueil' },
+        { to: '/s-identifier', text: 'S\'identifier' },
+        { text: 'Confirmez votre adresse email' },
+      ]"
+    />
+    <div>
       <h1 class="fr-h3">
         <v-icon name="ri-mail-send-line" scale="2" class="mr-2" />Vérifiez votre
         adresse email
@@ -32,7 +39,7 @@
       </p>
 
       <DsfrButton
-        label="Retourner à l'accueil"
+        label="Revenir à l'accueil"
         secondary
         class="mt-6"
         @click="$router.push('/')"

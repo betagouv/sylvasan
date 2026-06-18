@@ -27,12 +27,19 @@ const { execute, isFetching } = useApiFetch("/auth/resend-verification/", {
 const resend = async () => {
   await execute()
   sent.value = true
-  toast.show("Email de vérification renvoyé.", "success")
 }
 </script>
 
 <template>
-  <div class="fr-container my-10">
+  <div class="fr-container mb-10">
+    <DsfrBreadcrumb
+      :links="[
+        { to: '/', text: 'Accueil' },
+        { to: '/s-identifier', text: 'S\'identifier' },
+        { text: 'Compte non activé' },
+      ]"
+    />
+
     <div class="max-w-lg">
       <h1 class="fr-h3">
         <v-icon name="ri-mail-close-line" scale="1.5" class="mr-2" />
@@ -56,20 +63,13 @@ const resend = async () => {
         class="mb-4"
       />
 
-      <div class="flex gap-3 mt-6">
-        <DsfrButton
-          label="Renvoyer l'email de vérification"
-          icon="ri-send-plane-line"
-          :disabled="isFetching || sent"
-          @click="resend"
-        />
-        <DsfrButton
-          label="Retour à la connexion"
-          secondary
-          icon="ri-arrow-left-line"
-          @click="$router.push('/s-identifier')"
-        />
-      </div>
+      <DsfrButton
+        label="Renvoyer l'email de vérification"
+        icon="ri-send-plane-line"
+        :disabled="isFetching || sent"
+        v-if="!sent"
+        @click="resend"
+      />
     </div>
   </div>
 </template>
