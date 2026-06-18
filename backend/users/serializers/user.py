@@ -45,6 +45,7 @@ class UserRegistrationSerializer(serializers.Serializer):
         return User.objects.create_user(
             email=validated_data.pop("email"),
             password=password,
+            is_active=False,
             **validated_data,
         )
 

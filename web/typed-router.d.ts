@@ -52,6 +52,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/AccountNotActivatedPage': RouteRecordInfo<
+      '/AccountNotActivatedPage',
+      '/compte-non-active',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/CookiesPage': RouteRecordInfo<
       '/CookiesPage',
       '/cookies',
@@ -83,6 +90,13 @@ declare module 'vue-router/auto-routes' {
     '/PrivacyPolicyPage': RouteRecordInfo<
       '/PrivacyPolicyPage',
       '/donnees-personnelles',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/EmailConfirmationSentPage': RouteRecordInfo<
+      '/EmailConfirmationSentPage',
+      '/email-de-confirmation-envoye',
       Record<never, never>,
       Record<never, never>,
       | never
@@ -174,6 +188,12 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
+    'src/pages/AccountNotActivatedPage.vue': {
+      routes:
+        | '/AccountNotActivatedPage'
+      views:
+        | never
+    }
     'src/pages/CookiesPage.vue': {
       routes:
         | '/CookiesPage'
@@ -201,6 +221,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/PrivacyPolicyPage.vue': {
       routes:
         | '/PrivacyPolicyPage'
+      views:
+        | never
+    }
+    'src/pages/EmailConfirmationSentPage.vue': {
+      routes:
+        | '/EmailConfirmationSentPage'
       views:
         | never
     }

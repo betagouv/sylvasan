@@ -1,0 +1,9 @@
+Bonjour {{ user.first_name }},
+
+Merci de vous être inscrit sur SylvaSan. Pour activer votre compte, cliquez sur le lien ci-dessous :
+
+{{ protocol }}://{{ domain }}/platform/verification-email/{{ uid }}/{{ token }}
+
+Si vous n'avez pas créé de compte, vous pouvez ignorer ce message.
+
+L'équipe SylvaSan

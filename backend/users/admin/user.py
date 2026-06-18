@@ -24,6 +24,7 @@ class UserAdmin(UserAdmin):
                 "fields": (
                     "username",
                     "password",
+                    "is_active",
                 )
             },
         ),
