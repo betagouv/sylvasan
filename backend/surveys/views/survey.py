@@ -5,7 +5,7 @@ from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveDest
 from rest_framework.permissions import IsAuthenticated
 
 from surveys.models import Survey
-from surveys.permissions import CanCreateSurvey
+from surveys.permissions import CanCreateSurvey, CanDeleteSurvey
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer, SurveySerializer
 
 
@@ -88,8 +88,16 @@ class SurveyResponderListAPIView(ListAPIView):
 
 class SurveyRetrieveDeleteAPIView(SurveyQuerySetMixin, RetrieveDestroyAPIView):
     serializer_class = FullSurveySerializer
-    permission_classes = [IsAuthenticated]
 
     def perform_destroy(self, survey):
         survey.deactivate()
+
+        # En utilsant "update" pour la désactivation des réponses on rend l'opération plus
+        # rapide même si on bypass les triggers (comme par ex. django simple history). C'est
+        # un choix qui peut évoluer plus tard
         survey.responses.update(is_active=False)
+
+    def get_permissions(self):
+        if self.request.method == "DELETE":
+            return [IsAuthenticated(), CanDeleteSurvey()]
+        return [IsAuthenticated()]

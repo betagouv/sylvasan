@@ -1,7 +1,7 @@
 from django.urls import reverse
 
 from common.utils import authenticate
-from organisations.factories import MembershipFactory, OrganisationFactory
+from organisations.factories import MembershipFactory, OrganisationFactory, PoleFactory
 from organisations.models import MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -114,6 +114,92 @@ class TestSoftDeleteSurvey(APITestCase):
         survey = SurveyFactory()
         response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_responder_ne_peut_pas_supprimer_une_enquete(self):
+        """
+        Un·e RESPONDER reçoit un 403 en tentant de supprimer une enquête,
+        même s'il ou elle y a accès en lecture
+        """
+        survey = SurveyFactory()
+        MembershipFactory(
+            user=authenticate.user,
+            organisation=survey.organisation,
+            membership_type=MembershipType.RESPONDER,
+        )
+        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_admin_org_peut_supprimer_une_enquete_de_pole(self):
+        """
+        Un·e ADMIN au niveau organisation (pole=None) peut supprimer une enquête
+        rattachée à un pôle de cette organisation
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=pole)
+        MembershipFactory(
+            user=authenticate.user,
+            organisation=org,
+            pole=None,
+            membership_type=MembershipType.ADMIN,
+        )
+        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    @authenticate
+    def test_admin_pole_peut_supprimer_enquete_de_son_pole(self):
+        """
+        Un·e ADMIN de pôle peut supprimer une enquête rattachée à son pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=pole)
+        MembershipFactory(
+            user=authenticate.user,
+            organisation=org,
+            pole=pole,
+            membership_type=MembershipType.ADMIN,
+        )
+        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    @authenticate
+    def test_admin_pole_ne_peut_pas_supprimer_enquete_niveau_organisation(self):
+        """
+        Un·e ADMIN de pôle ne peut pas supprimer une enquête au niveau organisation (sans pôle)
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=None)
+        MembershipFactory(
+            user=authenticate.user,
+            organisation=org,
+            pole=pole,
+            membership_type=MembershipType.ADMIN,
+        )
+        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_admin_pole_ne_peut_pas_supprimer_enquete_autre_pole(self):
+        """
+        Un·e ADMIN de pôle ne peut pas supprimer une enquête rattachée à un autre pôle
+        de la même organisation
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        autre_pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=autre_pole)
+        MembershipFactory(
+            user=authenticate.user,
+            organisation=org,
+            pole=pole,
+            membership_type=MembershipType.ADMIN,
+        )
+        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @authenticate
     def test_membre_autre_organisation_ne_peut_pas_supprimer_une_enquete(self):

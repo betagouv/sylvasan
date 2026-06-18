@@ -27,16 +27,23 @@ const { data: survey, isFetching } = useApiFetch(
 const activeAccordion = ref<number>()
 const confirmDeleteOpened = ref(false)
 
-const { execute: deleteSurvey, isFetching: isDeleting } = useApiFetch(
-  `/surveys/${route.params.id}`,
-  { immediate: false }
-).delete()
+const {
+  execute: deleteSurvey,
+  isFetching: isDeleting,
+  statusCode,
+} = useApiFetch(`/surveys/${route.params.id}`, { immediate: false }).delete()
 
 const onConfirmDelete = async () => {
   await deleteSurvey()
   confirmDeleteOpened.value = false
   toast.show("L'enquête a été supprimée.", "success")
   router.push({ name: "/SurveyListPage" })
+  if (statusCode.value === 204) {
+    toast.show("L'enquête a été supprimée.", "success")
+    router.push({ name: "/SurveyListPage" })
+  } else {
+    toast.show("Une erreur s'est produite.", "error")
+  }
 }
 </script>
 

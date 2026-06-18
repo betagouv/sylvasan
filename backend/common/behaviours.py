@@ -12,9 +12,6 @@ class TimeStampable(models.Model):
 
 
 class DeactivableQuerySet(models.query.QuerySet):
-    class Meta:
-        abstract = True
-
     def active(self):
         return self.filter(is_active=True)
 

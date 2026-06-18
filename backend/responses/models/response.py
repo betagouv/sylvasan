@@ -12,7 +12,7 @@ class ResponseStatus(models.TextChoices):
 
 
 class Response(TimeStampable, Historisable, Deactivable):
-    objects = models.Manager().from_queryset(DeactivableQuerySet)()
+    objects = DeactivableQuerySet.as_manager()
 
     survey = models.ForeignKey(Survey, related_name="responses", verbose_name="enquête", on_delete=models.CASCADE)
     respondant = models.ForeignKey(

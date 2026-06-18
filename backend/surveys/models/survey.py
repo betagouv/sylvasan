@@ -14,7 +14,7 @@ class Survey(TimeStampable, Deactivable, Historisable):
     class Meta:
         verbose_name = "enquête"
 
-    objects = models.Manager().from_queryset(DeactivableQuerySet)()
+    objects = DeactivableQuerySet.as_manager()
 
     organisation = models.ForeignKey(
         Organisation, related_name="surveys", on_delete=models.SET_NULL, null=True, blank=True
