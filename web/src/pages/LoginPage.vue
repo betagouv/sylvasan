@@ -68,6 +68,10 @@ const submit = async () => {
   try {
     validator.parse(payload.value)
     await execute()
+    if (statusCode.value === 403) {
+      router.push({ name: "/AccountNotActivatedPage", query: { identifier: payload.value.username } })
+      return
+    }
     if (statusCode.value === 401) {
       toast.show("Identifiant ou mot de passe incorrect.", "error")
       return

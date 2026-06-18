@@ -52,6 +52,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/AccountNotActivatedPage': RouteRecordInfo<
+      '/AccountNotActivatedPage',
+      '/compte-non-active',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/CookiesPage': RouteRecordInfo<
       '/CookiesPage',
       '/cookies',
@@ -178,6 +185,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/HomePage.vue': {
       routes:
         | '/HomePage'
+      views:
+        | never
+    }
+    'src/pages/AccountNotActivatedPage.vue': {
+      routes:
+        | '/AccountNotActivatedPage'
       views:
         | never
     }

@@ -1,14 +1,18 @@
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db.models import Q
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views import View
 
+from rest_framework import status
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from users.serializers import UserRegistrationSerializer
 
@@ -40,6 +44,24 @@ class UserRegistrationView(CreateAPIView):
     def perform_create(self, serializer):
         user = serializer.save()
         _send_verification_email(user, self.request)
+
+
+class ResendVerificationEmailView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        identifier = request.data.get("identifier", "").strip()
+        if not identifier:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(
+                Q(email=identifier) | Q(username=identifier),
+                is_active=False,
+            )
+            _send_verification_email(user, request)
+        except User.DoesNotExist:
+            pass  # Ne pas révéler si le compte existe ou non
+        return Response(status=status.HTTP_200_OK)
 
 
 class EmailVerificationView(View):
