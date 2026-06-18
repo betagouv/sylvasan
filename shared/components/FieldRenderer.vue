@@ -212,6 +212,7 @@ const errorMessage = computed(() =>
       :disabled="disabled"
       :force-validate="forceValidate"
       :vocabularies="props.vocabularies"
+      :map-component="mapComponent"
     />
 
     <AutocompleteField

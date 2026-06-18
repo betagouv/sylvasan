@@ -9,7 +9,7 @@
 </route>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../utils/data-fetching.ts"
 import type { SurveyField, ImageItem } from "@shared-types/survey"
@@ -19,11 +19,14 @@ import { resolveFieldValue } from "@shared-utils/survey"
 import { storeToRefs } from "pinia"
 import { useRootStore } from "../stores/root.ts"
 import MapField from "../components/MapField.vue"
+import ProgressSpinner from "../components/ProgressSpinner.vue"
 
 const route = useRoute()
 const { vocabularies } = storeToRefs(useRootStore())
 
-const { data: response } = useApiFetch(`/responses/${route.params.id}`).json()
+const { data: response, isFetching } = useApiFetch(
+  `/responses/${route.params.id}`
+).json()
 
 const fieldLabel = (fieldId: string): string =>
   response.value?.survey.jsonSchema.fields.find(
@@ -68,6 +71,12 @@ const openViewer = (images: ImageItem[], index: number) => {
   viewerIndex.value = index
   viewerOpen.value = true
 }
+
+const respondantName = computed(() => {
+  const respondant = response.value.respondant
+  if (!respondant) return "—"
+  return `${respondant.firstName} ${respondant.lastName || ""}`
+})
 </script>
 
 <template>
@@ -76,16 +85,18 @@ const openViewer = (images: ImageItem[], index: number) => {
       :links="[
         { to: '/dashboard', text: 'Dashboard' },
         { to: '/reponses', text: 'Réponses' },
-        { text: `Réponse « ${response?.survey.title} »` },
+        { text: `Réponse « ${response?.survey?.title || ''} »` },
       ]"
     />
-    <div v-if="response">
+    <div v-if="isFetching" class="flex justify-center my-20">
+      <ProgressSpinner />
+    </div>
+    <div v-else-if="response">
       <h1 class="fr-h4">Réponse à l'enquête « {{ response.survey.title }} »</h1>
       <div class="mb-6">
         <p class="font-medium fr-badge">
           <v-icon name="ri-user-line" scale="0.8" class="mr-2" />
-          {{ response.respondant?.firstName }}
-          {{ response.respondant?.lastName }}
+          {{ respondantName }}
         </p>
       </div>
 
@@ -167,7 +178,11 @@ const openViewer = (images: ImageItem[], index: number) => {
                     v-else
                     class="w-full h-full bg-slate-100 flex items-center justify-center"
                   >
-                    <v-icon name="ri-image-line" scale="2" class="text-slate-400" />
+                    <v-icon
+                      name="ri-image-line"
+                      scale="2"
+                      class="text-slate-400"
+                    />
                   </div>
                   <div
                     class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center"

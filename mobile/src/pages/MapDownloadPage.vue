@@ -6,9 +6,13 @@ import {
   IonHeader,
   IonToolbar,
   IonButtons,
+  IonButton,
+  IonIcon,
   IonMenuButton,
+  IonSpinner,
   IonTitle,
 } from "@ionic/vue"
+import { closeOutline } from "ionicons/icons"
 import maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import MapDownloader from "../components/MapDownloader.vue"
@@ -27,6 +31,7 @@ function getZoomLevels(currentZoom: number): number[] {
 
 const mapContainer = ref<HTMLDivElement | null>(null)
 const currentZoom = ref(5)
+const tilesLoaded = ref(false)
 
 const selectionBbox = ref<BoundaryBox | null>(null)
 const zoomLevels = ref<number[]>([])
@@ -90,11 +95,16 @@ onMounted(async () => {
     selectionBbox.value = getBboxFromSelectionBox()
     zoomLevels.value = getZoomLevels(currentZoom.value)
   })
+
+  map.once("idle", () => {
+    tilesLoaded.value = true
+  })
 })
 
 onBeforeUnmount(() => {
   map?.remove()
   map = null
+  tilesLoaded.value = false
 })
 </script>
 
@@ -106,12 +116,27 @@ onBeforeUnmount(() => {
         <ion-buttons slot="start">
           <ion-menu-button />
         </ion-buttons>
+        <ion-buttons slot="end">
+          <ion-button @click="router.back()">
+            <ion-icon slot="icon-only" :icon="closeOutline" />
+          </ion-button>
+        </ion-buttons>
       </ion-toolbar>
     </ion-header>
     <ion-content :scroll-y="false">
       <div class="flex flex-col w-full h-full">
         <div class="w-full h-full relative">
           <div ref="mapContainer" class="w-full h-full" />
+
+          <Transition name="fade">
+            <div
+              v-if="!tilesLoaded"
+              class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/70 z-10 pointer-events-none"
+            >
+              <IonSpinner name="crescent" style="width: 2rem; height: 2rem" />
+              <span class="text-sm text-stone-500">Chargement de la carte en cours</span>
+            </div>
+          </Transition>
 
           <!-- carré au centre de la carte -->
           <div
@@ -180,5 +205,12 @@ onBeforeUnmount(() => {
   right: 0;
   border-bottom-width: 3px;
   border-right-width: 3px;
+}
+
+.fade-leave-active {
+  transition: opacity 0.4s ease;
+}
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

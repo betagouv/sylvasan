@@ -29,7 +29,6 @@ let networkListener: PluginListenerHandle | null = null
 
 const { selectedPin } = useMapPins(mapRef)
 
-
 const destroyMap = () => {
   mapRef.value?.remove()
   mapRef.value = null
@@ -60,7 +59,8 @@ const initMap = () => {
 
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true, timeout: 5000 },
-    trackUserLocation: true,
+    trackUserLocation: false,
+    showUserLocation: true,
     showAccuracyCircle: true,
     fitBoundsOptions: { maxZoom: 13 },
   })
@@ -132,9 +132,12 @@ onBeforeUnmount(() => {
         <Transition name="fade">
           <div
             v-if="!tilesLoaded"
-            class="absolute inset-0 flex items-center justify-center bg-white/60"
+            class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/70 z-10 pointer-events-none"
           >
-            <ion-spinner name="crescent" style="width: 2rem; height: 2rem" />
+            <IonSpinner name="crescent" style="width: 2rem; height: 2rem" />
+            <span class="text-sm text-stone-500"
+              >Chargement de la carte en cours</span
+            >
           </div>
         </Transition>
 

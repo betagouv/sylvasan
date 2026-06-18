@@ -1,0 +1,32 @@
+{% load static %}
+<!doctype html>
+<html lang="fr">
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{% endblock %} - Sylva-San</title>
+  <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+
+  <link rel="icon" type="image/png" href="{% static 'images/favicon-marianne.png' %}">
+
+  <!-- Matomo -->
+
+  <!-- End Matomo Code -->
+</head>
+
+<body>
+  <main>
+    <div id="wrapper" {% if form.uses_columns %}class="columns" {% endif %}>
+      <div>
+        <a href="/" aria-label="Sylva-San (aller à l'accueil) - République Française" id="home-logo-link">
+          <img src="{% static 'images/Marianne-logo.png' %}" alt="" id="marianne" />
+        </a>
+      </div>
+      <p class="sylvasan-title">Sylvasan</p>
+      {% block content %}
+      {% endblock %}
+    </div>
+  </main>
+</body>
+
+</html>

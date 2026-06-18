@@ -53,6 +53,8 @@ class LoginView(APIView):
         try:
             user = get_user_model().objects.get(Q(username=username_or_email) | Q(email=username_or_email))
             authenticated_user = authenticate(request, username=user.username, password=password)
+            if not authenticated_user and not user.is_active and user.check_password(password):
+                return Response({"error": "account_not_activated"}, status=status.HTTP_403_FORBIDDEN)
         except get_user_model().DoesNotExist:
             authenticated_user = authenticate(request, username=username_or_email, password=password)
 

@@ -1,2 +1,2 @@
-from .survey import SurveyListCreateAPIView, SurveyResponderListAPIView, SurveyRetrieveAPIView
+from .survey import SurveyListCreateAPIView, SurveyResponderListAPIView, SurveyRetrieveDeleteAPIView
 from .vocabularyset import MobileVocabularySetListView, VocabularySetDetailView, VocabularySetListView

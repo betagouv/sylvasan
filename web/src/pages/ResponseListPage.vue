@@ -9,7 +9,7 @@
       "limit": 10,
       "created_after": "",
       "created_before": "",
-      "triage": "",
+      "triage": "-creation_date",
       "survey": ""
     }
   }
@@ -26,6 +26,7 @@ import ProgressSpinner from "../components/ProgressSpinner.vue"
 import PaginationSizeSelect from "../components/ResponseListPage/PaginationSizeSelect.vue"
 import DateRangeFilter from "../components/ResponseListPage/DateRangeFilter.vue"
 import OrderingFilter from "../components/ResponseListPage/OrderingFilter.vue"
+import type { UserDisplay } from "@shared-types/api"
 
 const router = useRouter()
 const route = useRoute()
@@ -93,6 +94,11 @@ const pages = computed(() =>
   }))
 )
 
+const getRespondantName = (respondant: UserDisplay | null) => {
+  if (!respondant) return "—"
+  return `${respondant.firstName} ${respondant.lastName || ""}`
+}
+
 const rows = computed(() =>
   (data.value?.results ?? []).map((response: ResponseDisplay) => ({
     rowData: [
@@ -103,7 +109,7 @@ const rows = computed(() =>
         class: "font-bold",
         to: { name: "/ResponsePage", params: { id: response.id } },
       },
-      `${response.respondant?.firstName} ${response.respondant?.lastName}`,
+      getRespondantName(response.respondant),
       new Date(response.creationDate).toLocaleDateString("fr-FR", {
         day: "numeric",
         month: "long",

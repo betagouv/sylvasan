@@ -1,0 +1,181 @@
+@font-face {
+  font-family: "Marianne";
+  src: url("../fonts/Marianne-Regular.woff2") format("woff2"),
+    url("../fonts/Marianne-Regular.woff") format("woff"),
+    url("../fonts/Marianne-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+@font-face {
+  font-family: "Marianne";
+  src: url("../fonts/Marianne-Medium.woff2") format("woff2"),
+    url("../fonts/Marianne-Medium.woff") format("woff");
+  font-weight: 500;
+}
+@font-face {
+  font-family: "Marianne";
+  src: url("../fonts/Marianne-Light.woff2") format("woff2"),
+    url("../fonts/Marianne-Light.woff") format("woff"),
+    url("../fonts/Marianne-Light.ttf") format("truetype");
+  font-weight: 100 300;
+}
+@font-face {
+  font-family: "Marianne";
+  src: url("../fonts/Marianne-Bold.woff2") format("woff2"),
+    url("../fonts/Marianne-Bold.woff") format("woff"),
+    url("../fonts/Marianne-Bold.ttf") format("truetype");
+  font-weight: 600 700;
+}
+@font-face {
+  font-family: "Marianne";
+  src: url("../fonts/Marianne-ExtraBold.woff2") format("woff2"),
+    url("../fonts/Marianne-ExtraBold.woff") format("woff"),
+    url("../fonts/Marianne-ExtraBold.ttf") format("truetype");
+  font-weight: 800 900;
+}
+html {
+  height: 100%;
+}
+body {
+  font-family: "Marianne", Arial, Helvetica, sans-serif;
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  color: #000;
+  background: #f8f8fa;
+  margin: 0;
+}
+h2 {
+  font-size: 1.17em;
+}
+#home-logo-link {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 20px 0;
+}
+#marianne {
+  max-width: 45%;
+  object-fit: contain;
+  max-height: 70px;
+}
+p {
+  font-size: 0.95em;
+}
+#wrapper {
+  text-align: center;
+  margin: 40px 0;
+  padding: 50px;
+  background: #ffffff;
+  width: 300px;
+  border: solid 1px #eee;
+  border-radius: 0px;
+}
+.control-group {
+  text-align: left;
+  margin-bottom: 20px;
+}
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+select {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  padding: 0 12px;
+  border-radius: 0.25rem 0.25rem 0 0;
+  background-color: #eee !important;
+  box-shadow: inset 0 -2px 0 0 #3a3a3a;
+}
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: #0a76f6;
+  outline-offset: 2px;
+  border-radius: 2px 2px 0 0;
+}
+label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.95em;
+}
+button {
+  width: 100%;
+  padding: 10px;
+  box-shadow: 0px 0.5px 1px rgba(24, 25, 38, 0.21),
+    inset 0px 1px 0.5px rgba(255, 255, 255, 0.32),
+    inset 0px -1px 0.5px rgba(24, 25, 38, 0.32);
+  border-radius: 0px;
+  border: solid 1px #ddd;
+  cursor: pointer;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  display: inline-block;
+  font-family: Marianne;
+}
+button[type="submit"],
+button.main {
+  border: none;
+  background: #000091;
+  color: white;
+}
+button[type="submit"]:hover {
+  border: none;
+  background: #000091;
+}
+.messages,
+.error-container {
+  text-align: left;
+  font-size: 0.85em;
+  padding: 10px;
+  border-radius: 0px;
+  margin-bottom: 20px;
+}
+.messages {
+  background: #d5ffde;
+}
+p.error-container {
+  background: #ffe3e3;
+  font-size: 0.95em;
+}
+p.inline-error-container {
+  color: #db2929;
+  font-size: 10px;
+  margin-top: 5px;
+  margin-bottom: 0;
+}
+hr {
+  height: 1px;
+  background: #ddd;
+  border: none;
+  margin: 10px 0 18px 0;
+}
+ul {
+  padding-left: 0.5em;
+}
+li {
+  list-style: none;
+}
+#wrapper.columns {
+  width: 805px;
+}
+
+.field-help-text {
+  display: block;
+  font-size: 0.8em;
+  color: #333;
+}
+
+.sylvasan-title {
+  font-weight: bold;
+  font-size: 1.2em;
+  margin-top: 0;
+}
