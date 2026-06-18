@@ -1,5 +1,5 @@
 import type { SurveyDisplay, SurveySchema } from "./survey"
-import type { UserDisplay } from "./user"
+import type { UserDisplay } from "./api"
 
 export type LocalResponseStatus = "draft" | "pending" | "synced"
 export type BackendResponseStatus = "draft" | "submitted" | "exported"
