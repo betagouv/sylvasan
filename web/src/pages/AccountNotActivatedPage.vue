@@ -12,10 +12,8 @@
 import { ref } from "vue"
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../utils/data-fetching"
-import { useToastStore } from "../stores/toast"
 
 const route = useRoute()
-const toast = useToastStore()
 
 const identifier = ref((route.query.identifier as string) ?? "")
 const sent = ref(false)
