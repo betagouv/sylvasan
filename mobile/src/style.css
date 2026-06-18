@@ -50,6 +50,10 @@
   --breakpoint-2xl: initial;
 }
 
+ion-tab-bar {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Reset pour éviter des conflits avec le DSFR */
 ion-action-sheet .action-sheet-button,
 ion-alert .alert-button {

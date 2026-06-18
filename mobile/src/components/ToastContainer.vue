@@ -5,7 +5,8 @@ const store = useToastStore()
 
 <template>
   <div
-    class="fixed top-1 right-1 flex flex-col gap-2 z-9999 bg-white ml-1"
+    class="fixed top-1 right-1 flex flex-col gap-2 z-9999 ml-1"
+    id="main-toast-container"
     aria-live="polite"
   >
     <TransitionGroup name="toast">
@@ -17,6 +18,7 @@ const store = useToastStore()
         :description="toast.message"
         :closeable="true"
         @close="store.dismiss(toast.id)"
+        class="bg-white"
       />
     </TransitionGroup>
   </div>
@@ -34,5 +36,10 @@ const store = useToastStore()
 .toast-leave-to {
   opacity: 0;
   transform: translateY(-10px);
+}
+#main-toast-container {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
 }
 </style>
