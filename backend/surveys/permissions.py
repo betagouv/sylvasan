@@ -37,3 +37,24 @@ class CanCreateSurvey(permissions.BasePermission):
         # S'il s'agit d'un·e ADMIN au niveau d'un pole, il faut que le pole soit le même
         # que celui donc l'ADMIN a accès
         return pole_id and qs.filter(pole_id=pole_id).exists()
+
+
+class CanDeleteSurvey(permissions.BasePermission):
+    """
+    Seuls les utilisateur·ices avec le rôle ADMIN dans l'organisation de l'enquête
+    peuvent la supprimer. Vérifié après récupération de l'objet (has_object_permission).
+    """
+
+    message = "Vous n'avez pas l'autorisation pour supprimer cette enquête"
+
+    def has_object_permission(self, request, view, obj):
+        qs = Membership.objects.filter(
+            user=request.user,
+            organisation=obj.organisation,
+            membership_type=MembershipType.ADMIN,
+        )
+        # Un·e ADMIN au niveau organisation peut supprimer n'importe quelle enquête de l'org
+        if qs.filter(pole__isnull=True).exists():
+            return True
+        # Un·e ADMIN de pôle ne peut supprimer que les enquêtes rattachées à son pôle
+        return obj.pole is not None and qs.filter(pole=obj.pole).exists()

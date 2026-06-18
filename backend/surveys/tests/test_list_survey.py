@@ -114,6 +114,25 @@ class TestListSurvey(APITestCase):
         self.assertEqual(response.json(), [])
 
     @authenticate
+    def test_enquete_inactive_non_retournee_dans_la_liste(self):
+        """
+        Une enquête désactivée (is_active=False) n'est pas retournée dans la liste,
+        même pour un·e utilisateur·ice qui y aurait normalement accès
+        """
+        org = OrganisationFactory()
+        enquete_active = SurveyFactory(organisation=org)
+        enquete_inactive = SurveyFactory(organisation=org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        enquete_inactive.deactivate()
+
+        response = self.client.get(reverse("survey_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()]
+        self.assertIn(enquete_active.id, ids)
+        self.assertNotIn(enquete_inactive.id, ids)
+
+    @authenticate
     def test_multiple_memberships_aggregate_surveys(self):
         """
         Un utilisateur avec plusieurs rôles voit les enquêtes de toutes ses organisations/pôles

@@ -11,11 +11,27 @@ class TimeStampable(models.Model):
     modification_date = models.DateTimeField(auto_now=True)
 
 
+class DeactivableQuerySet(models.query.QuerySet):
+    def active(self):
+        return self.filter(is_active=True)
+
+    def inactive(self):
+        return self.filter(is_active=False)
+
+
 class Deactivable(models.Model):
     class Meta:
         abstract = True
 
     is_active = models.BooleanField(default=True)
+
+    def activate(self):
+        self.is_active = True
+        self.save()
+
+    def deactivate(self):
+        self.is_active = False
+        self.save()
 
 
 class Historisable(models.Model):

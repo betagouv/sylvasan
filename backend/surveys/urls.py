@@ -6,7 +6,7 @@ import surveys.views as views
 
 urlpatterns = [
     path("api/surveys/", views.SurveyListCreateAPIView.as_view(), name="survey_list_create"),
-    path("api/surveys/<int:pk>", views.SurveyRetrieveAPIView.as_view(), name="survey_retrieve"),
+    path("api/surveys/<int:pk>", views.SurveyRetrieveDeleteAPIView.as_view(), name="survey_retrieve_delete"),
     path("api/mobile/surveys/", views.SurveyResponderListAPIView.as_view(), name="survey_responder_retrieve"),
     path("api/vocabularies/", views.VocabularySetListView.as_view(), name="vocabulary_set_list"),
     path("api/vocabularies/<str:code>/", views.VocabularySetDetailView.as_view(), name="vocabulary_set_detail"),

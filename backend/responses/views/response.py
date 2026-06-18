@@ -79,7 +79,10 @@ class ResponseQuerySetMixin:
                 query |= Q(survey__organisation_id=membership.organisation_id)
 
         return (
-            Response.objects.filter(query).distinct().select_related("survey", "survey__organisation", "survey__pole")
+            Response.objects.active()
+            .filter(query)
+            .distinct()
+            .select_related("survey", "survey__organisation", "survey__pole")
         )
 
 
@@ -131,7 +134,8 @@ class ResponseFullListAPIView(ListAPIView):
         if not has_responder_membership:
             return Response.objects.none()
         return (
-            Response.objects.filter(respondant=user)
+            Response.objects.active()
+            .filter(respondant=user)
             .select_related("survey", "survey__organisation", "survey__pole")
             .prefetch_related("images")
         )

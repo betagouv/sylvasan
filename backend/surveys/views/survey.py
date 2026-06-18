@@ -1,11 +1,11 @@
 from django.db.models import Q
 
 from organisations.models import Membership, MembershipType
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from surveys.models import Survey
-from surveys.permissions import CanCreateSurvey
+from surveys.permissions import CanCreateSurvey, CanDeleteSurvey
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer, SurveySerializer
 
 
@@ -20,11 +20,15 @@ class SurveyQuerySetMixin:
             user=user, pole__isnull=False, membership_type=MembershipType.RESPONDER
         ).values_list("organisation_id", flat=True)
 
-        return Survey.objects.filter(
-            Q(organisation_id__in=org_ids)
-            | Q(pole_id__in=pole_ids)
-            | Q(organisation_id__in=responder_pole_org_ids, pole__isnull=True)
-        ).distinct()
+        return (
+            Survey.objects.active()
+            .filter(
+                Q(organisation_id__in=org_ids)
+                | Q(pole_id__in=pole_ids)
+                | Q(organisation_id__in=responder_pole_org_ids, pole__isnull=True)
+            )
+            .distinct()
+        )
 
 
 class SurveyListCreateAPIView(SurveyQuerySetMixin, ListCreateAPIView):
@@ -58,11 +62,15 @@ def _responder_survey_queryset(user):
     pole_ids = [m["pole_id"] for m in pole_memberships]
     pole_org_ids = [m["organisation_id"] for m in pole_memberships]
 
-    return Survey.objects.filter(
-        Q(organisation_id__in=org_ids)
-        | Q(pole_id__in=pole_ids)
-        | Q(organisation_id__in=pole_org_ids, pole__isnull=True)
-    ).distinct()
+    return (
+        Survey.objects.active()
+        .filter(
+            Q(organisation_id__in=org_ids)
+            | Q(pole_id__in=pole_ids)
+            | Q(organisation_id__in=pole_org_ids, pole__isnull=True)
+        )
+        .distinct()
+    )
 
 
 class SurveyResponderListAPIView(ListAPIView):
@@ -78,6 +86,18 @@ class SurveyResponderListAPIView(ListAPIView):
         return _responder_survey_queryset(self.request.user)
 
 
-class SurveyRetrieveAPIView(SurveyQuerySetMixin, RetrieveAPIView):
+class SurveyRetrieveDeleteAPIView(SurveyQuerySetMixin, RetrieveDestroyAPIView):
     serializer_class = FullSurveySerializer
-    permission_classes = [IsAuthenticated]
+
+    def perform_destroy(self, survey):
+        survey.deactivate()
+
+        # En utilsant "update" pour la désactivation des réponses on rend l'opération plus
+        # rapide même si on bypass les triggers (comme par ex. django simple history). C'est
+        # un choix qui peut évoluer plus tard
+        survey.responses.update(is_active=False)
+
+    def get_permissions(self):
+        if self.request.method == "DELETE":
+            return [IsAuthenticated(), CanDeleteSurvey()]
+        return [IsAuthenticated()]

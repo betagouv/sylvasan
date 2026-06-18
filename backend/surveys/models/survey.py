@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from common.behaviours import Deactivable, Historisable, TimeStampable
+from common.behaviours import Deactivable, DeactivableQuerySet, Historisable, TimeStampable
 from organisations.models import Organisation, Pole
 
 from surveys.surveytype import SurveyType
@@ -13,6 +13,8 @@ from .campaign import Campaign
 class Survey(TimeStampable, Deactivable, Historisable):
     class Meta:
         verbose_name = "enquête"
+
+    objects = DeactivableQuerySet.as_manager()
 
     organisation = models.ForeignKey(
         Organisation, related_name="surveys", on_delete=models.SET_NULL, null=True, blank=True
@@ -43,5 +45,5 @@ class Survey(TimeStampable, Deactivable, Historisable):
             if self.organisation != self.campaign.organisation or self.pole != self.campaign.pole:
                 raise ValidationError("La campagne doit appartenir à la même organisation/pôle que l'enquête.")
         if self.pole and self.organisation:
-            if self.pole != self.organisation:
+            if self.pole.organisation != self.organisation:
                 raise ValidationError("Le pôle doit appartenir à l'organisation de l'enquête.")
