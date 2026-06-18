@@ -36,8 +36,6 @@ const {
 const onConfirmDelete = async () => {
   await deleteSurvey()
   confirmDeleteOpened.value = false
-  toast.show("L'enquête a été supprimée.", "success")
-  router.push({ name: "/SurveyListPage" })
   if (statusCode.value === 204) {
     toast.show("L'enquête a été supprimée.", "success")
     router.push({ name: "/SurveyListPage" })
