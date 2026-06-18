@@ -9,7 +9,7 @@
 </route>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../utils/data-fetching.ts"
 import type { SurveyField, ImageItem } from "@shared-types/survey"
@@ -71,6 +71,12 @@ const openViewer = (images: ImageItem[], index: number) => {
   viewerIndex.value = index
   viewerOpen.value = true
 }
+
+const respondantName = computed(() => {
+  const respondant = response.value.respondant
+  if (!respondant) return "—"
+  return `${respondant.firstName} ${respondant.lastName || ""}`
+})
 </script>
 
 <template>
@@ -90,8 +96,7 @@ const openViewer = (images: ImageItem[], index: number) => {
       <div class="mb-6">
         <p class="font-medium fr-badge">
           <v-icon name="ri-user-line" scale="0.8" class="mr-2" />
-          {{ response.respondant?.firstName }}
-          {{ response.respondant?.lastName }}
+          {{ respondantName }}
         </p>
       </div>
 
