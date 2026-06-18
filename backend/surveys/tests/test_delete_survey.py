@@ -3,13 +3,13 @@ from django.urls import reverse
 from common.utils import authenticate
 from organisations.factories import MembershipFactory, OrganisationFactory, PoleFactory
 from organisations.models import MembershipType
-from rest_framework import status
-from rest_framework.test import APITestCase
-from surveys.factories import SurveyFactory
-from surveys.models import Survey
-
 from responses.factories import ResponseFactory
 from responses.models import Response
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from surveys.factories import SurveyFactory
+from surveys.models import Survey
 
 
 class TestSoftDeleteSurvey(APITestCase):
@@ -180,7 +180,7 @@ class TestSoftDeleteSurvey(APITestCase):
             membership_type=MembershipType.ADMIN,
         )
         response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @authenticate
     def test_admin_pole_ne_peut_pas_supprimer_enquete_autre_pole(self):
@@ -199,7 +199,7 @@ class TestSoftDeleteSurvey(APITestCase):
             membership_type=MembershipType.ADMIN,
         )
         response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @authenticate
     def test_membre_autre_organisation_ne_peut_pas_supprimer_une_enquete(self):
