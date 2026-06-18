@@ -29,7 +29,7 @@ class TestJsonExport(APITestCase):
         La réponse est un fichier JSON en pièce jointe
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         ResponseFactory(survey=SurveyFactory(organisation=org))
 
         response = self.client.get(reverse("response_export_json"))
@@ -44,7 +44,7 @@ class TestJsonExport(APITestCase):
         L'export contient toutes les réponses accessibles, sans pagination
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         survey = SurveyFactory(organisation=org)
         response_a = ResponseFactory(survey=survey)
         response_b = ResponseFactory(survey=survey)
@@ -63,7 +63,7 @@ class TestJsonExport(APITestCase):
         """
         org = OrganisationFactory()
         other_org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         ResponseFactory(survey=SurveyFactory(organisation=other_org))
 
         response = self.client.get(reverse("response_export_json"))
@@ -77,7 +77,7 @@ class TestJsonExport(APITestCase):
         Le filtre created_after exclut les réponses créées avant la date donnée
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         survey = SurveyFactory(organisation=org)
         old_response = ResponseFactory(survey=survey)
         recent_response = ResponseFactory(survey=survey)
@@ -103,7 +103,7 @@ class TestJsonExport(APITestCase):
         Le filtre created_before exclut les réponses créées après la date donnée
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         survey = SurveyFactory(organisation=org)
         old_response = ResponseFactory(survey=survey)
         recent_response = ResponseFactory(survey=survey)
@@ -137,7 +137,7 @@ class TestCsvExport(APITestCase):
         La réponse est un fichier CSV en pièce jointe
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         ResponseFactory(survey=SurveyFactory(organisation=org))
 
         response = self.client.get(reverse("response_export_csv"))
@@ -152,7 +152,7 @@ class TestCsvExport(APITestCase):
         Le fichier CSV commence par un BOM UTF-8 pour être lisible sous Excel
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
 
         response = self.client.get(reverse("response_export_csv"))
 
@@ -164,7 +164,7 @@ class TestCsvExport(APITestCase):
         Le fichier CSV contient une ligne d'en-tête avec les noms de colonnes attendus
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
 
         response = self.client.get(reverse("response_export_csv"))
 
@@ -178,7 +178,7 @@ class TestCsvExport(APITestCase):
         Le fichier CSV contient une ligne de données par réponse accessible
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         survey = SurveyFactory(organisation=org)
         ResponseFactory(survey=survey)
         ResponseFactory(survey=survey)
@@ -196,7 +196,7 @@ class TestCsvExport(APITestCase):
         """
         org = OrganisationFactory()
         other_org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         ResponseFactory(survey=SurveyFactory(organisation=other_org))
 
         response = self.client.get(reverse("response_export_csv"))
@@ -211,7 +211,7 @@ class TestCsvExport(APITestCase):
         Les filtres de date fonctionnent sur l'export CSV comme sur l'export JSON
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         survey = SurveyFactory(organisation=org)
         old_response = ResponseFactory(survey=survey)
         recent_response = ResponseFactory(survey=survey)

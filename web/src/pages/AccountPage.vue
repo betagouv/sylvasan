@@ -17,13 +17,11 @@ const { loggedUser } = storeToRefs(useRootStore())
 
 const membershipTypeLabels: Record<string, string> = {
   admin: "Administrateur",
-  manager: "Responsable",
   responder: "Répondant",
 }
 
 const membershipTypeDescriptions: Record<string, string> = {
   admin: "Création d'enquêtes, accès aux réponses, gestion des usagers.",
-  manager: "Accès aux réponses de son pôle ou organisation",
   responder: "Réponse aux enquêtes de son pôle ou organisation",
 }
 

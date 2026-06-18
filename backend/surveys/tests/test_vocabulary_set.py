@@ -114,7 +114,7 @@ class TestVocabularySetDetail(APITestCase):
         Un membre peut accéder au détail d'un vocabulaire de son organisation
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         vocab = VocabularySetFactory(organisation=org)
 
         response = self.client.get(reverse("vocabulary_set_detail", kwargs={"code": vocab.code}), format="json")
@@ -129,7 +129,7 @@ class TestVocabularySetDetail(APITestCase):
         """
         org = OrganisationFactory()
         other_org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         other_vocab = VocabularySetFactory(organisation=other_org, code="ZZZZ")
 
         response = self.client.get(reverse("vocabulary_set_detail", kwargs={"code": other_vocab.code}), format="json")
@@ -243,10 +243,10 @@ class TestMobileVocabularySetList(APITestCase):
     @authenticate
     def test_non_responder_gets_empty_list(self):
         """
-        Un MANAGER ou ADMIN sans rôle RESPONDER obtient une liste vide
+        Un·e ADMIN sans rôle RESPONDER obtient une liste vide
         """
         org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         vocab = VocabularySetFactory(organisation=None)
         SurveyFactory(organisation=org, json_schema=self._schema_with_vocabulary(vocab.code))
 

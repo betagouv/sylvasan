@@ -59,20 +59,6 @@ class TestCreateSurvey(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @authenticate
-    def test_manager_cannot_create_survey(self):
-        """
-        Un utilisateur avec le rôle MANAGER ne peut pas créer d'enquête
-        """
-        org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
-        response = self.client.post(
-            reverse("survey_list_create"),
-            survey_payload(org),
-            format="json",
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    @authenticate
     def test_org_admin_can_create_survey_for_org(self):
         """
         Un ADMIN d'organisation peut créer une enquête au niveau de l'organisation

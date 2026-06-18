@@ -9,7 +9,6 @@ from .pole import Pole
 
 class MembershipType(models.TextChoices):
     ADMIN = "admin", "Administrateur"
-    MANAGER = "manager", "Responsable"
     RESPONDER = "responder", "Répondant"
 
 

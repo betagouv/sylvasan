@@ -11,7 +11,6 @@ const router = useRouter()
 
 const membershipTypeLabels: Record<string, string> = {
   admin: "Administrateur",
-  manager: "Responsable",
   responder: "Répondant",
 }
 

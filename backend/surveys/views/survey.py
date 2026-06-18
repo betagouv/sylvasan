@@ -76,7 +76,7 @@ def _responder_survey_queryset(user):
 class SurveyResponderListAPIView(ListAPIView):
     """
     Retourne seulement les enquêtes auxquelles l'utilisateur·ice connecté·e peut répondre.
-    Seuls les rôles RESPONDER sont pris en compte — les ADMIN et MANAGER obtiennent une liste vide.
+    Seuls les rôles RESPONDER sont pris en compte — les ADMIN obtiennent une liste vide.
     """
 
     serializer_class = FullSurveySerializer
