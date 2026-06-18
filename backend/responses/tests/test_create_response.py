@@ -78,22 +78,6 @@ class TestCreateResponse(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @authenticate
-    def test_manager_membership_cannot_create_response(self):
-        """
-        Un·e utilisateur·ice avec le rôle MANAGER ne peut pas créer une réponse
-        """
-        survey = SurveyFactory()
-        MembershipFactory(
-            user=authenticate.user, organisation=survey.organisation, membership_type=MembershipType.MANAGER
-        )
-        response = self.client.post(
-            reverse("response_list_create"),
-            response_payload(survey),
-            format="json",
-        )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    @authenticate
     def test_org_responder_can_create_response_for_org_survey(self):
         """
         Un·e RESPONDER au niveau de l'organisation peut répondre à une enquête de l'organisation

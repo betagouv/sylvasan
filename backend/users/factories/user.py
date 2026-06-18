@@ -1,8 +1,9 @@
 import random
 import string
 
-import factory
 from django.contrib.auth import get_user_model
+
+import factory
 
 
 def _make_username():
@@ -22,7 +23,4 @@ class UserFactory(factory.django.DjangoModelFactory):
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         manager = cls._get_manager(model_class)
-        return manager.create_user(*args, **kwargs)
-        return manager.create_user(*args, **kwargs)
-        return manager.create_user(*args, **kwargs)
         return manager.create_user(*args, **kwargs)

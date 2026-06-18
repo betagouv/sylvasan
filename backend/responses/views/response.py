@@ -120,7 +120,7 @@ class ResponseRetrieveAPIView(ResponseQuerySetMixin, RetrieveAPIView):
 class ResponseFullListAPIView(ListAPIView):
     """
     Retourne la liste complète des réponses de l'utilisateur·ice connecté·e.
-    Seuls les rôles RESPONDER sont pris en compte — les ADMIN et MANAGER obtiennent une liste vide.
+    Seuls les rôles RESPONDER sont pris en compte — les ADMIN obtiennent une liste vide.
     """
 
     serializer_class = FullResponseSerializer

@@ -134,31 +134,15 @@ class TestRetrieveSurvey(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    # role MANAGER
-
     @authenticate
-    def test_org_manager_can_retrieve_org_survey(self):
+    def test_org_admin_can_retrieve_pole_survey_within_org(self):
         """
-        Un·e MANAGER au niveau organisation peut accéder à une enquête de cette organisation
-        """
-        org = OrganisationFactory()
-        survey = SurveyFactory(organisation=org)
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
-
-        response = self.client.get(survey_url(survey.id), format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["id"], survey.id)
-
-    @authenticate
-    def test_org_manager_can_retrieve_pole_survey_within_org(self):
-        """
-        Un·e MANAGER au niveau organisation peut accéder à une enquête d'un pôle de cette organisation
+        Un·e ADMIN au niveau organisation peut accéder à une enquête d'un pôle de cette organisation
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
         survey = SurveyFactory(organisation=org, pole=pole)
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
 
         response = self.client.get(survey_url(survey.id), format="json")
 
@@ -166,27 +150,14 @@ class TestRetrieveSurvey(APITestCase):
         self.assertEqual(response.json()["id"], survey.id)
 
     @authenticate
-    def test_org_manager_cannot_retrieve_survey_from_other_org(self):
+    def test_pole_admin_can_retrieve_their_pole_survey(self):
         """
-        Un·e MANAGER ne peut pas accéder à une enquête d'une autre organisation
-        """
-        org = OrganisationFactory()
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
-        other_survey = SurveyFactory()
-
-        response = self.client.get(survey_url(other_survey.id), format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-    @authenticate
-    def test_pole_manager_can_retrieve_their_pole_survey(self):
-        """
-        Un·e MANAGER de pôle peut accéder à une enquête de son pôle
+        Un·e ADMIN de pôle peut accéder à une enquête de son pôle
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
         survey = SurveyFactory(organisation=org, pole=pole)
-        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
 
         response = self.client.get(survey_url(survey.id), format="json")
 
@@ -194,29 +165,29 @@ class TestRetrieveSurvey(APITestCase):
         self.assertEqual(response.json()["id"], survey.id)
 
     @authenticate
-    def test_pole_manager_cannot_retrieve_org_level_survey(self):
+    def test_pole_admin_cannot_retrieve_org_level_survey(self):
         """
-        Un·e MANAGER de pôle ne peut pas accéder à une enquête au niveau organisation (sans pôle)
+        Un·e ADMIN de pôle ne peut pas accéder à une enquête au niveau organisation (sans pôle)
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
         survey = SurveyFactory(organisation=org, pole=None)
-        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
 
         response = self.client.get(survey_url(survey.id), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @authenticate
-    def test_pole_manager_cannot_retrieve_survey_from_other_pole(self):
+    def test_pole_admin_cannot_retrieve_survey_from_other_pole(self):
         """
-        Un·e MANAGER de pôle ne peut pas accéder à une enquête d'un autre pôle de la même organisation
+        Un·e ADMIN de pôle ne peut pas accéder à une enquête d'un autre pôle de la même organisation
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
         other_pole = PoleFactory(organisation=org)
         survey = SurveyFactory(organisation=org, pole=other_pole)
-        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
 
         response = self.client.get(survey_url(survey.id), format="json")
 
@@ -295,20 +266,6 @@ class TestSurveyResponderList(APITestCase):
         org = OrganisationFactory()
         SurveyFactory(organisation=org)
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
-
-        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), [])
-
-    @authenticate
-    def test_manager_returns_empty_list(self):
-        """
-        Un·e MANAGER ne peut pas répondre aux enquêtes — la liste est vide
-        """
-        org = OrganisationFactory()
-        SurveyFactory(organisation=org)
-        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.MANAGER)
 
         response = self.client.get(reverse("survey_responder_retrieve"), format="json")
 

@@ -142,7 +142,7 @@ class TestListSurvey(APITestCase):
         survey_a = SurveyFactory(organisation=org_a)
         survey_b = SurveyFactory(organisation=org_b)
         MembershipFactory(user=authenticate.user, organisation=org_a, membership_type=MembershipType.RESPONDER)
-        MembershipFactory(user=authenticate.user, organisation=org_b, membership_type=MembershipType.MANAGER)
+        MembershipFactory(user=authenticate.user, organisation=org_b, membership_type=MembershipType.ADMIN)
 
         response = self.client.get(reverse("survey_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
