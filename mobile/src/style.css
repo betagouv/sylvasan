@@ -52,6 +52,7 @@
 
 ion-tab-bar {
   padding-bottom: env(safe-area-inset-bottom);
+  padding-top: 10px;
 }
 
 /* Reset pour éviter des conflits avec le DSFR */
@@ -72,6 +73,7 @@ ion-content {
   --padding-start: 1rem;
   --padding-end: 1rem;
 }
+
 ion-title {
-  padding: 0 20px;
+  padding: 0 20px 20px 0;
 }
