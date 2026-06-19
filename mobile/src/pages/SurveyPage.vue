@@ -126,14 +126,14 @@ const confirmDelete = async () => {
   const alert = await alertController.create({
     header: hasDraft
       ? "Supprimer l'observation en cours ?"
-      : "Annuler l'observation ?",
+      : "Abandonner l'observation ?",
     message: hasDraft
       ? "Cette observation sera définitivement supprimée."
       : "Les données saisies ne seront pas sauvegardées.",
     buttons: [
-      { text: "Annuler", role: "cancel" },
+      { text: "Contnuer la saisie", role: "cancel" },
       {
-        text: hasDraft ? "Supprimer" : "Annuler",
+        text: hasDraft ? "Supprimer" : "Abandonner",
         role: "destructive",
         handler: async () => {
           if (hasDraft) {
