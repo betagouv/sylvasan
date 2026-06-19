@@ -50,18 +50,27 @@ const saving = ref(false)
 const forceValidate = ref(false)
 
 // Force validation immediately when a draft is opened (user already saw/filled the form)
-watch(prefillData, (val) => { if (val) forceValidate.value = true })
+watch(prefillData, (val) => {
+  if (val) forceValidate.value = true
+})
 // Force validation when going back from summary (user clicked "Modifier")
-watch(showSummary, (val, prev) => { if (!val && prev) forceValidate.value = true })
+watch(showSummary, (val, prev) => {
+  if (!val && prev) forceValidate.value = true
+})
 
 const summaryHasErrors = computed(() => {
   const fields = survey.value?.jsonSchema?.fields ?? []
   const visibleFieldIds = new Set(
     fields
-      .filter((f) => !f.condition || evaluateCondition(f.condition, summaryData.value))
+      .filter(
+        (f) => !f.condition || evaluateCondition(f.condition, summaryData.value)
+      )
       .map((f) => f.id)
   )
-  return Object.keys(validateResponse(fields, summaryData.value, visibleFieldIds)).length > 0
+  return (
+    Object.keys(validateResponse(fields, summaryData.value, visibleFieldIds))
+      .length > 0
+  )
 })
 
 const router = useIonRouter()
@@ -113,17 +122,23 @@ const onSurveyDone = (data: Record<string, unknown>) => {
 }
 
 const confirmDelete = async () => {
-  if (!currentLocalId.value) return
+  const hasDraft = !!currentLocalId.value
   const alert = await alertController.create({
-    header: "Supprimer l'observation en cours ?",
-    message: "Cette observation sera définitivement supprimée.",
+    header: hasDraft
+      ? "Supprimer l'observation en cours ?"
+      : "Annuler l'observation ?",
+    message: hasDraft
+      ? "Cette observation sera définitivement supprimée."
+      : "Les données saisies ne seront pas sauvegardées.",
     buttons: [
       { text: "Annuler", role: "cancel" },
       {
-        text: "Supprimer",
+        text: hasDraft ? "Supprimer" : "Annuler",
         role: "destructive",
         handler: async () => {
-          await responsesStore.deleteDraft(currentLocalId.value!)
+          if (hasDraft) {
+            await responsesStore.deleteDraft(currentLocalId.value!)
+          }
           emit("close")
         },
       },
@@ -138,9 +153,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
     currentFormData.value = data
 
     const schema = survey.value?.jsonSchema
-    const draftData = schema
-      ? await saveImagesToFilesystem(data, schema)
-      : data
+    const draftData = schema ? await saveImagesToFilesystem(data, schema) : data
 
     const localId = await responsesStore.upsertDraft(
       surveyId.value,
@@ -190,12 +203,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end">
-          <ion-button
-            v-if="currentLocalId"
-            color="danger"
-            @click="confirmDelete"
-            class="pr-2"
-          >
+          <ion-button color="danger" @click="confirmDelete" class="pr-2">
             <ion-icon slot="icon-only" :icon="trashOutline" />
           </ion-button>
         </ion-buttons>
@@ -227,8 +235,14 @@ const saveResponse = async (data: Record<string, unknown>) => {
               @click="showSummary = false"
             />
             <div class="flex items-center gap-3">
-              <div v-if="saving" class="flex items-center gap-2 text-sm text-stone-500">
-                <ion-spinner name="crescent" style="width: 1rem; height: 1rem" />
+              <div
+                v-if="saving"
+                class="flex items-center gap-2 text-sm text-stone-500"
+              >
+                <ion-spinner
+                  name="crescent"
+                  style="width: 1rem; height: 1rem"
+                />
                 <span>Envoi en cours...</span>
               </div>
               <DsfrButton
