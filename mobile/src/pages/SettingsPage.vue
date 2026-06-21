@@ -11,10 +11,18 @@ import {
 import { computed } from "vue"
 import { useRouter } from "vue-router"
 import { useAuthStore } from "../stores/auth"
+import { useSyncStore } from "../stores/sync"
 import { storeToRefs } from "pinia"
+import { timeAgo } from "@shared-utils/date"
 
 const authStore = useAuthStore()
 const { loggedUser } = storeToRefs(authStore)
+const syncStore = useSyncStore()
+const { syncedAt, syncing } = storeToRefs(syncStore)
+
+const syncedAtLabel = computed(() =>
+  syncedAt.value ? timeAgo(syncedAt.value) : "Jamais synchronisé"
+)
 const router = useRouter()
 
 const membershipTypeLabels: Record<string, string> = {
@@ -70,8 +78,25 @@ const logout = async () => {
         </div>
       </section>
 
-      <section class="fr-mb-6w">
-        <h2 class="fr-h5">Rôles</h2>
+      <hr />
+      <section class="mb-8">
+        <h2 class="fr-h6 mb-1!">Gestion des données</h2>
+        <p class="fr-text--sm text-gray-500 mb-2!">
+          Dernière synchronisation {{ syncedAtLabel }}
+        </p>
+        <DsfrButton
+          label="Synchroniser"
+          size="sm"
+          secondary
+          icon="ri-refresh-line"
+          :disabled="syncing"
+          @click="syncStore.syncAll()"
+        />
+      </section>
+
+      <hr />
+      <section class="mb-8">
+        <h2 class="fr-h6 mb-1!">Rôles</h2>
         <p
           v-if="!loggedUser?.memberships.length"
           class="fr-text--sm text-gray-500"
@@ -83,7 +108,7 @@ const logout = async () => {
           <div
             v-for="(m, i) in loggedUser?.memberships"
             :key="i"
-            class="fr-p-3w border border-gray-200 rounded"
+            class="p-3 border border-gray-200 rounded"
           >
             <p class="font-bold fr-text--sm mb-1!">{{ m.organisation.name }}</p>
             <p class="fr-text--sm mb-1!">

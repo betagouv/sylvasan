@@ -31,18 +31,17 @@ import { useAuthStore } from "./stores/auth"
 const auth = useAuthStore()
 await auth.bootstrap()
 
+import { useSyncStore } from "./stores/sync"
+// Instantiate individual stores so they are registered before the sync store uses them
 import { useSurveysStore } from "./stores/surveys"
 import { useResponsesStore } from "./stores/responses"
 import { useVocabulariesStore } from "./stores/vocabularies"
-const surveys = useSurveysStore()
-const responses = useResponsesStore()
-const vocabulaires = useVocabulariesStore()
+useSurveysStore()
+useResponsesStore()
+useVocabulariesStore()
+const syncStore = useSyncStore()
 if (auth.isLoggedIn) {
-  await Promise.all([
-    surveys.bootstrap(),
-    responses.bootstrap(),
-    vocabulaires.bootstrap(),
-  ])
+  await syncStore.bootstrap()
 }
 
 import router from "./router/root"
