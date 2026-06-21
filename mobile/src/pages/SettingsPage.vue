@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { IonPage, IonHeader, IonToolbar, IonContent } from "@ionic/vue"
+import { personOutline } from "ionicons/icons"
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonContent,
+  IonTitle,
+  IonIcon,
+} from "@ionic/vue"
 import { computed } from "vue"
 import { useRouter } from "vue-router"
 import { useAuthStore } from "../stores/auth"
@@ -13,6 +21,11 @@ const membershipTypeLabels: Record<string, string> = {
   admin: "Administrateur",
   responder: "Répondant",
 }
+const fullName = computed(() => {
+  return `${loggedUser.value?.firstName ?? ""} ${
+    loggedUser.value?.lastName || "-"
+  }`
+})
 
 const personalInformation = computed(() => [
   { key: "Prénom", value: loggedUser.value?.firstName ?? "-" },
@@ -30,28 +43,31 @@ const logout = async () => {
   <ion-page>
     <ion-header>
       <ion-toolbar>
-        <ion-title>Mon profil</ion-title>
+        <ion-title>Paramètres</ion-title>
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      <DsfrTag
-        icon="ri-links-line"
-        v-if="loggedUser?.source !== 'local'"
-        :label="`Compte ${loggedUser?.source?.toUpperCase()}`"
-        class="mb-6!"
-      />
-
-      <section class="fr-mb-6w">
-        <dl class="pl-0!">
-          <div
-            v-for="info in personalInformation"
-            :key="info.key"
-            class="fr-mb-2w"
+      <section class="mb-4 flex items-center gap-3">
+        <div class="flex flex-col items-center gap-0">
+          <ion-icon
+            :icon="personOutline"
+            class="p-2 bg-slate-100 rounded-full border border-slate-300"
+          />
+          <p
+            v-if="loggedUser?.source !== 'local'"
+            class="mb-0! fr-text--xs font-medium text-emerald-700"
           >
-            <dt class="font-bold fr-text--sm mb-0!">{{ info.key }}</dt>
-            <dd class="ml-0! pl-0!">{{ info.value }}</dd>
-          </div>
-        </dl>
+            {{ `${loggedUser?.source?.toUpperCase()}` }}
+          </p>
+        </div>
+        <div>
+          <p class="font-bold mb-0!">
+            {{ fullName }}
+          </p>
+          <p class="fr-text--sm text-gray-500 font-bold mb-0!">
+            {{ loggedUser?.username ?? "-" }}
+          </p>
+        </div>
       </section>
 
       <section class="fr-mb-6w">
@@ -62,6 +78,7 @@ const logout = async () => {
         >
           Aucun rôle assigné.
         </p>
+
         <div v-else class="flex flex-col gap-3">
           <div
             v-for="(m, i) in loggedUser?.memberships"

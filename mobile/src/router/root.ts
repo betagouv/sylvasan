@@ -8,7 +8,7 @@ import PositionPage from "../pages/PositionPage.vue"
 import ResponseListPage from "../pages/ResponseListPage/index.vue"
 import SurveyPage from "../pages/SurveyPage.vue"
 import MapsPage from "../pages/MapsPage/index.vue"
-import ProfilePage from "../pages/ProfilePage.vue"
+import SettingsPage from "../pages/SettingsPage.vue"
 import MapDownloadPage from "../pages/MapDownloadPage.vue"
 import MapPreviewPage from "../pages/MapPreviewPage.vue"
 import ResponseSummaryPage from "../pages/ResponseSummaryPage.vue"
@@ -38,9 +38,9 @@ const routes: Array<RouteRecordRaw> = [
         component: MapsPage,
       },
       {
-        path: "profil",
-        name: "ProfilePage",
-        component: ProfilePage,
+        path: "parametres",
+        name: "SettingsPage",
+        component: SettingsPage,
       },
     ],
   },
