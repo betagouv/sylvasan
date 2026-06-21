@@ -12,7 +12,7 @@ import {
 } from "@ionic/vue"
 import { useResponsesStore } from "../../stores/responses"
 import { useSurveysStore } from "../../stores/surveys"
-import { useVocabulariesStore } from "../../stores/vocabularies.ts"
+import { useSyncStore } from "../../stores/sync"
 import ResponseCard from "./ResponseCard.vue"
 import SurveyPage from "../SurveyPage.vue"
 import { computed, ref } from "vue"
@@ -20,7 +20,7 @@ import type { ResponseFull, LocalResponse } from "@shared-types/response"
 
 const responsesStore = useResponsesStore()
 const surveysStore = useSurveysStore()
-const vocabulariesStore = useVocabulariesStore()
+const syncStore = useSyncStore()
 
 const byDateDesc = (
   a: LocalResponse | ResponseFull,
@@ -56,9 +56,7 @@ const onOpen = (response: LocalResponse | ResponseFull) => {
 }
 
 const handleRefresh = async (event: CustomEvent) => {
-  await surveysStore.sync()
-  await responsesStore.sync()
-  await vocabulariesStore.sync()
+  await syncStore.syncAll()
   ;(event.target as HTMLIonRefresherElement).complete()
 }
 

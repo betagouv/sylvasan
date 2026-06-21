@@ -8,7 +8,7 @@ import {
   IonTitle,
   IonIcon,
 } from "@ionic/vue"
-import { computed } from "vue"
+import { computed, ref, onUnmounted } from "vue"
 import { useRouter } from "vue-router"
 import { useAuthStore } from "../stores/auth"
 import { useSyncStore } from "../stores/sync"
@@ -31,9 +31,16 @@ const sync = async () => {
   }
 }
 
-const syncedAtLabel = computed(() =>
-  syncedAt.value ? timeAgo(syncedAt.value) : "Jamais synchronisé"
-)
+const now = ref(Date.now())
+const ticker = setInterval(() => {
+  now.value = Date.now()
+}, 60000)
+onUnmounted(() => clearInterval(ticker))
+
+const syncedAtLabel = computed(() => {
+  void now.value
+  return syncedAt.value ? timeAgo(syncedAt.value) : "Jamais synchronisé"
+})
 const router = useRouter()
 
 const membershipTypeLabels: Record<string, string> = {
@@ -45,12 +52,6 @@ const fullName = computed(() => {
     loggedUser.value?.lastName || "-"
   }`
 })
-
-const personalInformation = computed(() => [
-  { key: "Prénom", value: loggedUser.value?.firstName ?? "-" },
-  { key: "Nom", value: loggedUser.value?.lastName || "-" },
-  { key: "Identifiant", value: loggedUser.value?.username ?? "-" },
-])
 
 const logout = async () => {
   await authStore.logout()

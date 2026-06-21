@@ -32,13 +32,7 @@ const auth = useAuthStore()
 await auth.bootstrap()
 
 import { useSyncStore } from "./stores/sync"
-// Instantiate individual stores so they are registered before the sync store uses them
-import { useSurveysStore } from "./stores/surveys"
-import { useResponsesStore } from "./stores/responses"
-import { useVocabulariesStore } from "./stores/vocabularies"
-useSurveysStore()
-useResponsesStore()
-useVocabulariesStore()
+
 const syncStore = useSyncStore()
 if (auth.isLoggedIn) {
   await syncStore.bootstrap()
