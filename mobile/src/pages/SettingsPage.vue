@@ -12,6 +12,7 @@ import { computed } from "vue"
 import { useRouter } from "vue-router"
 import { useAuthStore } from "../stores/auth"
 import { useSyncStore } from "../stores/sync"
+import { useToastStore } from "../stores/toast"
 import { storeToRefs } from "pinia"
 import { timeAgo } from "@shared-utils/date"
 
@@ -19,6 +20,16 @@ const authStore = useAuthStore()
 const { loggedUser } = storeToRefs(authStore)
 const syncStore = useSyncStore()
 const { syncedAt, syncing } = storeToRefs(syncStore)
+const toast = useToastStore()
+
+const sync = async () => {
+  try {
+    await syncStore.syncAll()
+    toast.show("Données mises à jour", "success")
+  } catch {
+    toast.show("Échec de la synchronisation", "error")
+  }
+}
 
 const syncedAtLabel = computed(() =>
   syncedAt.value ? timeAgo(syncedAt.value) : "Jamais synchronisé"
@@ -90,7 +101,7 @@ const logout = async () => {
           secondary
           icon="ri-refresh-line"
           :disabled="syncing"
-          @click="syncStore.syncAll()"
+          @click="sync"
         />
       </section>
 
