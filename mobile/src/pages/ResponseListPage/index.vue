@@ -11,7 +11,6 @@ import {
   useIonRouter,
 } from "@ionic/vue"
 import { useResponsesStore } from "../../stores/responses"
-import { useSurveysStore } from "../../stores/surveys"
 import { useSyncStore } from "../../stores/sync"
 import ResponseCard from "./ResponseCard.vue"
 import SurveyPage from "../SurveyPage.vue"
@@ -19,7 +18,6 @@ import { computed, ref } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 
 const responsesStore = useResponsesStore()
-const surveysStore = useSurveysStore()
 const syncStore = useSyncStore()
 
 const byDateDesc = (
