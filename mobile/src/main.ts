@@ -31,18 +31,11 @@ import { useAuthStore } from "./stores/auth"
 const auth = useAuthStore()
 await auth.bootstrap()
 
-import { useSurveysStore } from "./stores/surveys"
-import { useResponsesStore } from "./stores/responses"
-import { useVocabulariesStore } from "./stores/vocabularies"
-const surveys = useSurveysStore()
-const responses = useResponsesStore()
-const vocabulaires = useVocabulariesStore()
+import { useSyncStore } from "./stores/sync"
+
+const syncStore = useSyncStore()
 if (auth.isLoggedIn) {
-  await Promise.all([
-    surveys.bootstrap(),
-    responses.bootstrap(),
-    vocabulaires.bootstrap(),
-  ])
+  await syncStore.bootstrap()
 }
 
 import router from "./router/root"

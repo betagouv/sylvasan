@@ -14,7 +14,7 @@ import {
   clipboardOutline,
   addOutline,
   cloudDownloadOutline,
-  personOutline,
+  cogOutline,
 } from "ionicons/icons"
 import { ref } from "vue"
 import SurveyListPage from "./SurveyListPage/index.vue"
@@ -56,9 +56,9 @@ const onSurveySelected = (id: number) => {
           <ion-label>Cartes</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button class="flex-1_1_0!" tab="profil" href="/profil">
-          <ion-icon :icon="personOutline" />
-          <ion-label>Profil</ion-label>
+        <ion-tab-button class="flex-1_1_0!" tab="parametres" href="/parametres">
+          <ion-icon :icon="cogOutline" />
+          <ion-label>Paramètres</ion-label>
         </ion-tab-button>
       </ion-tab-bar>
     </ion-tabs>

@@ -3,9 +3,7 @@ import { Preferences } from "@capacitor/preferences"
 import { Browser } from "@capacitor/browser"
 import { useApiFetch } from "../utils/data-fetching"
 import type { LoggedUser } from "@shared-types/api"
-import { useSurveysStore } from "./surveys"
-import { useResponsesStore } from "./responses"
-import { useVocabulariesStore } from "./vocabularies"
+import { useSyncStore } from "./sync"
 
 const ACCESS_KEY = "auth_access"
 const REFRESH_KEY = "auth_refresh"
@@ -88,15 +86,7 @@ export const useAuthStore = defineStore("auth", {
       this.refresh = data.value.refresh
 
       await Promise.all([this.persist(), this.fetchUser()])
-
-      const surveyStore = useSurveysStore()
-      const responsesStore = useResponsesStore()
-      const vocabulariesStore = useVocabulariesStore()
-      await Promise.all([
-        surveyStore.sync(),
-        responsesStore.sync(),
-        vocabulariesStore.sync(),
-      ])
+      await useSyncStore().syncAll()
     },
 
     async refreshToken() {
@@ -181,10 +171,7 @@ export const useAuthStore = defineStore("auth", {
       this.refresh = data.refresh
 
       await Promise.all([this.persist(), this.fetchUser()])
-
-      const surveyStore = useSurveysStore()
-      const responsesStore = useResponsesStore()
-      await Promise.all([surveyStore.sync(), responsesStore.sync()])
+      await useSyncStore().syncAll()
     },
 
     async logout() {
