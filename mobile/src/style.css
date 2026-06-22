@@ -75,5 +75,7 @@ ion-content {
 }
 
 ion-title {
-  padding: 0 20px 0 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  box-sizing: border-box;
 }

@@ -27,19 +27,29 @@ const MAX_DROPDOWN_HEIGHT = 240
 const updateDropdownPosition = () => {
   const rect = containerRef.value?.getBoundingClientRect()
   if (!rect) return
-  // visualViewport.height prend en compte le clavier on-screen; window.innerHeight pas toujours
+
   const viewportHeight = window.visualViewport?.height ?? window.innerHeight
   const spaceBelow = viewportHeight - rect.bottom
+
+  // Certaines plateformes (comme iOS) déplacent le document vers le haut lorsque
+  // le clavier est affiché. Ce déplacement est donné par getBoundingClientRect (en
+  // négatif) et doit être pris en compte pour la mesure de l'espace
+  const bodyRectTop = Math.abs(document.body.getBoundingClientRect().top)
+
+  // Petit espace approximatif per s'approcher de l'input en se mettant au dessus
+  // du label
   const labelOffsetHeight = 24
-  if (spaceBelow < MAX_DROPDOWN_HEIGHT) {
+
+
+  if ((spaceBelow + bodyRectTop) < MAX_DROPDOWN_HEIGHT) {
     dropdownStyle.value = {
-      bottom: `${viewportHeight - rect.top - labelOffsetHeight}px`,
+      bottom: `${window.innerHeight - rect.top - labelOffsetHeight}px`,
       left: `${rect.left}px`,
       width: `${rect.width}px`,
     }
   } else {
     dropdownStyle.value = {
-      top: `${rect.bottom}px`,
+      top: `${rect.bottom + bodyRectTop}px`,
       left: `${rect.left}px`,
       width: `${rect.width}px`,
     }
