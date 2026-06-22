@@ -1,3 +1,10 @@
+import { StatusBar, Style } from "@capacitor/status-bar"
+import { Capacitor } from "@capacitor/core"
+
+if (Capacitor.isNativePlatform()) {
+  StatusBar.setStyle({ style: Style.Light })
+}
+
 import { createApp } from "vue"
 import "./style.css"
 import App from "./App.vue"
