@@ -7,6 +7,7 @@ import {
   IonContent,
   IonTitle,
   IonIcon,
+  alertController,
 } from "@ionic/vue"
 import { computed, ref, onUnmounted } from "vue"
 import { useRouter } from "vue-router"
@@ -34,7 +35,7 @@ const sync = async () => {
 const now = ref(Date.now())
 const ticker = setInterval(() => {
   now.value = Date.now()
-}, 60000)
+}, 30000)
 onUnmounted(() => clearInterval(ticker))
 
 const syncedAtLabel = computed(() => {
@@ -54,8 +55,22 @@ const fullName = computed(() => {
 })
 
 const logout = async () => {
-  await authStore.logout()
-  router.replace({ name: "LoginPage" })
+  const alert = await alertController.create({
+    header: "Se déconnecter ?",
+    message: "Vous devrez vous reconnecter pour accéder à l'application.",
+    buttons: [
+      { text: "Annuler", role: "cancel" },
+      {
+        text: "Se déconnecter",
+        role: "destructive",
+        handler: async () => {
+          await authStore.logout()
+          router.replace({ name: "LoginPage" })
+        },
+      },
+    ],
+  })
+  await alert.present()
 }
 </script>
 
@@ -67,26 +82,43 @@ const logout = async () => {
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      <section class="mb-4 flex items-center gap-3">
-        <div class="flex flex-col items-center gap-0">
-          <ion-icon
-            :icon="personOutline"
-            class="p-2 bg-slate-100 rounded-full border border-slate-300"
-          />
-          <p
-            v-if="loggedUser?.source !== 'local'"
-            class="mb-0! fr-text--xs font-medium text-emerald-700"
-          >
-            {{ `${loggedUser?.source?.toUpperCase()}` }}
-          </p>
+      <section class="flex">
+        <div class="mb-4 flex items-center gap-3 grow">
+          <div class="flex flex-col items-center gap-0">
+            <ion-icon
+              :icon="personOutline"
+              class="p-2 bg-slate-100 rounded-full border border-slate-300"
+            />
+            <p
+              v-if="loggedUser?.source !== 'local'"
+              class="mb-0! fr-text--xs font-medium text-emerald-700"
+            >
+              {{ `${loggedUser?.source?.toUpperCase()}` }}
+            </p>
+          </div>
+          <div>
+            <p class="font-bold mb-0!">
+              {{ fullName }}
+            </p>
+            <p class="fr-text--sm text-gray-500 font-bold mb-0!">
+              {{ loggedUser?.username ?? "-" }}
+            </p>
+          </div>
         </div>
         <div>
-          <p class="font-bold mb-0!">
-            {{ fullName }}
-          </p>
-          <p class="fr-text--sm text-gray-500 font-bold mb-0!">
-            {{ loggedUser?.username ?? "-" }}
-          </p>
+          <DsfrButton
+            size="sm"
+            icon-only
+            title="Se déconnecter"
+            label="Se déconnecter"
+            tertiary
+            @click="logout"
+            :icon="{
+              name: 'ri-logout-box-r-line',
+              fill: 'var(--error-425-625)',
+            }"
+            class="rounded-full"
+          />
         </div>
       </section>
 
@@ -100,7 +132,11 @@ const logout = async () => {
           label="Synchroniser"
           size="sm"
           secondary
-          icon="ri-refresh-line"
+          :icon="
+            syncing
+              ? { name: 'ri-refresh-line', animation: 'spin' }
+              : 'ri-refresh-line'
+          "
           :disabled="syncing"
           @click="sync"
         />
@@ -136,8 +172,6 @@ const logout = async () => {
           </div>
         </div>
       </section>
-
-      <DsfrButton label="Se déconnecter" secondary @click="logout" />
     </ion-content>
   </ion-page>
 </template>
