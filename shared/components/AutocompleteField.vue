@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, onUnmounted, nextTick } from "vue"
 import type { VocabularyEntry } from "@shared-types/survey"
 
 const props = defineProps<{
@@ -19,16 +19,32 @@ const isOpen = ref(false)
 const highlightedIndex = ref(-1)
 const listRef = ref<HTMLUListElement | null>(null)
 const containerRef = ref<HTMLElement | null>(null)
-const dropdownStyle = ref({ top: "0px", left: "0px", width: "0px" })
+const dropdownStyle = ref<Record<string, string>>({})
+const dropdownPositioned = ref(false)
+
+const MAX_DROPDOWN_HEIGHT = 240
 
 const updateDropdownPosition = () => {
   const rect = containerRef.value?.getBoundingClientRect()
   if (!rect) return
-  dropdownStyle.value = {
-    top: `${rect.bottom}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`,
+  // visualViewport.height prend en compte le clavier on-screen; window.innerHeight pas toujours
+  const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+  const spaceBelow = viewportHeight - rect.bottom
+  const labelOffsetHeight = 24
+  if (spaceBelow < MAX_DROPDOWN_HEIGHT) {
+    dropdownStyle.value = {
+      bottom: `${viewportHeight - rect.top - labelOffsetHeight}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+    }
+  } else {
+    dropdownStyle.value = {
+      top: `${rect.bottom}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+    }
   }
+  dropdownPositioned.value = true
 }
 
 const normalize = (s: string) =>
@@ -51,10 +67,41 @@ const selectedLabel = computed(
   () => props.entries.find((e) => e.code === modelValue.value)?.label ?? ""
 )
 
+const addPositionListeners = () => {
+  window.visualViewport?.addEventListener("resize", updateDropdownPosition)
+  window.visualViewport?.addEventListener("scroll", updateDropdownPosition)
+  window.addEventListener("resize", updateDropdownPosition)
+}
+
+const removePositionListeners = () => {
+  window.visualViewport?.removeEventListener("resize", updateDropdownPosition)
+  window.visualViewport?.removeEventListener("scroll", updateDropdownPosition)
+  window.removeEventListener("resize", updateDropdownPosition)
+}
+
+const openDropdown = async () => {
+  dropdownPositioned.value = false
+  isOpen.value = true
+  await nextTick()
+  addPositionListeners()
+  // Delai pour résoudre certaines lenteurs du render dans les téléphones
+  setTimeout(updateDropdownPosition, navigator.maxTouchPoints > 0 ? 500 : 0)
+}
+
+const closeDropdown = () => {
+  isOpen.value = false
+  dropdownPositioned.value = false
+  removePositionListeners()
+}
+
+onUnmounted(() => {
+  removePositionListeners()
+})
+
 const select = (entry: VocabularyEntry) => {
   modelValue.value = entry.code
   query.value = entry.label
-  isOpen.value = false
+  closeDropdown()
   highlightedIndex.value = -1
 }
 
@@ -64,16 +111,15 @@ if (modelValue.value) {
   if (selectedEntry) select(selectedEntry)
 }
 
-const onFocus = () => {
+const onFocus = async () => {
   query.value = selectedLabel.value
-  isOpen.value = true
-  updateDropdownPosition()
+  await openDropdown()
 }
 
 // @mousedown.prevent dans la liste maintient le focus dans l'input, blur n'est
 // déclenché que quand l'utilisateur clique ailleurs ou fait Tab
 const onBlur = () => {
-  isOpen.value = false
+  closeDropdown()
   highlightedIndex.value = -1
   if (!query.value) {
     modelValue.value = undefined
@@ -92,7 +138,7 @@ const onKeydown = (e: KeyboardEvent) => {
   if (e.key === "ArrowDown") {
     e.preventDefault()
     if (!isOpen.value) {
-      isOpen.value = true
+      openDropdown()
       return
     }
     highlightedIndex.value = Math.min(
@@ -136,7 +182,7 @@ const onKeydown = (e: KeyboardEvent) => {
               @keydown="onKeydown"
               @update:model-value="
                 () => {
-                  isOpen = true
+                  openDropdown()
                   highlightedIndex = -1
                 }
               "
@@ -153,6 +199,7 @@ const onKeydown = (e: KeyboardEvent) => {
         v-if="isOpen && filtered.length"
         ref="listRef"
         :style="dropdownStyle"
+        :class="{ invisible: !dropdownPositioned }"
         class="fixed z-[9999] bg-white border border-slate-200 rounded shadow-md max-h-60 overflow-y-auto pl-0!"
         role="listbox"
       >
