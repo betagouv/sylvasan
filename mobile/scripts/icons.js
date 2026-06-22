@@ -34,6 +34,7 @@ export const collectionsToFilter = [
       "refresh-line",
       "save-line",
       "zoom-in-line",
+      "logout-box-r-line",
     ],
   ],
 ]
