@@ -15,7 +15,6 @@ import {
   IonBackButton,
   IonButton,
   IonIcon,
-  IonSpinner,
   IonTitle,
   useIonRouter,
   alertController,
