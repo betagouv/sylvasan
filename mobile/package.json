@@ -25,6 +25,7 @@
     "@capacitor/ios": "^8.4.0",
     "@capacitor/network": "^8.0.1",
     "@capacitor/preferences": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@gouvfr/dsfr": "^1.14.4",
     "@gouvminint/vue-dsfr": "^8.17.0",
     "@ionic/vue": "^8.8.9",
