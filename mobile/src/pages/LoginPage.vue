@@ -20,6 +20,7 @@ const validator = z.object({
 })
 
 const formErrors = ref<any>()
+const loading = ref(false)
 
 const resetFields = () => {
   payload.value.username = ""
@@ -30,11 +31,14 @@ const resetFields = () => {
 const submit = async () => {
   try {
     const validatedData = validator.parse(payload.value)
+    loading.value = true
     await authStore.login(validatedData.username, validatedData.password)
     router.push({ name: "PositionPage" })
     resetFields()
   } catch (error) {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -74,7 +78,12 @@ const loginWithDsf = async () => {
           </DsfrInputGroup>
 
           <div class="fr-mt-4w text-center">
-            <DsfrButton label="Se connecter" @click="submit" />
+            <DsfrButton
+              label="Se connecter"
+              :icon="loading ? { name: 'ri-refresh-line', animation: 'spin' } : undefined"
+              :disabled="loading"
+              @click="submit"
+            />
           </div>
 
           <div class="flex items-center gap-3 fr-mt-4w">

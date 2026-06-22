@@ -34,7 +34,7 @@ const sync = async () => {
 const now = ref(Date.now())
 const ticker = setInterval(() => {
   now.value = Date.now()
-}, 60000)
+}, 30000)
 onUnmounted(() => clearInterval(ticker))
 
 const syncedAtLabel = computed(() => {
@@ -100,7 +100,11 @@ const logout = async () => {
           label="Synchroniser"
           size="sm"
           secondary
-          icon="ri-refresh-line"
+          :icon="
+            syncing
+              ? { name: 'ri-refresh-line', animation: 'spin' }
+              : 'ri-refresh-line'
+          "
           :disabled="syncing"
           @click="sync"
         />

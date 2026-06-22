@@ -134,6 +134,9 @@ ion-content,
 ion-content::part(background) {
   background: #f4f4ff;
 }
+ion-refresher {
+  --background: #f4f4ff;
+}
 ion-content {
   --padding-top: 0;
   --padding-bottom: 0;
