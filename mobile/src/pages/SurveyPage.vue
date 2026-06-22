@@ -235,19 +235,13 @@ const saveResponse = async (data: Record<string, unknown>) => {
               @click="showSummary = false"
             />
             <div class="flex items-center gap-3">
-              <div
-                v-if="saving"
-                class="flex items-center gap-2 text-sm text-stone-500"
-              >
-                <ion-spinner
-                  name="crescent"
-                  style="width: 1rem; height: 1rem"
-                />
-                <span>Envoi en cours...</span>
-              </div>
               <DsfrButton
                 label="Sauvegarder"
-                icon="ri-cloud-line"
+                :icon="
+                  saving
+                    ? { name: 'ri-refresh-line', animation: 'spin' }
+                    : 'ri-cloud-line'
+                "
                 :disabled="saving || summaryHasErrors"
                 @click="saveResponse(summaryData)"
               />
