@@ -54,8 +54,11 @@ const onOpen = (response: LocalResponse | ResponseFull) => {
 }
 
 const handleRefresh = async (event: CustomEvent) => {
-  await syncStore.syncAll()
-  ;(event.target as HTMLIonRefresherElement).complete()
+  try {
+    await syncStore.syncAll()
+  } finally {
+    ;(event.target as HTMLIonRefresherElement).complete()
+  }
 }
 
 const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
@@ -128,15 +131,8 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
 
 <style scoped>
 ion-content,
-ion-content::part(background),
-ion-refresher {
+ion-content::part(background) {
   background: #f4f4ff;
-}
-ion-refresher.refresher-active {
-  z-index: 999;
-}
-ion-content::part(scroll) {
-  z-index: 9999;
 }
 ion-content {
   --padding-top: 0;
