@@ -13,6 +13,7 @@ export const setupAutoSync = async () => {
   let syncInterval: ReturnType<typeof setInterval> | null = null
 
   const startSyncInterval = () => {
+    stopSyncInterval()
     syncInterval = setInterval(() => {
       if (auth.isLoggedIn) syncStore.syncAll().catch(() => {})
     }, 60000)
