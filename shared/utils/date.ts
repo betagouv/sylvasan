@@ -6,7 +6,7 @@ export const timeAgo = (date: Date | string): string => {
   if (seconds < 60) return "à l'instant"
 
   const minutes = Math.round(seconds / 60)
-  if (minutes < 60) return `${prefix} ${minutes} m`
+  if (minutes < 60) return `${prefix} ${minutes} mn`
 
   const hours = Math.round(seconds / 3600)
   if (hours < 24) return `${prefix} ${hours} h`

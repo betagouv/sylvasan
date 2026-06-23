@@ -38,12 +38,8 @@ import { useAuthStore } from "./stores/auth"
 const auth = useAuthStore()
 await auth.bootstrap()
 
-import { useSyncStore } from "./stores/sync"
-
-const syncStore = useSyncStore()
-if (auth.isLoggedIn) {
-  await syncStore.bootstrap()
-}
+import { setupAutoSync } from "./utils/autoSync"
+await setupAutoSync()
 
 import router from "./router/root"
 app.use(router)
