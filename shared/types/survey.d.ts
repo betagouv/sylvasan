@@ -63,12 +63,15 @@ export interface SurveyField {
   type: FieldType
   label: string
   required?: boolean
+  default?: FieldDefault
   vocabulary?: string
   condition?: Condition
   validation?: FieldValidation
   ui?: FieldUI
   fields?: SurveyField[] // Pour le type array
 }
+
+export type FieldDefault = "today" | (string & {})
 
 export type FieldWidget =
   | "input"

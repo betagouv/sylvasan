@@ -40,6 +40,9 @@
         "condition": {
           "$ref": "#/$defs/condition"
         },
+        "default": {
+          "type": "string"
+        },
         "fields": {
           "items": {
             "$ref": "#/$defs/field"
