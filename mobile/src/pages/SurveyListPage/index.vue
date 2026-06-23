@@ -22,7 +22,7 @@ const syncStore = useSyncStore()
 const { syncedAt, syncing } = storeToRefs(syncStore)
 
 const sync = async () => {
-  await syncStore.syncAll()
+  await syncStore.syncAll().catch(() => {})
 }
 
 const now = ref(Date.now())
