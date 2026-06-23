@@ -88,7 +88,9 @@ const mapValue = computed({
 
 const rootRef = ref<HTMLElement | null>(null)
 const touched = ref(false)
-watchEffect(() => { if (props.forceValidate) touched.value = true })
+watchEffect(() => {
+  if (props.forceValidate) touched.value = true
+})
 
 const onFocusOut = (e: FocusEvent) => {
   if (!rootRef.value?.contains(e.relatedTarget as Node)) {
@@ -101,11 +103,25 @@ const errorMessage = computed(() =>
     ? validateField(props.field, modelValue.value)
     : null
 )
+
+if (
+  props.field.ui?.widget === "date" &&
+  props.field.default === "today" &&
+  !modelValue.value
+) {
+  const d = new Date()
+  const mm = String(d.getMonth() + 1).padStart(2, "0")
+  const dd = String(d.getDate()).padStart(2, "0")
+  modelValue.value = `${d.getFullYear()}-${mm}-${dd}`
+}
 </script>
 
 <template>
   <div ref="rootRef" @focusout="onFocusOut">
-    <DsfrInputGroup v-if="field.ui?.widget === 'input'" :error-message="errorMessage ?? undefined">
+    <DsfrInputGroup
+      v-if="field.ui?.widget === 'input'"
+      :error-message="errorMessage ?? undefined"
+    >
       <!-- Champ texte -->
       <DsfrInput
         v-model="modelValue"
@@ -121,7 +137,10 @@ const errorMessage = computed(() =>
     </DsfrInputGroup>
 
     <!-- Champ numérique -->
-    <DsfrInputGroup v-else-if="field.ui?.widget === 'number'" :error-message="errorMessage ?? undefined">
+    <DsfrInputGroup
+      v-else-if="field.ui?.widget === 'number'"
+      :error-message="errorMessage ?? undefined"
+    >
       <DsfrInput
         v-model="modelValue"
         :label="field.label"
@@ -133,7 +152,13 @@ const errorMessage = computed(() =>
         :min="field.validation?.min"
         :max="field.validation?.max"
         :disabled="disabled"
-        :step="field.validation?.numberType === 'integer' ? 1 : field.validation?.numberType === 'float' ? 'any' : undefined"
+        :step="
+          field.validation?.numberType === 'integer'
+            ? 1
+            : field.validation?.numberType === 'float'
+            ? 'any'
+            : undefined
+        "
         :is-invalid="!!errorMessage"
       />
     </DsfrInputGroup>
@@ -190,7 +215,10 @@ const errorMessage = computed(() =>
     </DsfrInputGroup>
 
     <!-- Champ date -->
-    <DsfrInputGroup v-else-if="field.ui?.widget === 'date'" :error-message="errorMessage ?? undefined">
+    <DsfrInputGroup
+      v-else-if="field.ui?.widget === 'date'"
+      :error-message="errorMessage ?? undefined"
+    >
       <DsfrInput
         v-model="modelValue"
         :label="field.label"

@@ -58,11 +58,14 @@ export interface FieldUI {
   unselectedText?: string
 }
 
+export type FieldDefault = "today" | (string & {})
+
 export interface SurveyField {
   id: string
   type: FieldType
   label: string
   required?: boolean
+  default?: FieldDefault
   vocabulary?: string
   condition?: Condition
   validation?: FieldValidation

@@ -221,6 +221,11 @@ const confirmFieldDeletion = () => {
             <div class="text-gray-500 text-medium">Aide</div>
             <div>{{ field.ui.hint }}</div>
           </div>
+          <div class="flex gap-2" v-if="field.default === 'today'">
+            <div class="text-gray-500 text-medium">
+              Remplissage par défaut à la date de réponse
+            </div>
+          </div>
           <div class="flex gap-2" v-if="field.validation?.min">
             <div class="text-gray-500 text-medium">Date min</div>
             <div v-if="typeof field.validation.min === 'string'">
