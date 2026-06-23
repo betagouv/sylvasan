@@ -129,7 +129,7 @@ export const useResponsesStore = defineStore("responses", {
 
         if (response.value?.ok) {
           this.deleteDraft(localResponse.localId)
-          await this.sync()
+          await this.sync().catch(() => {})
           return true
         } else {
           localResponse.status = "pending"
@@ -173,11 +173,10 @@ export const useResponsesStore = defineStore("responses", {
         const { data, response } = await useApiFetch("/mobile/responses/")
           .get()
           .json()
-        if (response.value?.ok) {
-          this.responses = data.value
-          this.syncedAt = new Date().toISOString()
-          await this.persist()
-        }
+        if (!response.value?.ok) throw new Error("Sync failed")
+        this.responses = data.value
+        this.syncedAt = new Date().toISOString()
+        await this.persist()
       } finally {
         this.syncing = false
       }

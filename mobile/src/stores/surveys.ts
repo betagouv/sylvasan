@@ -50,11 +50,10 @@ export const useSurveysStore = defineStore("surveys", {
         const { data, response } = await useApiFetch("/mobile/surveys/")
           .get()
           .json()
-        if (response.value?.ok) {
-          this.surveys = data.value
-          this.syncedAt = new Date().toISOString()
-          await this.persist()
-        }
+        if (!response.value?.ok) throw new Error("Sync failed")
+        this.surveys = data.value
+        this.syncedAt = new Date().toISOString()
+        await this.persist()
       } finally {
         this.syncing = false
       }

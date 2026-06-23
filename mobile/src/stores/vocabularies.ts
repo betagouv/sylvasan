@@ -39,11 +39,10 @@ export const useVocabulariesStore = defineStore("vocabularies", {
         const { data, response } = await useApiFetch("/mobile/vocabularies/")
           .get()
           .json()
-        if (response.value?.ok) {
-          this.vocabularySets = data.value
-          this.syncedAt = new Date().toISOString()
-          await this.persist()
-        }
+        if (!response.value?.ok) throw new Error("Sync failed")
+        this.vocabularySets = data.value
+        this.syncedAt = new Date().toISOString()
+        await this.persist()
       } finally {
         this.syncing = false
       }
