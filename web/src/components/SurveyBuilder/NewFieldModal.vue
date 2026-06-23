@@ -614,6 +614,7 @@ const close = () => {
           label="Préremplir à la date de remplissage"
           hint="La valeur par défaut serait celle de la journée où la réponse est remplie"
           name="today-default"
+          :model-value="payload.default === 'today'"
           @update:modelValue="(val: boolean) => payload.default = val ? 'today' : undefined "
         />
       </div>

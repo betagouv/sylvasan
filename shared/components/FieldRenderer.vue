@@ -109,7 +109,7 @@ if (
   props.field.default === "today" &&
   !modelValue.value
 )
-  modelValue.value = new Date().toISOString().slice(0, 10)
+  modelValue.value = new Date().toLocaleDateString("fr-FR")
 </script>
 
 <template>

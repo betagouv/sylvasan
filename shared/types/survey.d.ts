@@ -58,6 +58,8 @@ export interface FieldUI {
   unselectedText?: string
 }
 
+export type FieldDefault = "today" | (string & {})
+
 export interface SurveyField {
   id: string
   type: FieldType
@@ -70,8 +72,6 @@ export interface SurveyField {
   ui?: FieldUI
   fields?: SurveyField[] // Pour le type array
 }
-
-export type FieldDefault = "today" | (string & {})
 
 export type FieldWidget =
   | "input"
