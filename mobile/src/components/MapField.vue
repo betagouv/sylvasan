@@ -300,7 +300,6 @@ onBeforeUnmount(() => {
           label="Choisir sur la carte"
           icon="ri-map-pin-line"
           secondary
-          size="sm"
           :disabled="disabled"
           @click="opened = true"
         />
