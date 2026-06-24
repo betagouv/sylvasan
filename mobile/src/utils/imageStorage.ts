@@ -81,6 +81,15 @@ export async function loadImagesFromFilesystem(
 }
 
 /**
+ * Resolves a local filesystem path to a WebView-accessible URL.
+ * Pass this function as the `resolveImagePath` prop to SurveyRenderer / FieldRenderer.
+ */
+export async function resolveLocalImageSrc(path: string): Promise<string | null> {
+  const { uri } = await Filesystem.getUri({ path, directory: IMAGE_DIR })
+  return (window as any).Capacitor?.convertFileSrc(uri) ?? null
+}
+
+/**
  * Deletes all local image files referenced in data. Call after a draft is deleted
  * or a response is successfully submitted.
  */

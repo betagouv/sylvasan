@@ -19,6 +19,7 @@ const props = defineProps<{
   forceValidate?: boolean
   vocabularies?: VocabularySet[]
   mapComponent?: Component
+  resolveImagePath?: (path: string) => Promise<string | null>
 }>()
 
 const localId = useId()
@@ -260,6 +261,7 @@ if (
       :field="field"
       v-model="imagesModelValue as ImageItem[]"
       :disabled="disabled"
+      :resolveImagePath="resolveImagePath"
     />
 
     <component
