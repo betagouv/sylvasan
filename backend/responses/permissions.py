@@ -1,6 +1,7 @@
 from organisations.models import Membership, MembershipType
 from rest_framework import permissions
 from surveys.models import Survey
+from surveys.permissions import CanDeleteSurvey
 
 
 class CanCreateResponse(permissions.BasePermission):
@@ -30,3 +31,15 @@ class CanCreateResponse(permissions.BasePermission):
         if survey.pole is None:
             return qs.filter(pole__isnull=False).exists()
         return qs.filter(pole=survey.pole).exists()
+
+
+class CanDeleteResponse(permissions.BasePermission):
+    """
+    Seuls les utilisateur·ices avec le rôle ADMIN dans l'organisation de l'enquête
+    peuvent la supprimer. Vérifié après récupération de l'objet (has_object_permission).
+    """
+
+    message = "Vous n'avez pas l'autorisation pour supprimer cette réponse"
+
+    def has_object_permission(self, request, view, obj):
+        return CanDeleteSurvey().has_object_permission(request, view, obj.survey)

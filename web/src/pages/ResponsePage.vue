@@ -20,13 +20,20 @@ import { storeToRefs } from "pinia"
 import { useRootStore } from "../stores/root.ts"
 import MapField from "../components/MapField.vue"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
+import ConfirmDeleteModal from "../components/SurveyBuilder/ConfirmDeleteModal.vue"
+import { useToastStore } from "../stores/toast"
+import { useRouter } from "vue-router"
 
+const router = useRouter()
 const route = useRoute()
 const { vocabularies } = storeToRefs(useRootStore())
 
 const { data: response, isFetching } = useApiFetch(
   `/responses/${route.params.id}`
 ).json()
+
+const confirmDeleteOpened = ref(false)
+const toast = useToastStore()
 
 const fieldLabel = (fieldId: string): string =>
   response.value?.survey.jsonSchema.fields.find(
@@ -77,6 +84,23 @@ const respondantName = computed(() => {
   if (!respondant) return "—"
   return `${respondant.firstName} ${respondant.lastName || ""}`
 })
+
+const {
+  execute: deleteResponse,
+  isFetching: isDeleting,
+  statusCode,
+} = useApiFetch(`/responses/${route.params.id}`, { immediate: false }).delete()
+
+const onConfirmDelete = async () => {
+  await deleteResponse()
+  confirmDeleteOpened.value = false
+  if (statusCode.value === 204) {
+    toast.show("La réponse a été supprimée.", "success")
+    router.push({ name: "/ResponseListPage" })
+  } else {
+    toast.show("Une erreur s'est produite.", "error")
+  }
+}
 </script>
 
 <template>
@@ -92,7 +116,19 @@ const respondantName = computed(() => {
       <ProgressSpinner />
     </div>
     <div v-else-if="response">
-      <h1 class="fr-h4">Réponse à l'enquête « {{ response.survey.title }} »</h1>
+      <div class="flex border border-gray-200 p-4 mb-4 items-center">
+        <h1 class="fr-h4 mb-0!">
+          Réponse à l'enquête « {{ response.survey.title }} »
+        </h1>
+        <div class="grow"></div>
+        <DsfrButton
+          label="Supprimer"
+          secondary
+          icon="ri-delete-bin-line"
+          :disabled="isDeleting"
+          @click="confirmDeleteOpened = true"
+        />
+      </div>
       <div class="mb-6">
         <p class="font-medium fr-badge">
           <v-icon name="ri-user-line" scale="0.8" class="mr-2" />
@@ -237,5 +273,11 @@ const respondantName = computed(() => {
     :startIndex="viewerIndex"
     :opened="viewerOpen"
     @close="viewerOpen = false"
+  />
+  <ConfirmDeleteModal
+    :opened="confirmDeleteOpened"
+    title="Supprimer la réponse ?"
+    @confirm="onConfirmDelete"
+    @close="confirmDeleteOpened = false"
   />
 </template>
