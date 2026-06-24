@@ -33,6 +33,12 @@ class Deactivable(models.Model):
         self.is_active = False
         self.save()
 
+    @property
+    def activity_icon(self):
+        return "✅" if self.is_active else "❌"
+
+    activity_icon.fget.short_description = "Actif ?"
+
 
 class Historisable(models.Model):
     class Meta:

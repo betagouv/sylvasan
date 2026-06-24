@@ -7,7 +7,12 @@ from django.http import HttpResponse
 from django_filters import rest_framework as django_filters
 from organisations.models import Membership, MembershipType
 from rest_framework.filters import OrderingFilter
-from rest_framework.generics import GenericAPIView, ListAPIView, ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics import (
+    GenericAPIView,
+    ListAPIView,
+    ListCreateAPIView,
+    RetrieveDestroyAPIView,
+)
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
@@ -15,7 +20,7 @@ from surveys.models import Survey
 from surveys.serializers import SurveyDisplaySerializer
 
 from responses.models import Response
-from responses.permissions import CanCreateResponse
+from responses.permissions import CanCreateResponse, CanDeleteResponse
 from responses.serializers import (
     FullResponseSerializer,
     ResponseDisplaySerializer,
@@ -109,12 +114,19 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
         serializer.save(respondant=self.request.user)
 
 
-class ResponseRetrieveAPIView(ResponseQuerySetMixin, RetrieveAPIView):
+class ResponseRetrieveDestroyAPIView(ResponseQuerySetMixin, RetrieveDestroyAPIView):
     serializer_class = FullResponseSerializer
-    permission_classes = [IsAuthenticated]
+
+    def perform_destroy(self, response):
+        response.deactivate()
 
     def get_queryset(self):
         return super().get_queryset().prefetch_related("images")
+
+    def get_permissions(self):
+        if self.request.method == "DELETE":
+            return [IsAuthenticated(), CanDeleteResponse()]
+        return [IsAuthenticated()]
 
 
 class ResponseFullListAPIView(ListAPIView):

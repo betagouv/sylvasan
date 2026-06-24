@@ -22,7 +22,7 @@ def _b64(filename):
 
 
 def response_url(response_id):
-    return reverse("response_retrieve", kwargs={"pk": response_id})
+    return reverse("response_retrieve_destroy", kwargs={"pk": response_id})
 
 
 class TestRetrieveResponse(APITestCase):
