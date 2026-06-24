@@ -26,7 +26,7 @@ import MapField from "../components/MapField.vue"
 import { useResponsesStore } from "../stores/responses"
 import { storeToRefs } from "pinia"
 import { useVocabulariesStore } from "../stores/vocabularies"
-import { saveImagesToFilesystem } from "../utils/imageStorage"
+import { saveImagesToFilesystem, resolveLocalImageSrc } from "../utils/imageStorage"
 import { validateResponse } from "@shared-utils/validateField"
 import { evaluateCondition } from "@shared-utils/survey"
 
@@ -219,6 +219,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
             :forceValidate="forceValidate"
             :vocabularies="vocabularySets"
             :mapComponent="MapField"
+            :resolveImagePath="resolveLocalImageSrc"
             @done="onSurveyDone"
             @change="handleFormChange"
           />

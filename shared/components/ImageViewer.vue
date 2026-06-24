@@ -7,6 +7,7 @@ const props = withDefaults(
     images: ImageItem[]
     startIndex?: number
     opened: boolean
+    resolvedSrcs?: Record<string, string>
   }>(),
   { startIndex: 0 }
 )
@@ -25,8 +26,7 @@ watch(
 const current = computed(() => props.images[currentIndex.value])
 
 const fullSrc = (item: ImageItem): string => {
-  if ("type" in item)
-    return (window as any).Capacitor?.convertFileSrc(item.path) ?? ""
+  if ("type" in item) return props.resolvedSrcs?.[item.path] ?? ""
   if ("id" in item) {
     if (item.fileUrl) return item.fileUrl
     if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`

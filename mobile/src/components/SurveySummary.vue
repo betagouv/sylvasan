@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 import type { Survey, SurveyField, ImageItem } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
@@ -8,6 +8,7 @@ import { resolveFieldValue, evaluateCondition } from "@shared-utils/survey"
 import { validateResponse, validateField } from "@shared-utils/validateField"
 import { useVocabulariesStore } from "../stores/vocabularies"
 import ImageViewer from "@shared-components/ImageViewer.vue"
+import { resolveLocalImageSrc } from "../utils/imageStorage"
 
 const { response, data, survey } = defineProps<{
   response?: ResponseFull | LocalResponse
@@ -36,9 +37,27 @@ const isImageField = (fieldId: string): boolean =>
 const getSubFields = (fieldId: string): SurveyField[] =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.fields ?? []
 
+const resolvedSrcs = ref<Record<string, string>>({})
+
+watch(
+  resolvedData,
+  async (data) => {
+    for (const field of survey.jsonSchema.fields) {
+      if (field.ui?.widget !== "image") continue
+      const images = data[field.id]
+      if (!Array.isArray(images)) continue
+      for (const item of images as ImageItem[]) {
+        if (!("type" in item) || resolvedSrcs.value[item.path]) continue
+        const src = await resolveLocalImageSrc(item.path).catch(() => null)
+        if (src) resolvedSrcs.value[item.path] = src
+      }
+    }
+  },
+  { immediate: true }
+)
+
 const imageSrc = (item: ImageItem): string | null => {
-  if ("type" in item)
-    return (window as any).Capacitor?.convertFileSrc(item.path) ?? null
+  if ("type" in item) return resolvedSrcs.value[item.path] ?? null
   if ("file" in item) return `data:image/jpeg;base64,${item.file}`
   if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
   return null
@@ -50,11 +69,19 @@ const visibleFields = computed(() =>
   )
 )
 
-const visibleFieldIds = computed(() => new Set(visibleFields.value.map((f) => f.id)))
+const visibleFieldIds = computed(
+  () => new Set(visibleFields.value.map((f) => f.id))
+)
 
 // On montre la validation seulement lors que la réponse n'est pas sauvegardé dans le backend
 const validationErrors = computed(() =>
-  response ? {} : validateResponse(survey.jsonSchema.fields, resolvedData.value, visibleFieldIds.value)
+  response
+    ? {}
+    : validateResponse(
+        survey.jsonSchema.fields,
+        resolvedData.value,
+        visibleFieldIds.value
+      )
 )
 
 const getSubFieldError = (
@@ -212,6 +239,7 @@ const openViewer = (images: ImageItem[], index: number) => {
     :images="viewerImages"
     :startIndex="viewerIndex"
     :opened="viewerOpen"
+    :resolvedSrcs="resolvedSrcs"
     @close="viewerOpen = false"
   />
 </template>

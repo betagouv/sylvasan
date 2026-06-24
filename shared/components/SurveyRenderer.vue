@@ -15,6 +15,7 @@ const props = withDefaults(
     forceValidate?: boolean
     vocabularies?: VocabularySet[]
     mapComponent?: Component
+    resolveImagePath?: (path: string) => Promise<string | null>
   }>(),
   { vocabularies: () => [] }
 )
@@ -116,6 +117,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
           :force-validate="forceValidate"
           :vocabularies="props.vocabularies"
           :mapComponent="mapComponent"
+          :resolveImagePath="props.resolveImagePath"
         />
       </template>
     </TransitionGroup>

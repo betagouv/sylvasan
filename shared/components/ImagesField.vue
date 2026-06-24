@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useId } from "vue"
+import { computed, ref, useId, watch } from "vue"
 import type {
   SurveyField,
   ImageItem,
@@ -10,6 +10,7 @@ import ImageViewer from "./ImageViewer.vue"
 const props = defineProps<{
   field: SurveyField
   disabled?: boolean
+  resolveImagePath?: (path: string) => Promise<string | null>
 }>()
 
 const modelValue = defineModel<ImageItem[]>({ default: () => [] })
@@ -21,9 +22,23 @@ const openFilePicker = () => fileInput.value?.click()
 const maxImages = computed(() => props.field.validation?.maxItems ?? 5)
 const atMax = computed(() => modelValue.value.length >= maxImages.value)
 
+const resolvedSrcs = ref<Record<string, string>>({})
+
+watch(
+  modelValue,
+  async (items) => {
+    if (!props.resolveImagePath) return
+    for (const item of items) {
+      if (!("type" in item) || resolvedSrcs.value[item.path]) continue
+      const src = await props.resolveImagePath(item.path).catch(() => null)
+      if (src) resolvedSrcs.value[item.path] = src
+    }
+  },
+  { immediate: true }
+)
+
 const previewSrc = (item: ImageItem): string | null => {
-  if ("type" in item)
-    return (window as any).Capacitor?.convertFileSrc(item.path) ?? null
+  if ("type" in item) return resolvedSrcs.value[item.path] ?? null
   if ("file" in item) return `data:image/jpeg;base64,${item.file}`
   if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
   return null
@@ -183,6 +198,7 @@ const openViewer = (index: number) => {
     :images="modelValue"
     :startIndex="viewerIndex"
     :opened="viewerOpen"
+    :resolvedSrcs="resolvedSrcs"
     @close="viewerOpen = false"
   />
 </template>
