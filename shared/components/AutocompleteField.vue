@@ -28,6 +28,19 @@ const updateDropdownPosition = () => {
   const rect = containerRef.value?.getBoundingClientRect()
   if (!rect) return
 
+  const isNative = (window as any).Capacitor?.isNativePlatform()
+  console.log(`isNative ${isNative}`)
+
+  if (!isNative) {
+    dropdownStyle.value = {
+      top: `${rect.bottom}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+    }
+    dropdownPositioned.value = true
+    return
+  }
+
   const viewportHeight = window.visualViewport?.height ?? window.innerHeight
   const spaceBelow = viewportHeight - rect.bottom
 
@@ -40,8 +53,7 @@ const updateDropdownPosition = () => {
   // du label
   const labelOffsetHeight = 24
 
-
-  if ((spaceBelow + bodyRectTop) < MAX_DROPDOWN_HEIGHT) {
+  if (spaceBelow + bodyRectTop < MAX_DROPDOWN_HEIGHT) {
     dropdownStyle.value = {
       bottom: `${window.innerHeight - rect.top - labelOffsetHeight}px`,
       left: `${rect.left}px`,
