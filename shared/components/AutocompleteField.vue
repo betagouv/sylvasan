@@ -29,7 +29,6 @@ const updateDropdownPosition = () => {
   if (!rect) return
 
   const isNative = (window as any).Capacitor?.isNativePlatform()
-  console.log(`isNative ${isNative}`)
 
   if (!isNative) {
     dropdownStyle.value = {
