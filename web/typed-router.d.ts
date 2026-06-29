@@ -157,6 +157,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/DataDeletion': RouteRecordInfo<
+      '/DataDeletion',
+      '/suppression-donnees',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
   }
 
   /**
@@ -275,6 +282,12 @@ declare module 'vue-router/auto-routes' {
     'src/pages/LoginPage.vue': {
       routes:
         | '/LoginPage'
+      views:
+        | never
+    }
+    'src/pages/DataDeletion.vue': {
+      routes:
+        | '/DataDeletion'
       views:
         | never
     }
