@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useId, watch } from "vue"
+import { computed, onUnmounted, ref, useId, watch } from "vue"
 import type {
   SurveyField,
   ImageItem,
@@ -107,6 +107,7 @@ const compressImage = (file: File): Promise<LocalImageItem> =>
 
 const compressing = ref(false)
 watch(compressing, (val) => emit("busyChange", val))
+onUnmounted(() => { if (compressing.value) emit("busyChange", false) })
 
 const handleChange = async (event: Event) => {
   const files = (event.target as HTMLInputElement).files
