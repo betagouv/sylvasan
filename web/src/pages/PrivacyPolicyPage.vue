@@ -273,5 +273,28 @@
       no-caption
       :pagination="false"
     />
+
+    <h2>Données de géolocalisation</h2>
+
+    <p>
+      Lors de la réalisation d'un signalement, les coordonnées GPS du lieu
+      d'observation sont enregistrées afin de géoréférencer l'observation. Cette
+      donnée est nécessaire à l'exploitation des signalements.
+    </p>
+
+    <h2>Images</h2>
+    <p>
+      Les enquêtes peuvent contenir des champs image, permettant aux usagers
+      d'associer une ou plusieurs photographies à leurs observations, dans le
+      cadre du diagnostic phytosanitaire.
+    </p>
+
+    <h2>Données issues de l'enquête</h2>
+    <p>
+      Les réponses apportées aux enquêtes (descriptions des symptômes observés,
+      essences concernées, données de diagnostic) sont enregistrées et associées
+      au compte de l'utilisateur ou de l'utilisatrice ayant réalisé le
+      signalement.
+    </p>
   </div>
 </template>
