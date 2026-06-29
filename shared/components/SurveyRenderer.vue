@@ -90,6 +90,11 @@ watch(
 )
 
 watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
+
+const isCompressing = ref(false)
+const onFieldBusyChange = (val: boolean) => {
+  isCompressing.value = val
+}
 </script>
 
 <template>
@@ -118,6 +123,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
           :vocabularies="props.vocabularies"
           :mapComponent="mapComponent"
           :resolveImagePath="props.resolveImagePath"
+          @busyChange="onFieldBusyChange"
         />
       </template>
     </TransitionGroup>
@@ -128,7 +134,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
         label="Précédent"
         secondary
         type="button"
-        :disabled="currentStep === 1"
+        :disabled="currentStep === 1 || isCompressing"
         @click="goPrev"
         size="lg"
       />
@@ -137,6 +143,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
         label="Suivant"
         type="button"
         icon="ri-arrow-right-s-line"
+        :disabled="isCompressing"
         @click="goNext"
         size="lg"
       />
@@ -144,6 +151,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
         v-if="isLastStep && allowSubmit"
         icon="ri-arrow-right-s-line"
         label="Suivant"
+        :disabled="isCompressing"
         @click="handleDone"
         size="lg"
       />
@@ -155,6 +163,7 @@ watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
         @click="handleDone"
         icon="ri-arrow-right-s-line"
         label="Suivant"
+        :disabled="isCompressing"
         size="lg"
       />
     </div>

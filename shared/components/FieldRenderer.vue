@@ -24,6 +24,10 @@ const props = defineProps<{
 
 const localId = useId()
 
+const emit = defineEmits<{
+  busyChange: [value: boolean]
+}>()
+
 const modelValue = defineModel<unknown>()
 
 const arrayModelValue = computed({
@@ -262,6 +266,7 @@ if (
       v-model="imagesModelValue as ImageItem[]"
       :disabled="disabled"
       :resolveImagePath="resolveImagePath"
+      @busyChange="(val) => emit('busyChange', val)"
     />
 
     <component

@@ -13,6 +13,10 @@ const props = defineProps<{
   resolveImagePath?: (path: string) => Promise<string | null>
 }>()
 
+const emit = defineEmits<{
+  busyChange: [value: boolean]
+}>()
+
 const modelValue = defineModel<ImageItem[]>({ default: () => [] })
 const inputId = useId()
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -102,6 +106,7 @@ const compressImage = (file: File): Promise<LocalImageItem> =>
   })
 
 const compressing = ref(false)
+watch(compressing, (val) => emit("busyChange", val))
 
 const handleChange = async (event: Event) => {
   const files = (event.target as HTMLInputElement).files
