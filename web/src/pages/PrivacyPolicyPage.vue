@@ -157,6 +157,36 @@
         >notre page dédiée.</router-link
       >
     </p>
+
+    <h3>e) Données de géolocalisation</h3>
+    <p>
+      Ce traitement est nécessaire à l’exécution d’une mission d’intérêt public
+      ou relevant de l’exercice de l’autorité publique dont est investi le
+      responsable de traitement au sens de l’article 6-e du RGPD. Lors de la
+      réalisation d'un signalement, les coordonnées GPS du lieu d'observation
+      sont enregistrées afin de géoréférencer l'observation. Cette donnée est
+      nécessaire à l'exploitation des signalements.
+    </p>
+
+    <h3>f) Images</h3>
+    <p>
+      Ce traitement est nécessaire à l’exécution d’une mission d’intérêt public
+      ou relevant de l’exercice de l’autorité publique dont est investi le
+      responsable de traitement au sens de l’article 6-e du RGPD. Les enquêtes
+      peuvent contenir des champs image, permettant aux usagers d'associer une
+      ou plusieurs photographies à leurs observations, dans le cadre du
+      diagnostic phytosanitaire.
+    </p>
+
+    <h3>g) Données issues de l'enquête</h3>
+    <p>
+      Ce traitement est nécessaire à l’exécution d’une mission d’intérêt public
+      ou relevant de l’exercice de l’autorité publique dont est investi le
+      responsable de traitement au sens de l’article 6-e du RGPD. Les réponses
+      apportées aux enquêtes (descriptions des symptômes observés, essences
+      concernées, données de diagnostic) sont enregistrées et associées au
+      compte de l'utilisateur ou de l'utilisatrice ayant réalisé le signalement.
+    </p>
     <h2>Durée de conservation</h2>
     <DsfrTable
       title="Durée de conservation"
