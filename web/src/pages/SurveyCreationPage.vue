@@ -19,6 +19,7 @@ import { useRootStore } from "../stores/root.ts"
 import * as z from "zod"
 import { ZodError } from "zod"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
+import { DsfrAlert } from "@gouvminint/vue-dsfr"
 
 ////////////////////////////////////////////////
 /////////////// MODIFICATION ///////////////////
@@ -39,7 +40,8 @@ const {
 }).json()
 
 onFetchError(() => {
-  // Alert (toast) + Redirect
+  toast.show("Enquête introuvable", "error")
+  router.push({ name: "/SurveyListPage" })
 })
 
 onFetchResponse(() => {
@@ -269,6 +271,14 @@ const createOrUpdateSurvey = async () => {
           >pour {{ uniqueAdminOrgs[0].name }}</span
         >
       </h1>
+      <div v-if="existingSurveyId" class="flex mb-6">
+        <DsfrAlert
+          type="warning"
+          description="La modification d'une enquête existante peut entraîner des jeux de
+        données incompatibles"
+          :small="true"
+        />
+      </div>
       <div class="flex gap-8">
         <DsfrInputGroup :error-message="formErrors?.fieldErrors?.title?.[0]">
           <DsfrInput

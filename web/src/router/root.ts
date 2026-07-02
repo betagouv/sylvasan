@@ -20,6 +20,7 @@ type SylvaSanRouter = Router & {
 const extendedRoutes = [
   ...routes,
   {
+    name: "SurveyModification",
     path: "/modification-enquete/:surveyId",
     component: () => SurveyCreationPage,
     meta: { authenticationRequired: true, title: "Modification d'enquête" },
