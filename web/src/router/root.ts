@@ -10,6 +10,7 @@ import { useStorage } from "@vueuse/core"
 import { useRootStore } from "../stores/root.ts"
 import { routes, handleHotUpdate } from "vue-router/auto-routes"
 import NotFoundPage from "../pages/NotFoundPage.vue"
+import SurveyCreationPage from "../pages/SurveyCreationPage.vue"
 
 const previousRoute = ref<RouteLocationNormalizedGeneric | null>(null)
 type SylvaSanRouter = Router & {
@@ -18,6 +19,11 @@ type SylvaSanRouter = Router & {
 
 const extendedRoutes = [
   ...routes,
+  {
+    path: "/modification-enquete/:surveyId",
+    component: () => SurveyCreationPage,
+    meta: { authenticationRequired: true, title: "Modification d'enquête" },
+  },
   {
     path: "/:pathMatch(.*)*",
     name: "NotFound",
