@@ -3,7 +3,7 @@ Authlib==1.7.2
 bcrypt==5.0.0
 boto3==1.43.34
 botocore==1.43.34
-certifi==2026.5.20
+certifi==2026.6.17
 cffi==2.0.0
 charset-normalizer==3.4.7
 cryptography==49.0.0
@@ -18,7 +18,7 @@ djangorestframework==3.17.1
 djangorestframework-camel-case==1.4.2
 djangorestframework_simplejwt==5.5.1
 factory_boy==3.3.3
-Faker==40.19.1
+Faker==40.23.0
 idna==3.18
 jmespath==1.1.0
 joserfc==1.7.1
@@ -32,7 +32,7 @@ python-dateutil==2.9.0.post0
 requests==2.34.2
 ruff==0.15.17
 s3transfer==0.19.0
-sentry-sdk==2.62.0
+sentry-sdk==2.63.0
 six==1.17.0
 sqlparse==0.5.5
 urllib3==2.7.0

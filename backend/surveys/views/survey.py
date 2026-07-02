@@ -1,7 +1,7 @@
 from django.db.models import Q
 
 from organisations.models import Membership, MembershipType
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveDestroyAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from surveys.models import Survey
@@ -86,7 +86,7 @@ class SurveyResponderListAPIView(ListAPIView):
         return _responder_survey_queryset(self.request.user)
 
 
-class SurveyRetrieveDeleteAPIView(SurveyQuerySetMixin, RetrieveDestroyAPIView):
+class SurveyRetrieveUpdateDestroyAPIView(SurveyQuerySetMixin, RetrieveUpdateDestroyAPIView):
     serializer_class = FullSurveySerializer
 
     def perform_destroy(self, survey):
@@ -98,6 +98,11 @@ class SurveyRetrieveDeleteAPIView(SurveyQuerySetMixin, RetrieveDestroyAPIView):
         survey.responses.update(is_active=False)
 
     def get_permissions(self):
-        if self.request.method == "DELETE":
+        if self.request.method == "DELETE" or self.request.method == "PUT" or self.request.method == "PATCH":
             return [IsAuthenticated(), CanDeleteSurvey()]
         return [IsAuthenticated()]
+
+    def get_serializer_class(self):
+        if self.request.method == "PUT" or self.request.method == "PATCH":
+            return SurveySerializer
+        return FullSurveySerializer

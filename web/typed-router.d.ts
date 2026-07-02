@@ -20,9 +20,9 @@ import type {
 
 declare module 'vue-router' {
   interface TypesConfig {
-    ParamParsers:
-      | never
+    _ParamParsers: {}
     RouteNamedMap: import('vue-router/auto-routes').RouteNamedMap
+    _RouteFileInfoMap: import('vue-router/auto-routes')._RouteFileInfoMap
   }
 }
 
@@ -73,8 +73,8 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/SurveyCreationPage': RouteRecordInfo<
-      '/SurveyCreationPage',
+    '/SurveyCreationModificationPage': RouteRecordInfo<
+      '/SurveyCreationModificationPage',
       '/creation-enquete',
       Record<never, never>,
       Record<never, never>,
@@ -182,11 +182,15 @@ declare module 'vue-router/auto-routes' {
         | '/'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/A11yPage.vue': {
       routes:
         | '/A11yPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/HomePage.vue': {
@@ -194,11 +198,15 @@ declare module 'vue-router/auto-routes' {
         | '/HomePage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/AccountNotActivatedPage.vue': {
       routes:
         | '/AccountNotActivatedPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/CookiesPage.vue': {
@@ -206,17 +214,23 @@ declare module 'vue-router/auto-routes' {
         | '/CookiesPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/SignUpPage.vue': {
       routes:
         | '/SignUpPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
-    'src/pages/SurveyCreationPage.vue': {
+    'src/pages/SurveyCreationModificationPage.vue': {
       routes:
-        | '/SurveyCreationPage'
+        | '/SurveyCreationModificationPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/DashboardPage.vue': {
@@ -224,11 +238,15 @@ declare module 'vue-router/auto-routes' {
         | '/DashboardPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/PrivacyPolicyPage.vue': {
       routes:
         | '/PrivacyPolicyPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/EmailConfirmationSentPage.vue': {
@@ -236,11 +254,15 @@ declare module 'vue-router/auto-routes' {
         | '/EmailConfirmationSentPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/SurveyPage.vue': {
       routes:
         | '/SurveyPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/SurveyListPage.vue': {
@@ -248,11 +270,15 @@ declare module 'vue-router/auto-routes' {
         | '/SurveyListPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/LegalNoticesPage.vue': {
       routes:
         | '/LegalNoticesPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/AccountPage.vue': {
@@ -260,11 +286,15 @@ declare module 'vue-router/auto-routes' {
         | '/AccountPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/NotFoundPage.vue': {
       routes:
         | '/NotFoundPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/ResponseListPage.vue': {
@@ -272,11 +302,15 @@ declare module 'vue-router/auto-routes' {
         | '/ResponseListPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/ResponsePage.vue': {
       routes:
         | '/ResponsePage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/LoginPage.vue': {
@@ -284,11 +318,15 @@ declare module 'vue-router/auto-routes' {
         | '/LoginPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/DataDeletion.vue': {
       routes:
         | '/DataDeletion'
       views:
+        | never
+      pathParamNames:
         | never
     }
   }
