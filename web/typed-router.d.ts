@@ -73,8 +73,8 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
-    '/SurveyCreationPage': RouteRecordInfo<
-      '/SurveyCreationPage',
+    '/SurveyCreationModificationPage': RouteRecordInfo<
+      '/SurveyCreationModificationPage',
       '/creation-enquete',
       Record<never, never>,
       Record<never, never>,
@@ -213,9 +213,9 @@ declare module 'vue-router/auto-routes' {
       views:
         | never
     }
-    'src/pages/SurveyCreationPage.vue': {
+    'src/pages/SurveyCreationModificationPage.vue': {
       routes:
-        | '/SurveyCreationPage'
+        | '/SurveyCreationModificationPage'
       views:
         | never
     }

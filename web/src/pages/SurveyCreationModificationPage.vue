@@ -45,7 +45,6 @@ onFetchError(() => {
 })
 
 onFetchResponse(() => {
-  console.log(existingSurvey.value)
   schema.value = existingSurvey.value.jsonSchema
   selectedOrganisationId.value = existingSurvey.value.organisation?.id || ""
   selectedPoleOption.value = existingSurvey.value.pole?.id || ""
@@ -53,7 +52,7 @@ onFetchResponse(() => {
   isFetching.value = false
 })
 
-if (existingSurveyId) {
+if (existingSurveyId.value) {
   execute()
 } else {
   isFetching.value = false
