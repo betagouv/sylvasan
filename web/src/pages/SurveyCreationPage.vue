@@ -45,8 +45,8 @@ onFetchError(() => {
 onFetchResponse(() => {
   console.log(existingSurvey.value)
   schema.value = existingSurvey.value.jsonSchema
-  selectedOrganisationId.value = existingSurvey.value.organisation?.id
-  selectedPoleOption.value = existingSurvey.value.pole?.id
+  selectedOrganisationId.value = existingSurvey.value.organisation?.id || ""
+  selectedPoleOption.value = existingSurvey.value.pole?.id || ""
   title.value = existingSurvey.value.title
   isFetching.value = false
 })
@@ -232,10 +232,15 @@ const createOrUpdateSurvey = async () => {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
     return
   }
-  const { response } = await useApiFetch("/surveys/").post(payload).json()
+  const saveFunction = existingSurveyId
+    ? useApiFetch(`/surveys/${existingSurveyId.value}`).put
+    : useApiFetch("/surveys/").post
+
+  const { response } = await saveFunction(payload).json()
   if (response.value?.ok) {
-    toast.show("Enquête créée", "success")
-    router.push({ name: "/DashboardPage" })
+    const message = existingSurveyId ? "Enquête modifiée" : "Enquête créée"
+    toast.show(message, "success")
+    router.push({ name: "/SurveyListPage" })
   } else {
     toast.show("Une erreur s'est produite", "error")
   }

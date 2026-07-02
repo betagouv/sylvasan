@@ -18,7 +18,7 @@ class TestSoftDeleteSurvey(APITestCase):
         Un·e utilisateur·ice non authentifié·e reçoit un 401 en tentant de supprimer une enquête
         """
         survey = SurveyFactory()
-        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     @authenticate
@@ -32,7 +32,7 @@ class TestSoftDeleteSurvey(APITestCase):
             organisation=survey.organisation,
             membership_type=MembershipType.ADMIN,
         )
-        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     @authenticate
@@ -46,7 +46,7 @@ class TestSoftDeleteSurvey(APITestCase):
             organisation=survey.organisation,
             membership_type=MembershipType.ADMIN,
         )
-        self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
 
         survey.refresh_from_db()
         self.assertFalse(survey.is_active)
@@ -63,7 +63,7 @@ class TestSoftDeleteSurvey(APITestCase):
             organisation=survey.organisation,
             membership_type=MembershipType.ADMIN,
         )
-        self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
 
         self.assertFalse(Survey.objects.active().filter(pk=survey.pk).exists())
 
@@ -81,7 +81,7 @@ class TestSoftDeleteSurvey(APITestCase):
         reponse_1 = ResponseFactory(survey=survey)
         reponse_2 = ResponseFactory(survey=survey)
 
-        self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
 
         reponse_1.refresh_from_db()
         reponse_2.refresh_from_db()
@@ -101,7 +101,7 @@ class TestSoftDeleteSurvey(APITestCase):
         )
         reponse = ResponseFactory(survey=survey)
 
-        self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
 
         self.assertTrue(Response.objects.filter(pk=reponse.pk).exists())
 
@@ -112,7 +112,7 @@ class TestSoftDeleteSurvey(APITestCase):
         (l'enquête est absente de son queryset)
         """
         survey = SurveyFactory()
-        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @authenticate
@@ -127,7 +127,7 @@ class TestSoftDeleteSurvey(APITestCase):
             organisation=survey.organisation,
             membership_type=MembershipType.RESPONDER,
         )
-        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @authenticate
@@ -145,7 +145,7 @@ class TestSoftDeleteSurvey(APITestCase):
             pole=None,
             membership_type=MembershipType.ADMIN,
         )
-        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     @authenticate
@@ -162,7 +162,7 @@ class TestSoftDeleteSurvey(APITestCase):
             pole=pole,
             membership_type=MembershipType.ADMIN,
         )
-        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     @authenticate
@@ -179,7 +179,7 @@ class TestSoftDeleteSurvey(APITestCase):
             pole=pole,
             membership_type=MembershipType.ADMIN,
         )
-        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @authenticate
@@ -198,7 +198,7 @@ class TestSoftDeleteSurvey(APITestCase):
             pole=pole,
             membership_type=MembershipType.ADMIN,
         )
-        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @authenticate
@@ -214,5 +214,5 @@ class TestSoftDeleteSurvey(APITestCase):
             organisation=autre_org,
             membership_type=MembershipType.ADMIN,
         )
-        response = self.client.delete(reverse("survey_retrieve_delete", kwargs={"pk": survey.pk}))
+        response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
