@@ -98,11 +98,11 @@ class SurveyRetrieveUpdateDestroyAPIView(SurveyQuerySetMixin, RetrieveUpdateDest
         survey.responses.update(is_active=False)
 
     def get_permissions(self):
-        if self.request.method == "DELETE" or self.request.method == "PUT":
+        if self.request.method == "DELETE" or self.request.method == "PUT" or self.request.method == "PATCH":
             return [IsAuthenticated(), CanDeleteSurvey()]
         return [IsAuthenticated()]
 
     def get_serializer_class(self):
-        if self.request.method == "PUT":
+        if self.request.method == "PUT" or self.request.method == "PATCH":
             return SurveySerializer
         return FullSurveySerializer

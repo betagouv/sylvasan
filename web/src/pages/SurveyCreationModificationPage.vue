@@ -233,7 +233,7 @@ const createOrUpdateSurvey = async () => {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
     return
   }
-  const saveFunction = existingSurveyId
+  const saveFunction = existingSurveyId.value
     ? useApiFetch(`/surveys/${existingSurveyId.value}`).put
     : useApiFetch("/surveys/").post
 
