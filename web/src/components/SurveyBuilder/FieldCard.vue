@@ -5,7 +5,7 @@ export default { name: "FieldCard" }
 </script>
 
 <script setup lang="ts">
-import { computed, ref, watchEffect } from "vue"
+import { computed, ref, watch } from "vue"
 import type { SurveyField } from "@shared-types/survey"
 import { typeWidgetMapping } from "./mappings"
 import type { WidgetData } from "./mappings"
@@ -29,9 +29,13 @@ const resolvedVocabulary = computed(() =>
   field.vocabulary ? rootStore.vocabularyDetails[field.vocabulary] : undefined
 )
 
-watchEffect(() => {
-  if (field.vocabulary) rootStore.fetchVocabularyDetail(field.vocabulary)
-})
+watch(
+  () => field.vocabulary,
+  (vocabulary) => {
+    if (vocabulary) rootStore.fetchVocabularyDetail(vocabulary)
+  },
+  { immediate: true }
+)
 
 const { field, fieldIds, allFieldIds } = defineProps<{
   field: SurveyField

@@ -12,13 +12,53 @@
 import { computed, ref, watch } from "vue"
 import SurveyBuilder from "../components/SurveyBuilder/index.vue"
 import type { SurveySchema } from "@shared-types/survey"
-import { DsfrBreadcrumb } from "@gouvminint/vue-dsfr"
 import { useApiFetch } from "../utils/data-fetching.ts"
 import { useToastStore } from "../stores/toast.ts"
-import { useRouter } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
 import { useRootStore } from "../stores/root.ts"
 import * as z from "zod"
 import { ZodError } from "zod"
+import ProgressSpinner from "../components/ProgressSpinner.vue"
+import { DsfrAlert } from "@gouvminint/vue-dsfr"
+
+////////////////////////////////////////////////
+/////////////// MODIFICATION ///////////////////
+// Si on est dans le cas d'une modification d'une
+// enquête existante, on doit fetch les données et
+// initializer les refs pour rendre l'enquête
+/////////////////////////////////////////////////
+const route = useRoute()
+const isFetching = ref(true)
+const existingSurveyId = computed(() => route.params.surveyId)
+const {
+  execute,
+  data: existingSurvey,
+  onFetchError,
+  onFetchResponse,
+} = useApiFetch(`/surveys/${existingSurveyId.value}`, {
+  immediate: false,
+}).json()
+
+onFetchError(() => {
+  toast.show("Enquête introuvable", "error")
+  router.push({ name: "/SurveyListPage" })
+})
+
+onFetchResponse(() => {
+  schema.value = existingSurvey.value.jsonSchema
+  selectedOrganisationId.value = existingSurvey.value.organisation?.id || ""
+  selectedPoleOption.value = existingSurvey.value.pole?.id || ""
+  title.value = existingSurvey.value.title
+  isFetching.value = false
+})
+
+if (existingSurveyId.value) {
+  execute()
+} else {
+  isFetching.value = false
+}
+/////////////////////////////////////////
+/////////////////////////////////////////
 
 const store = useRootStore()
 const router = useRouter()
@@ -172,7 +212,7 @@ const payload = computed(() => ({
   createdBy: store.loggedUser?.id,
 }))
 
-const createSurvey = async () => {
+const createOrUpdateSurvey = async () => {
   const hasPageWithoutTitle = schema.value.pages?.some(
     (p) => !p.title || p.title.trim() === ""
   )
@@ -193,10 +233,15 @@ const createSurvey = async () => {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
     return
   }
-  const { response } = await useApiFetch("/surveys/").post(payload).json()
+  const saveFunction = existingSurveyId.value
+    ? useApiFetch(`/surveys/${existingSurveyId.value}`).put
+    : useApiFetch("/surveys/").post
+
+  const { response } = await saveFunction(payload).json()
   if (response.value?.ok) {
-    toast.show("Enquête créée", "success")
-    router.push({ name: "/DashboardPage" })
+    const message = existingSurveyId ? "Enquête modifiée" : "Enquête créée"
+    toast.show(message, "success")
+    router.push({ name: "/SurveyListPage" })
   } else {
     toast.show("Une erreur s'est produite", "error")
   }
@@ -208,63 +253,80 @@ const createSurvey = async () => {
     <DsfrBreadcrumb
       :links="[
         { to: '/dashboard', text: 'Dashboard' },
-        { text: 'Création d\'enquête' },
+        { text: 'Mon enquête' },
       ]"
     />
-    <h1 class="fr-h4">
-      Créer une nouvelle enquête
-      <span v-if="uniqueAdminOrgs.length === 1"
-        >pour {{ uniqueAdminOrgs[0].name }}</span
-      >
-    </h1>
-    <div class="flex gap-8">
-      <DsfrInputGroup :error-message="formErrors?.fieldErrors?.title?.[0]">
-        <DsfrInput
-          class="max-w-sm"
-          label="Titre de l'enquête"
-          :required="true"
-          label-visible
-          v-model="title"
-          @update:modelValue="clearFieldError('title')"
+    <div
+      v-if="existingSurveyId && isFetching"
+      class="flex justify-center my-20"
+    >
+      <ProgressSpinner />
+    </div>
+    <div v-else>
+      <h1 class="fr-h4">
+        <span v-if="existingSurveyId">Modifiez votre enquête </span>
+        <span v-else>Créer une nouvelle enquête </span>
+        <span v-if="uniqueAdminOrgs.length === 1"
+          >pour {{ uniqueAdminOrgs[0].name }}</span
+        >
+      </h1>
+      <div v-if="existingSurveyId" class="flex mb-6">
+        <DsfrAlert
+          type="warning"
+          description="La modification d'une enquête existante peut entraîner des jeux de
+        données incompatibles"
+          :small="true"
         />
-      </DsfrInputGroup>
-      <DsfrSelect
-        v-if="uniqueAdminOrgs.length > 1"
-        v-model="selectedOrganisationId"
-        class="max-w-sm"
-        label="Organisation"
-        :options="orgOptions"
-        :required="true"
-        :error-message="formErrors?.fieldErrors?.organisation?.[0]"
-        @update:modelValue="clearFieldError('organisation')"
-      />
-      <DsfrSelect
-        v-if="showPoleSelect"
-        v-model="selectedPoleOption"
-        class="max-w-sm"
-        label="Pôle"
-        :options="poleOptions"
-        :required="!hasOrgLevelAdmin"
-        :error-message="formErrors?.fieldErrors?.pole?.[0]"
-        @update:modelValue="clearFieldError('pole')"
-      />
-    </div>
-    <div class="my-6">
-      <SurveyBuilder
-        v-model="schema"
-        @update:modelValue="clearFieldError('fields')"
-      />
-      <p v-if="formErrors?.fieldErrors?.fields?.[0]" class="fr-error-text">
-        {{ formErrors.fieldErrors.fields[0] }}
-      </p>
-    </div>
-    <div class="flex justify-end my-6">
-      <DsfrButton
-        label="Sauvegarder"
-        icon="ri-cloud-line"
-        size="large"
-        @click="createSurvey"
-      />
+      </div>
+      <div class="flex gap-8">
+        <DsfrInputGroup :error-message="formErrors?.fieldErrors?.title?.[0]">
+          <DsfrInput
+            class="max-w-sm"
+            label="Titre de l'enquête"
+            :required="true"
+            label-visible
+            v-model="title"
+            @update:modelValue="clearFieldError('title')"
+          />
+        </DsfrInputGroup>
+        <DsfrSelect
+          v-if="uniqueAdminOrgs.length > 1"
+          v-model="selectedOrganisationId"
+          class="max-w-sm"
+          label="Organisation"
+          :options="orgOptions"
+          :required="true"
+          :error-message="formErrors?.fieldErrors?.organisation?.[0]"
+          @update:modelValue="clearFieldError('organisation')"
+        />
+        <DsfrSelect
+          v-if="showPoleSelect"
+          v-model="selectedPoleOption"
+          class="max-w-sm"
+          label="Pôle"
+          :options="poleOptions"
+          :required="!hasOrgLevelAdmin"
+          :error-message="formErrors?.fieldErrors?.pole?.[0]"
+          @update:modelValue="clearFieldError('pole')"
+        />
+      </div>
+      <div class="my-6">
+        <SurveyBuilder
+          v-model="schema"
+          @update:modelValue="clearFieldError('fields')"
+        />
+        <p v-if="formErrors?.fieldErrors?.fields?.[0]" class="fr-error-text">
+          {{ formErrors.fieldErrors.fields[0] }}
+        </p>
+      </div>
+      <div class="flex justify-end my-6">
+        <DsfrButton
+          label="Sauvegarder"
+          icon="ri-cloud-line"
+          size="large"
+          @click="createOrUpdateSurvey"
+        />
+      </div>
     </div>
   </div>
 

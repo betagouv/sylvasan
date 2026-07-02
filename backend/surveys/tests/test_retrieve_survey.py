@@ -10,7 +10,7 @@ from surveys.factories import SurveyFactory
 
 
 def survey_url(survey_id):
-    return reverse("survey_retrieve_delete", kwargs={"pk": survey_id})
+    return reverse("survey_retrieve_update_destroy", kwargs={"pk": survey_id})
 
 
 class TestRetrieveSurvey(APITestCase):

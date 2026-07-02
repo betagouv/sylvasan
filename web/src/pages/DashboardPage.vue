@@ -22,7 +22,7 @@ const adminActions = [
   {
     title: "Créer une enquête",
     description: "Créez une nouvelle enquête",
-    link: { name: "/SurveyCreationPage" },
+    link: { name: "/SurveyCreationModificationPage" },
   },
   {
     title: "Mes enquêtes",

@@ -64,6 +64,17 @@ const onConfirmDelete = async () => {
         <DsfrBadge type="none" :label="survey.pole?.name || 'Tous les pôles'" />
         <div class="grow"></div>
         <DsfrButton
+          label="Modifier"
+          icon="ri-pencil-line"
+          :disabled="isDeleting"
+          @click="
+            router.push({
+              name: 'SurveyModification',
+              params: { surveyId: survey.id },
+            })
+          "
+        />
+        <DsfrButton
           label="Supprimer"
           secondary
           icon="ri-delete-bin-line"
