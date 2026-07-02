@@ -22,7 +22,7 @@ const extendedRoutes = [
   {
     name: "SurveyModification",
     path: "/modification-enquete/:surveyId",
-    component: () => SurveyCreationModificationPage,
+    component: SurveyCreationModificationPage,
     meta: { authenticationRequired: true, title: "Modification d'enquête" },
   },
   {

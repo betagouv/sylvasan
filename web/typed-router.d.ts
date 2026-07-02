@@ -20,9 +20,9 @@ import type {
 
 declare module 'vue-router' {
   interface TypesConfig {
-    ParamParsers:
-      | never
+    _ParamParsers: {}
     RouteNamedMap: import('vue-router/auto-routes').RouteNamedMap
+    _RouteFileInfoMap: import('vue-router/auto-routes')._RouteFileInfoMap
   }
 }
 
@@ -182,11 +182,15 @@ declare module 'vue-router/auto-routes' {
         | '/'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/A11yPage.vue': {
       routes:
         | '/A11yPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/HomePage.vue': {
@@ -194,11 +198,15 @@ declare module 'vue-router/auto-routes' {
         | '/HomePage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/AccountNotActivatedPage.vue': {
       routes:
         | '/AccountNotActivatedPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/CookiesPage.vue': {
@@ -206,11 +214,15 @@ declare module 'vue-router/auto-routes' {
         | '/CookiesPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/SignUpPage.vue': {
       routes:
         | '/SignUpPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/SurveyCreationModificationPage.vue': {
@@ -218,11 +230,15 @@ declare module 'vue-router/auto-routes' {
         | '/SurveyCreationModificationPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/DashboardPage.vue': {
       routes:
         | '/DashboardPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/PrivacyPolicyPage.vue': {
@@ -230,11 +246,15 @@ declare module 'vue-router/auto-routes' {
         | '/PrivacyPolicyPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/EmailConfirmationSentPage.vue': {
       routes:
         | '/EmailConfirmationSentPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/SurveyPage.vue': {
@@ -242,11 +262,15 @@ declare module 'vue-router/auto-routes' {
         | '/SurveyPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/SurveyListPage.vue': {
       routes:
         | '/SurveyListPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/LegalNoticesPage.vue': {
@@ -254,11 +278,15 @@ declare module 'vue-router/auto-routes' {
         | '/LegalNoticesPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/AccountPage.vue': {
       routes:
         | '/AccountPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/NotFoundPage.vue': {
@@ -266,11 +294,15 @@ declare module 'vue-router/auto-routes' {
         | '/NotFoundPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/ResponseListPage.vue': {
       routes:
         | '/ResponseListPage'
       views:
+        | never
+      pathParamNames:
         | never
     }
     'src/pages/ResponsePage.vue': {
@@ -278,17 +310,23 @@ declare module 'vue-router/auto-routes' {
         | '/ResponsePage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/LoginPage.vue': {
       routes:
         | '/LoginPage'
       views:
         | never
+      pathParamNames:
+        | never
     }
     'src/pages/DataDeletion.vue': {
       routes:
         | '/DataDeletion'
       views:
+        | never
+      pathParamNames:
         | never
     }
   }
