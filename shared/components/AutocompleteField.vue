@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onUnmounted, nextTick } from "vue"
+import { ref, computed, onUnmounted, nextTick, watch } from "vue"
 import type { VocabularyEntry } from "@shared-types/survey"
 
 const props = defineProps<{
@@ -126,11 +126,17 @@ const select = (entry: VocabularyEntry) => {
   highlightedIndex.value = -1
 }
 
-// Si le modelValue est pre-rempli on selectionne l'option
-if (modelValue.value) {
-  const selectedEntry = props.entries.find((x) => x.code === modelValue.value)
-  if (selectedEntry) select(selectedEntry)
-}
+// Si le modelValue est pre-rempli on selectionne l'option (les entries peuvent arriver en async)
+watch(
+  () => props.entries,
+  (entries) => {
+    if (modelValue.value && !query.value) {
+      const selectedEntry = entries.find((x) => x.code === modelValue.value)
+      if (selectedEntry) select(selectedEntry)
+    }
+  },
+  { immediate: true }
+)
 
 const onFocus = async () => {
   query.value = selectedLabel.value

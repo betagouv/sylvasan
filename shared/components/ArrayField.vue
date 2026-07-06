@@ -4,10 +4,11 @@ import type { Component } from "vue"
 import type { SurveyField, VocabularySet } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
 import { getEmptyValue, evaluateCondition } from "../utils/survey"
+import { getDefaultValue } from "../utils/defaultValues"
 
 const createEmptyItem = () =>
   Object.fromEntries(
-    (props.field.fields ?? []).map((f) => [f.id, getEmptyValue(f)])
+    (props.field.fields ?? []).map((f) => [f.id, getDefaultValue(f) ?? getEmptyValue(f)])
   )
 
 const props = defineProps<{
