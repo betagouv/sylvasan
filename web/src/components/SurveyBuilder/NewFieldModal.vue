@@ -371,8 +371,8 @@ const close = () => {
     </div>
 
     <div v-else-if="payload.ui?.widget === 'select'">
-      <h6 class="fr-text--md">Options</h6>
-      <div class="flex">
+      <h6 class="fr-text--md mb-0!">Options</h6>
+      <div class="flex gap-4 items-end mb-2">
         <DsfrRadioButtonSet
           name="options-source-select"
           :options="optionsSourceOptions"
@@ -387,6 +387,14 @@ const close = () => {
             label-visible
             v-model="payload.ui.unselectedText"
             label="Texte option vide"
+          />
+        </DsfrInputGroup>
+        <DsfrInputGroup>
+          <DsfrInput
+            label-visible
+            v-model="payload.default"
+            label="Valeur par défaut"
+            hint="Utilisez le valeur de l'option souhaitée"
           />
         </DsfrInputGroup>
         <div class="grow"></div>
@@ -431,8 +439,8 @@ const close = () => {
     </div>
 
     <div v-else-if="payload.ui?.widget === 'autocomplete'">
-      <h6 class="fr-text--md">Options</h6>
-      <div class="flex">
+      <h6 class="fr-text--md mb-0!">Options</h6>
+      <div class="flex gap-4 items-end">
         <DsfrRadioButtonSet
           name="options-source-autocomplete"
           :options="optionsSourceOptions"
@@ -447,6 +455,14 @@ const close = () => {
             label-visible
             v-model="payload.ui.placeholder"
             label="Placeholder"
+          />
+        </DsfrInputGroup>
+        <DsfrInputGroup>
+          <DsfrInput
+            label-visible
+            v-model="payload.default"
+            label="Valeur par défaut"
+            hint="Utilisez le valeur de l'option souhaitée"
           />
         </DsfrInputGroup>
         <div class="grow"></div>
@@ -537,14 +553,26 @@ const close = () => {
 
     <div v-else-if="payload.ui?.widget === 'radio'">
       <h6>Options</h6>
-      <DsfrRadioButtonSet
-        name="options-source-radio"
-        :options="optionsSourceOptions"
-        :model-value="optionsSource"
-        :inline="true"
-        @update:model-value="onOptionsSourceChange"
-        class="mb-4"
-      />
+      <div class="flex gap-4 items-end mb-2">
+        <DsfrRadioButtonSet
+          name="options-source-radio"
+          :options="optionsSourceOptions"
+          :model-value="optionsSource"
+          :inline="true"
+          @update:model-value="onOptionsSourceChange"
+          class="mb-4"
+        />
+        <div class="grow"></div>
+        <DsfrInputGroup>
+          <DsfrInput
+            label-visible
+            v-model="payload.default"
+            label="Valeur par défaut"
+            hint="Utilisez le valeur de l'option souhaitée"
+          />
+        </DsfrInputGroup>
+      </div>
+
       <div
         v-if="optionsSource === 'vocabulary'"
         class="flex items-center gap-2"

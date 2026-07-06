@@ -12,6 +12,8 @@ import ArrayField from "./ArrayField.vue"
 import AutocompleteField from "./AutocompleteField.vue"
 import ImagesField from "./ImagesField.vue"
 import { validateField } from "@shared-utils/validateField"
+import { getDefaultValue } from "@shared-utils/defaultValues"
+import { getEmptyValue } from "@shared-utils/survey"
 
 const props = defineProps<{
   field: SurveyField
@@ -109,16 +111,10 @@ const errorMessage = computed(() =>
     : null
 )
 
-if (
-  props.field.ui?.widget === "date" &&
-  props.field.default === "today" &&
-  !modelValue.value
-) {
-  const d = new Date()
-  const mm = String(d.getMonth() + 1).padStart(2, "0")
-  const dd = String(d.getDate()).padStart(2, "0")
-  modelValue.value = `${d.getFullYear()}-${mm}-${dd}`
-}
+const defaultValue = getDefaultValue(props.field)
+const emptyValue = getEmptyValue(props.field)
+if ((modelValue.value == null || modelValue.value === emptyValue) && defaultValue !== null)
+  modelValue.value = defaultValue
 </script>
 
 <template>

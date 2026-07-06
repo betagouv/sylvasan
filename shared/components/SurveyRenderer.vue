@@ -5,6 +5,7 @@ import type { SurveySchema, SurveyField, VocabularySet } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
 
 import { getEmptyValue, evaluateCondition } from "../utils/survey"
+import { getDefaultValue } from "../utils/defaultValues"
 
 const props = withDefaults(
   defineProps<{
@@ -62,7 +63,7 @@ const formData = reactive<Record<string, unknown>>(
       const value =
         props.prefillData && hasPrefillValue
           ? props.prefillData[field.id]
-          : getEmptyValue(field)
+          : getDefaultValue(field) ?? getEmptyValue(field)
       return [field.id, value]
     })
   )

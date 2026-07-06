@@ -182,7 +182,7 @@ const confirmFieldDeletion = () => {
           "
         >
           <div v-if="resolvedVocabulary" class="flex align-center">
-            <p>
+            <p class="mb-0!">
               {{ resolvedVocabulary.code }} — {{ resolvedVocabulary.name }} ({{
                 resolvedVocabulary.entries?.length
               }}
@@ -195,6 +195,11 @@ const confirmFieldDeletion = () => {
           </div>
           <div v-else-if="field.ui?.choices">
             {{ field.ui.choices.length }} options
+          </div>
+          <div class="flex gap-2" v-if="field.default">
+            <div class="text-gray-500 text-medium">
+              Remplissage par défaut à « {{ field.default }} »
+            </div>
           </div>
           <div
             class="flex gap-2"
