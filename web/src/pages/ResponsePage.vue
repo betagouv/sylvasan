@@ -9,7 +9,7 @@
 </route>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../utils/data-fetching.ts"
 import type { SurveyField, ImageItem } from "@shared-types/survey"
@@ -26,11 +26,39 @@ import { useRouter } from "vue-router"
 
 const router = useRouter()
 const route = useRoute()
-const { vocabularies } = storeToRefs(useRootStore())
+const rootStore = useRootStore()
+const { vocabularyDetails } = storeToRefs(rootStore)
 
 const { data: response, isFetching } = useApiFetch(
   `/responses/${route.params.id}`
 ).json()
+
+// Codes des vocabulaires utilisés dans cette enquête (sous-ensemble de tous les vocabulaires)
+const surveyCodes = ref<string[]>([])
+
+// Vocabulaires avec leurs entrées, limités à ceux référencés dans l'enquête.
+// isReady bloque le rendu jusqu'à ce que les entrées soient disponibles.
+const isReady = ref(false)
+
+const surveyVocabularies = computed(() =>
+  surveyCodes.value.map((code) => vocabularyDetails.value[code]).filter(Boolean)
+)
+
+watch(response, async (val) => {
+  if (!val) return
+  const schema = val.survey?.jsonSchema
+  const allFields: SurveyField[] = [
+    ...(schema?.fields ?? []),
+    ...(schema?.fields ?? []).flatMap((f: SurveyField) => f.fields ?? []),
+  ]
+  surveyCodes.value = [
+    ...new Set(
+      allFields.filter((f) => f.vocabulary).map((f) => f.vocabulary as string)
+    ),
+  ]
+  await Promise.all(surveyCodes.value.map((code) => rootStore.fetchVocabularyDetail(code)))
+  isReady.value = true
+})
 
 const confirmDeleteOpened = ref(false)
 const toast = useToastStore()
@@ -44,7 +72,7 @@ const resolveValue = (fieldId: string, raw: unknown): string => {
   const field = response.value?.survey.jsonSchema.fields.find(
     (f: SurveyField) => f.id === fieldId
   )
-  return resolveFieldValue(field, raw, vocabularies.value)
+  return resolveFieldValue(field, raw, surveyVocabularies.value)
 }
 
 const isArrayField = (fieldId: string): boolean =>
@@ -112,7 +140,7 @@ const onConfirmDelete = async () => {
         { text: `Réponse « ${response?.survey?.title || ''} »` },
       ]"
     />
-    <div v-if="isFetching" class="flex justify-center my-20">
+    <div v-if="isFetching || !isReady" class="flex justify-center my-20">
       <ProgressSpinner />
     </div>
     <div v-else-if="response">
@@ -170,7 +198,7 @@ const onConfirmDelete = async () => {
                         resolveFieldValue(
                           subField,
                           item[subField.id],
-                          vocabularies
+                          surveyVocabularies
                         )
                       "
                     >
@@ -178,7 +206,7 @@ const onConfirmDelete = async () => {
                         resolveFieldValue(
                           subField,
                           item[subField.id],
-                          vocabularies
+                          surveyVocabularies
                         )
                       }}
                     </p>
@@ -259,7 +287,7 @@ const onConfirmDelete = async () => {
               :allowSubmit="false"
               :readonly="true"
               :prefillData="response.data"
-              :vocabularies="vocabularies"
+              :vocabularies="surveyVocabularies"
               :mapComponent="MapField"
             />
           </div>
