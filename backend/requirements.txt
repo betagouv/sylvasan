@@ -21,7 +21,7 @@ factory_boy==3.3.3
 Faker==40.23.0
 idna==3.18
 jmespath==1.1.0
-joserfc==1.7.1
+joserfc==1.7.2
 packaging==26.2
 pillow==12.2.0
 pipdeptree==3.1.0
