@@ -5,6 +5,7 @@ import type {
   FieldWidget,
   FieldType,
   VocabularyEntry,
+  Condition,
 } from "@shared-types/survey"
 import AutocompleteField from "@shared-components/AutocompleteField.vue"
 import ConditionModalSegment from "./ConditionModalSegment.vue"
@@ -102,6 +103,7 @@ const validator = computed(() =>
       validation: z
         .object({ min: z.any().optional(), max: z.any().optional() })
         .optional(),
+      condition: z.any().optional(),
     })
     .superRefine((data, ctx) => {
       // Validation que min est inférieur à max pour les champs numériques
@@ -131,6 +133,22 @@ const validator = computed(() =>
           message: "Cet identifiant est déjà utilisé",
           path: ["id"],
         })
+      }
+
+      // Validation des conditions d'affichage : chaque ligne doit avoir un champ et un opérateur
+      if (data.condition) {
+        const rows: any[] =
+          "conditions" in data.condition
+            ? data.condition.conditions
+            : [data.condition]
+        if (rows.some((c) => !c.field || !c.operator)) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              "Chaque condition d'affichage doit avoir un champ et un opérateur renseignés",
+            path: ["condition"],
+          })
+        }
       }
     })
 )
@@ -259,6 +277,12 @@ const autoFillId = () => {
 const close = () => {
   if (formErrors.value?.fieldErrors) formErrors.value.fieldErrors = undefined
   emit("close")
+}
+
+const updateCondition = (c: Condition | undefined) => {
+  payload.value.condition = c
+  if (formErrors.value?.fieldErrors?.condition)
+    formErrors.value.fieldErrors.condition = []
 }
 </script>
 
@@ -727,10 +751,12 @@ const close = () => {
 
     <!-- Affichage conditionnel -->
     <hr class="mt-4!" />
+
     <ConditionModalSegment
       ref="conditionSegment"
       :field-ids="props.fieldIds?.filter?.((id) => id !== payload.id)"
-      @update:model-value="payload.condition = $event"
+      :error="formErrors?.fieldErrors?.condition?.[0]"
+      @update:model-value="updateCondition"
     />
 
     <!-- Footer -->
