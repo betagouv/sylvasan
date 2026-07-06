@@ -7,5 +7,5 @@ export const getDefaultValue = (field: SurveyField) => {
     const dd = String(d.getDate()).padStart(2, "0")
     return `${d.getFullYear()}-${mm}-${dd}`
   }
-  return field.default || null
+  return field.default ?? null
 }

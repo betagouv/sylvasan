@@ -13,6 +13,7 @@ import AutocompleteField from "./AutocompleteField.vue"
 import ImagesField from "./ImagesField.vue"
 import { validateField } from "@shared-utils/validateField"
 import { getDefaultValue } from "@shared-utils/defaultValues"
+import { getEmptyValue } from "@shared-utils/survey"
 
 const props = defineProps<{
   field: SurveyField
@@ -111,7 +112,9 @@ const errorMessage = computed(() =>
 )
 
 const defaultValue = getDefaultValue(props.field)
-if (!modelValue.value && defaultValue !== null) modelValue.value = defaultValue
+const emptyValue = getEmptyValue(props.field)
+if ((modelValue.value == null || modelValue.value === emptyValue) && defaultValue !== null)
+  modelValue.value = defaultValue
 </script>
 
 <template>
