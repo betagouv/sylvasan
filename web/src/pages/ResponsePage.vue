@@ -44,8 +44,14 @@ const surveyVocabularies = computed(() =>
   surveyCodes.value.map((code) => vocabularyDetails.value[code]).filter(Boolean)
 )
 
-watch(response, async (val) => {
-  if (!val) return
+// On surveille aussi isFetching pour débloquer la page si la requête échoue
+// (response resterait null et le watch sur response seul ne se déclencherait pas)
+watch([response, isFetching], async ([val, fetching]) => {
+  if (fetching) return
+  if (!val) {
+    isReady.value = true
+    return
+  }
   const schema = val.survey?.jsonSchema
   const allFields: SurveyField[] = [
     ...(schema?.fields ?? []),
@@ -56,7 +62,10 @@ watch(response, async (val) => {
       allFields.filter((f) => f.vocabulary).map((f) => f.vocabulary as string)
     ),
   ]
-  await Promise.all(surveyCodes.value.map((code) => rootStore.fetchVocabularyDetail(code)))
+  // Récupération en best-effort : un échec individuel n'empêche pas l'affichage
+  await Promise.allSettled(
+    surveyCodes.value.map((code) => rootStore.fetchVocabularyDetail(code))
+  )
   isReady.value = true
 })
 
@@ -74,6 +83,9 @@ const resolveValue = (fieldId: string, raw: unknown): string => {
   )
   return resolveFieldValue(field, raw, surveyVocabularies.value)
 }
+
+const resolveSubFieldValue = (subField: SurveyField, raw: unknown): string =>
+  resolveFieldValue(subField, raw, surveyVocabularies.value)
 
 const isArrayField = (fieldId: string): boolean =>
   response.value?.survey.jsonSchema.fields.find(
@@ -194,21 +206,9 @@ const onConfirmDelete = async () => {
                     </p>
                     <p
                       class="font-medium mb-0!"
-                      v-if="
-                        resolveFieldValue(
-                          subField,
-                          item[subField.id],
-                          surveyVocabularies
-                        )
-                      "
+                      v-if="resolveSubFieldValue(subField, item[subField.id])"
                     >
-                      {{
-                        resolveFieldValue(
-                          subField,
-                          item[subField.id],
-                          surveyVocabularies
-                        )
-                      }}
+                      {{ resolveSubFieldValue(subField, item[subField.id]) }}
                     </p>
                     <p class="italic text-stone-500 mb-0!" v-else>
                       Non renseigné
