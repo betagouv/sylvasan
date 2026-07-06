@@ -9,7 +9,7 @@
 </route>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../utils/data-fetching.ts"
 import type { SurveyField, ImageItem } from "@shared-types/survey"
@@ -26,11 +26,48 @@ import { useRouter } from "vue-router"
 
 const router = useRouter()
 const route = useRoute()
-const { vocabularies } = storeToRefs(useRootStore())
+const rootStore = useRootStore()
+const { vocabularyDetails } = storeToRefs(rootStore)
 
 const { data: response, isFetching } = useApiFetch(
   `/responses/${route.params.id}`
 ).json()
+
+// Codes des vocabulaires utilisés dans cette enquête (sous-ensemble de tous les vocabulaires)
+const surveyCodes = ref<string[]>([])
+
+// Vocabulaires avec leurs entrées, limités à ceux référencés dans l'enquête.
+// isReady bloque le rendu jusqu'à ce que les entrées soient disponibles.
+const isReady = ref(false)
+
+const surveyVocabularies = computed(() =>
+  surveyCodes.value.map((code) => vocabularyDetails.value[code]).filter(Boolean)
+)
+
+// On surveille aussi isFetching pour débloquer la page si la requête échoue
+// (response resterait null et le watch sur response seul ne se déclencherait pas)
+watch([response, isFetching], async ([val, fetching]) => {
+  if (fetching) return
+  if (!val) {
+    isReady.value = true
+    return
+  }
+  const schema = val.survey?.jsonSchema
+  const allFields: SurveyField[] = [
+    ...(schema?.fields ?? []),
+    ...(schema?.fields ?? []).flatMap((f: SurveyField) => f.fields ?? []),
+  ]
+  surveyCodes.value = [
+    ...new Set(
+      allFields.filter((f) => f.vocabulary).map((f) => f.vocabulary as string)
+    ),
+  ]
+  // Récupération en best-effort : un échec individuel n'empêche pas l'affichage
+  await Promise.allSettled(
+    surveyCodes.value.map((code) => rootStore.fetchVocabularyDetail(code))
+  )
+  isReady.value = true
+})
 
 const confirmDeleteOpened = ref(false)
 const toast = useToastStore()
@@ -44,8 +81,11 @@ const resolveValue = (fieldId: string, raw: unknown): string => {
   const field = response.value?.survey.jsonSchema.fields.find(
     (f: SurveyField) => f.id === fieldId
   )
-  return resolveFieldValue(field, raw, vocabularies.value)
+  return resolveFieldValue(field, raw, surveyVocabularies.value)
 }
+
+const resolveSubFieldValue = (subField: SurveyField, raw: unknown): string =>
+  resolveFieldValue(subField, raw, surveyVocabularies.value)
 
 const isArrayField = (fieldId: string): boolean =>
   response.value?.survey.jsonSchema.fields.find(
@@ -112,7 +152,7 @@ const onConfirmDelete = async () => {
         { text: `Réponse « ${response?.survey?.title || ''} »` },
       ]"
     />
-    <div v-if="isFetching" class="flex justify-center my-20">
+    <div v-if="isFetching || !isReady" class="flex justify-center my-20">
       <ProgressSpinner />
     </div>
     <div v-else-if="response">
@@ -166,21 +206,9 @@ const onConfirmDelete = async () => {
                     </p>
                     <p
                       class="font-medium mb-0!"
-                      v-if="
-                        resolveFieldValue(
-                          subField,
-                          item[subField.id],
-                          vocabularies
-                        )
-                      "
+                      v-if="resolveSubFieldValue(subField, item[subField.id])"
                     >
-                      {{
-                        resolveFieldValue(
-                          subField,
-                          item[subField.id],
-                          vocabularies
-                        )
-                      }}
+                      {{ resolveSubFieldValue(subField, item[subField.id]) }}
                     </p>
                     <p class="italic text-stone-500 mb-0!" v-else>
                       Non renseigné
@@ -259,7 +287,7 @@ const onConfirmDelete = async () => {
               :allowSubmit="false"
               :readonly="true"
               :prefillData="response.data"
-              :vocabularies="vocabularies"
+              :vocabularies="surveyVocabularies"
               :mapComponent="MapField"
             />
           </div>
