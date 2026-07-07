@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import { setActivePinia, createPinia } from "pinia"
-import { useAuthStore } from "../../src/stores/auth"
+import { useAuthStore, LoginError } from "../../src/stores/auth"
 import { Preferences } from "@capacitor/preferences"
 import { useApiFetch } from "../../src/utils/data-fetching"
 import { setupApiMocks } from "./mocks/api"
@@ -38,7 +38,9 @@ describe("auth store", () => {
     setupApiMocks({ tokenOk: false }) // override just the token endpoint
 
     const store = useAuthStore()
-    await expect(store.login("jean", "wrong")).rejects.toThrow("login failed")
+    const error = await store.login("jean", "wrong").catch((e) => e)
+    expect(error).toBeInstanceOf(LoginError)
+    expect(error.statusCode).toBe(401)
   })
 
   it("fetchUser does nothing if response is not ok", async () => {
