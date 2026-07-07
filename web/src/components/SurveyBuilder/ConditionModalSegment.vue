@@ -13,6 +13,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   fieldIds?: string[]
+  error?: string
 }>()
 
 type ConditionRow = {
@@ -119,6 +120,13 @@ defineExpose({ reset, loadCondition })
 <template>
   <section class="mb-4">
     <h6 class="fr-text--md mb-2!">Condition d'affichage</h6>
+
+    <p
+      v-if="props.error && conditionRows.length"
+      class="fr-error-text mb-3! mt-0!"
+    >
+      {{ props.error }}
+    </p>
 
     <DsfrRadioButtonSet
       v-if="conditionRows.length > 1"
