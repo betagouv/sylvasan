@@ -3,24 +3,24 @@ import { useApiFetch } from "../../../src/utils/data-fetching"
 
 const mockUser = { id: 1, username: "jean", email: "jean@example.com" }
 
-function makePostMock(ok: boolean, data: unknown) {
+function makePostMock(ok: boolean, data: unknown, status = ok ? 200 : 401) {
   return {
     post: () => ({
       json: () =>
         Promise.resolve({
-          response: { value: { ok } },
+          response: { value: { ok, status } },
           data: { value: data },
         }),
     }),
   }
 }
 
-function makeGetMock(ok: boolean, data: unknown) {
+function makeGetMock(ok: boolean, data: unknown, status = ok ? 200 : 401) {
   return {
     get: () => ({
       json: () =>
         Promise.resolve({
-          response: { value: { ok } },
+          response: { value: { ok, status } },
           data: { value: data },
         }),
     }),

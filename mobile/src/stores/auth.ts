@@ -5,6 +5,13 @@ import { useApiFetch } from "../utils/data-fetching"
 import type { LoggedUser } from "@shared-types/api"
 import { useSyncStore } from "./sync"
 
+export class LoginError extends Error {
+  constructor(public readonly statusCode: number) {
+    super(`HTTP ${statusCode}`)
+    this.name = "LoginError"
+  }
+}
+
 const ACCESS_KEY = "auth_access"
 const REFRESH_KEY = "auth_refresh"
 const USER_KEY = "auth_user"
@@ -80,7 +87,7 @@ export const useAuthStore = defineStore("auth", {
         .post({ username, password })
         .json()
 
-      if (!response.value?.ok) throw new Error("login failed")
+      if (!response.value?.ok) throw new LoginError(response.value?.status ?? 0)
 
       this.access = data.value.access
       this.refresh = data.value.refresh
