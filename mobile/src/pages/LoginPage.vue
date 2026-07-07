@@ -4,9 +4,12 @@ import * as z from "zod"
 import { ref } from "vue"
 import { ZodError } from "zod"
 import { useRouter } from "vue-router"
-import { useAuthStore } from "../stores/auth"
+import { useAuthStore, LoginError } from "../stores/auth"
+import { useToastStore } from "../stores/toast"
+import { oauthErrorFallback } from "@shared-utils/auth"
 
 const authStore = useAuthStore()
+const toast = useToastStore()
 const router = useRouter()
 
 const payload = ref({
@@ -36,14 +39,30 @@ const submit = async () => {
     router.push({ name: "PositionPage" })
     resetFields()
   } catch (error) {
-    if (error instanceof ZodError) formErrors.value = z.flattenError(error)
+    if (error instanceof ZodError) {
+      formErrors.value = z.flattenError(error)
+    } else if (error instanceof LoginError) {
+      if (error.statusCode === 401) {
+        toast.show("Identifiant ou mot de passe incorrect.", "error")
+      } else if (error.statusCode === 403) {
+        toast.show("Ce compte n'est pas encore activé.", "error")
+      } else {
+        toast.show(oauthErrorFallback, "error")
+      }
+    } else {
+      toast.show(oauthErrorFallback, "error")
+    }
   } finally {
     loading.value = false
   }
 }
 
 const loginWithDsf = async () => {
-  await authStore.loginWithDsf()
+  try {
+    await authStore.loginWithDsf()
+  } catch {
+    toast.show("Impossible d'ouvrir la page de connexion DSF. Veuillez réessayer.", "error")
+  }
 }
 </script>
 
