@@ -22,20 +22,21 @@ import ProgressSpinner from "../components/ProgressSpinner.vue"
 import { DsfrAlert } from "@gouvminint/vue-dsfr"
 
 ////////////////////////////////////////////////
-/////////////// MODIFICATION ///////////////////
+//////// MODIFICATION / DUPLICATION ////////////
 // Si on est dans le cas d'une modification d'une
 // enquête existante, on doit fetch les données et
 // initializer les refs pour rendre l'enquête
 /////////////////////////////////////////////////
 const route = useRoute()
 const isFetching = ref(true)
+const duplicateId = computed(() => route.query?.source)
 const existingSurveyId = computed(() => route.params.surveyId)
 const {
   execute,
   data: existingSurvey,
   onFetchError,
   onFetchResponse,
-} = useApiFetch(`/surveys/${existingSurveyId.value}`, {
+} = useApiFetch(`/surveys/${existingSurveyId.value || duplicateId.value}`, {
   immediate: false,
 }).json()
 
@@ -48,11 +49,14 @@ onFetchResponse(() => {
   schema.value = existingSurvey.value.jsonSchema
   selectedOrganisationId.value = existingSurvey.value.organisation?.id || ""
   selectedPoleOption.value = existingSurvey.value.pole?.id || ""
-  title.value = existingSurvey.value.title
+  if (!duplicateId.value) {
+    title.value = existingSurvey.value.title
+  }
+
   isFetching.value = false
 })
 
-if (existingSurveyId.value) {
+if (existingSurveyId.value || duplicateId.value) {
   execute()
 } else {
   isFetching.value = false
@@ -275,6 +279,13 @@ const createOrUpdateSurvey = async () => {
           type="warning"
           description="La modification d'une enquête existante peut entraîner des jeux de
         données incompatibles"
+          :small="true"
+        />
+      </div>
+      <div v-if="duplicateId" class="flex mb-6">
+        <DsfrAlert
+          type="info"
+          :description="`Les champs ont été dupliqués à patir de l'enquête « ${existingSurvey?.title} »`"
           :small="true"
         />
       </div>
