@@ -9,7 +9,7 @@
 </route>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, nextTick, ref, watch } from "vue"
 import SurveyBuilder from "../components/SurveyBuilder/index.vue"
 import type { SurveySchema } from "@shared-types/survey"
 import { useApiFetch } from "../utils/data-fetching.ts"
@@ -22,20 +22,21 @@ import ProgressSpinner from "../components/ProgressSpinner.vue"
 import { DsfrAlert } from "@gouvminint/vue-dsfr"
 
 ////////////////////////////////////////////////
-/////////////// MODIFICATION ///////////////////
+//////// MODIFICATION / DUPLICATION ////////////
 // Si on est dans le cas d'une modification d'une
 // enquête existante, on doit fetch les données et
 // initializer les refs pour rendre l'enquête
 /////////////////////////////////////////////////
 const route = useRoute()
 const isFetching = ref(true)
+const duplicateId = computed(() => route.query?.source)
 const existingSurveyId = computed(() => route.params.surveyId)
 const {
   execute,
   data: existingSurvey,
   onFetchError,
   onFetchResponse,
-} = useApiFetch(`/surveys/${existingSurveyId.value}`, {
+} = useApiFetch(`/surveys/${existingSurveyId.value || duplicateId.value}`, {
   immediate: false,
 }).json()
 
@@ -44,15 +45,23 @@ onFetchError(() => {
   router.push({ name: "/SurveyListPage" })
 })
 
-onFetchResponse(() => {
+onFetchResponse(async () => {
   schema.value = existingSurvey.value.jsonSchema
-  selectedOrganisationId.value = existingSurvey.value.organisation?.id || ""
-  selectedPoleOption.value = existingSurvey.value.pole?.id || ""
-  title.value = existingSurvey.value.title
+  selectedOrganisationId.value = existingSurvey.value.organisation?.id
+    ? String(existingSurvey.value.organisation.id)
+    : ""
+  await nextTick()
+  selectedPoleOption.value = existingSurvey.value.pole?.id
+    ? String(existingSurvey.value.pole?.id)
+    : ""
+  if (!duplicateId.value) {
+    title.value = existingSurvey.value.title
+  }
+
   isFetching.value = false
 })
 
-if (existingSurveyId.value) {
+if (existingSurveyId.value || duplicateId.value) {
   execute()
 } else {
   isFetching.value = false
@@ -239,7 +248,9 @@ const createOrUpdateSurvey = async () => {
 
   const { response } = await saveFunction(payload).json()
   if (response.value?.ok) {
-    const message = existingSurveyId ? "Enquête modifiée" : "Enquête créée"
+    const message = existingSurveyId.value
+      ? "Enquête modifiée"
+      : "Enquête créée"
     toast.show(message, "success")
     router.push({ name: "/SurveyListPage" })
   } else {
@@ -257,7 +268,7 @@ const createOrUpdateSurvey = async () => {
       ]"
     />
     <div
-      v-if="existingSurveyId && isFetching"
+      v-if="(existingSurveyId || duplicateId) && isFetching"
       class="flex justify-center my-20"
     >
       <ProgressSpinner />
@@ -275,6 +286,13 @@ const createOrUpdateSurvey = async () => {
           type="warning"
           description="La modification d'une enquête existante peut entraîner des jeux de
         données incompatibles"
+          :small="true"
+        />
+      </div>
+      <div v-if="duplicateId" class="flex mb-6">
+        <DsfrAlert
+          type="info"
+          :description="`Dupliquée à patir de l'enquête « ${existingSurvey?.title} »`"
           :small="true"
         />
       </div>

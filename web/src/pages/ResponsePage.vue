@@ -161,13 +161,6 @@ const onConfirmDelete = async () => {
           Réponse à l'enquête « {{ response.survey.title }} »
         </h1>
         <div class="grow"></div>
-        <DsfrButton
-          label="Supprimer"
-          secondary
-          icon="ri-delete-bin-line"
-          :disabled="isDeleting"
-          @click="confirmDeleteOpened = true"
-        />
       </div>
       <div class="mb-6">
         <p class="font-medium fr-badge">
@@ -292,6 +285,19 @@ const onConfirmDelete = async () => {
             />
           </div>
         </div>
+      </div>
+      <div class="flex border border-gray-200 p-4 mb-4 items-center">
+        <div class="grow"></div>
+        <DsfrButton
+          label="Supprimer"
+          secondary
+          :icon="{
+            name: 'ri-delete-bin-line',
+            fill: '#c9191e',
+          }"
+          :disabled="isDeleting"
+          @click="confirmDeleteOpened = true"
+        />
       </div>
     </div>
   </div>

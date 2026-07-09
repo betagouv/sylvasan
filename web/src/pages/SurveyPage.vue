@@ -64,6 +64,17 @@ const onConfirmDelete = async () => {
         <DsfrBadge type="none" :label="survey.pole?.name || 'Tous les pôles'" />
         <div class="grow"></div>
         <DsfrButton
+          label="Dupliquer"
+          icon="ri-file-copy-line"
+          secondary
+          @click="
+            router.push({
+              name: '/SurveyCreationModificationPage',
+              query: { source: survey.id },
+            })
+          "
+        />
+        <DsfrButton
           label="Modifier"
           icon="ri-pencil-line"
           :disabled="isDeleting"
@@ -73,13 +84,6 @@ const onConfirmDelete = async () => {
               params: { surveyId: survey.id },
             })
           "
-        />
-        <DsfrButton
-          label="Supprimer"
-          secondary
-          icon="ri-delete-bin-line"
-          :disabled="isDeleting"
-          @click="confirmDeleteOpened = true"
         />
       </div>
 
@@ -100,6 +104,21 @@ const onConfirmDelete = async () => {
           </div>
         </DsfrAccordion>
       </DsfrAccordionsGroup>
+
+      <div class="mb-4 flex gap-2 border border-gray-200 p-4">
+        <div class="grow"></div>
+
+        <DsfrButton
+          label="Supprimer"
+          secondary
+          :icon="{
+            name: 'ri-delete-bin-line',
+            fill: '#c9191e',
+          }"
+          :disabled="isDeleting"
+          @click="confirmDeleteOpened = true"
+        />
+      </div>
     </div>
   </div>
 
