@@ -9,7 +9,7 @@
 </route>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, nextTick, ref, watch } from "vue"
 import SurveyBuilder from "../components/SurveyBuilder/index.vue"
 import type { SurveySchema } from "@shared-types/survey"
 import { useApiFetch } from "../utils/data-fetching.ts"
@@ -45,10 +45,12 @@ onFetchError(() => {
   router.push({ name: "/SurveyListPage" })
 })
 
-onFetchResponse(() => {
+onFetchResponse(async () => {
   schema.value = existingSurvey.value.jsonSchema
-  selectedOrganisationId.value = existingSurvey.value.organisation?.id || ""
-  selectedPoleOption.value = existingSurvey.value.pole?.id || ""
+  selectedOrganisationId.value =
+    String(existingSurvey.value.organisation?.id) || ""
+  await nextTick()
+  selectedPoleOption.value = String(existingSurvey.value.pole?.id) || ""
   if (!duplicateId.value) {
     title.value = existingSurvey.value.title
   }
@@ -285,7 +287,7 @@ const createOrUpdateSurvey = async () => {
       <div v-if="duplicateId" class="flex mb-6">
         <DsfrAlert
           type="info"
-          :description="`Les champs ont été dupliqués à patir de l'enquête « ${existingSurvey?.title} »`"
+          :description="`Dupliquée à patir de l'enquête « ${existingSurvey?.title} »`"
           :small="true"
         />
       </div>

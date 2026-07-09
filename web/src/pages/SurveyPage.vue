@@ -117,7 +117,6 @@ const onConfirmDelete = async () => {
           }"
           :disabled="isDeleting"
           @click="confirmDeleteOpened = true"
-          class
         />
       </div>
     </div>
