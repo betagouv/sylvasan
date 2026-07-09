@@ -47,10 +47,13 @@ onFetchError(() => {
 
 onFetchResponse(async () => {
   schema.value = existingSurvey.value.jsonSchema
-  selectedOrganisationId.value =
-    String(existingSurvey.value.organisation?.id) || ""
+  selectedOrganisationId.value = existingSurvey.value.organisation?.id
+    ? String(existingSurvey.value.organisation.id)
+    : ""
   await nextTick()
-  selectedPoleOption.value = String(existingSurvey.value.pole?.id) || ""
+  selectedPoleOption.value = existingSurvey.value.pole?.id
+    ? String(existingSurvey.value.pole?.id)
+    : ""
   if (!duplicateId.value) {
     title.value = existingSurvey.value.title
   }
@@ -245,7 +248,9 @@ const createOrUpdateSurvey = async () => {
 
   const { response } = await saveFunction(payload).json()
   if (response.value?.ok) {
-    const message = existingSurveyId ? "Enquête modifiée" : "Enquête créée"
+    const message = existingSurveyId.value
+      ? "Enquête modifiée"
+      : "Enquête créée"
     toast.show(message, "success")
     router.push({ name: "/SurveyListPage" })
   } else {
@@ -263,7 +268,7 @@ const createOrUpdateSurvey = async () => {
       ]"
     />
     <div
-      v-if="existingSurveyId && isFetching"
+      v-if="(existingSurveyId || duplicateId) && isFetching"
       class="flex justify-center my-20"
     >
       <ProgressSpinner />

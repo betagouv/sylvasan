@@ -286,19 +286,19 @@ const onConfirmDelete = async () => {
           </div>
         </div>
       </div>
-    </div>
-    <div class="flex border border-gray-200 p-4 mb-4 items-center">
-      <div class="grow"></div>
-      <DsfrButton
-        label="Supprimer"
-        secondary
-        :icon="{
-          name: 'ri-delete-bin-line',
-          fill: '#c9191e',
-        }"
-        :disabled="isDeleting"
-        @click="confirmDeleteOpened = true"
-      />
+      <div class="flex border border-gray-200 p-4 mb-4 items-center">
+        <div class="grow"></div>
+        <DsfrButton
+          label="Supprimer"
+          secondary
+          :icon="{
+            name: 'ri-delete-bin-line',
+            fill: '#c9191e',
+          }"
+          :disabled="isDeleting"
+          @click="confirmDeleteOpened = true"
+        />
+      </div>
     </div>
   </div>
 
