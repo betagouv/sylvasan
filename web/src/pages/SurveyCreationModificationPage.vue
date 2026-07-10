@@ -19,6 +19,7 @@ import { useRootStore } from "../stores/root.ts"
 import * as z from "zod"
 import { ZodError } from "zod"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
+import EmptyPageTitleModal from "../components/SurveyBuilder/EmptyPageTitleModal.vue"
 
 ////////////////////////////////////////////////
 //////// MODIFICATION / DUPLICATION ////////////
@@ -209,6 +210,8 @@ const schema = ref<SurveySchema>({
   pages: [{ id: "page_1", title: "Page 1", fields: [] }],
 })
 
+const pageTitleModalOpened = ref(false)
+
 const payload = computed(() => ({
   organisation: organisation.value,
   pole: pole.value,
@@ -219,6 +222,13 @@ const payload = computed(() => ({
 }))
 
 const createOrUpdateSurvey = async () => {
+  const hasPageWithoutTitle = schema.value.pages?.some(
+    (p) => !p.title || p.title.trim() === ""
+  )
+  if (hasPageWithoutTitle) {
+    pageTitleModalOpened.value = true
+    return
+  }
   try {
     validator.parse({
       title: title.value,
@@ -335,4 +345,6 @@ const createOrUpdateSurvey = async () => {
       </div>
     </div>
   </div>
+
+  <EmptyPageTitleModal v-model="pageTitleModalOpened" />
 </template>

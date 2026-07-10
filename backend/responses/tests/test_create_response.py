@@ -504,3 +504,58 @@ class TestCreateFollowUpResponse(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["respondant"], authenticate.user.id)
+
+    @authenticate
+    def test_survey_follow_up_non_entier_retourne_403(self):
+        """
+        Envoyer une valeur non entière pour survey_follow_up (ex: "abc") ne provoque pas
+        un crash HTTP 500 — la permission retourne False → 403
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        response = self.client.post(
+            reverse("response_list_create"),
+            {"survey_follow_up": "abc", "parent_response": 1, "data": {}},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_reponse_de_suivi_sans_parent_response_retourne_400(self):
+        """
+        Créer une réponse de suivi sans fournir parent_response retourne une 400 —
+        ce champ est obligatoire pour les réponses de suivi
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        response = self.client.post(
+            reverse("response_list_create"),
+            {"survey_follow_up": follow_up.id, "data": {}},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
+    def test_parent_response_appartenant_a_une_autre_enquete_retourne_400(self):
+        """
+        Lier une réponse de suivi à une réponse parente issue d'une autre enquête retourne une 400.
+        Cela évite les liaisons cross-survey.
+        """
+        org = OrganisationFactory()
+        survey_1 = SurveyFactory(organisation=org)
+        survey_2 = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey_1)
+        parent_from_other_survey = ResponseFactory(survey=survey_2)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        response = self.client.post(
+            reverse("response_list_create"),
+            {
+                "survey_follow_up": follow_up.id,
+                "parent_response": parent_from_other_survey.id,
+                "data": {},
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

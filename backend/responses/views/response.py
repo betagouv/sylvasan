@@ -80,7 +80,14 @@ class ResponseQuerySetMixin:
             if membership.membership_type == MembershipType.RESPONDER:
                 query |= Q(respondant=user)
             elif membership.pole_id is not None:
-                query |= Q(survey__pole_id=membership.pole_id) | Q(survey_follow_up__pole_id=membership.pole_id)
+                query |= (
+                    Q(survey__pole_id=membership.pole_id)
+                    | Q(survey_follow_up__pole_id=membership.pole_id)
+                    | Q(
+                        survey_follow_up__organisation_id=membership.organisation_id,
+                        survey_follow_up__pole__isnull=True,
+                    )
+                )
             else:
                 query |= Q(survey__organisation_id=membership.organisation_id) | Q(
                     survey_follow_up__organisation_id=membership.organisation_id

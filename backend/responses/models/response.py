@@ -57,7 +57,7 @@ class Response(TimeStampable, Historisable, Deactivable):
     context = models.JSONField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.survey} – {self.get_status_display()}"
+        return f"{self.survey or self.survey_follow_up} – {self.get_status_display()}"
 
     def clean(self):
         if bool(self.survey) and bool(self.survey_follow_up):

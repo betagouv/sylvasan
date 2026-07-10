@@ -21,6 +21,7 @@ import { ZodError } from "zod"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
 import type { SurveySchema } from "@shared-types/survey"
 import IconPicker from "../components/IconPicker.vue"
+import EmptyPageTitleModal from "../components/SurveyBuilder/EmptyPageTitleModal.vue"
 
 const store = useRootStore()
 const router = useRouter()
@@ -30,6 +31,8 @@ const title = ref("")
 const actionLabel = ref("")
 const color = ref("#e3e3fd")
 const icon = ref("ri-information-line")
+
+const pageTitleModalOpened = ref(false)
 
 const schema = ref<SurveySchema>({
   version: "1.0",
@@ -52,7 +55,7 @@ const formErrors = ref<{
 // initializer les refs pour rendre l'enquête
 /////////////////////////////////////////////////
 const route = useRoute()
-const isFetching = ref(true)
+const isFetchingFollowUp = ref(true)
 const surveyId = computed(() => route.params.surveyId)
 const existingFollowUpId = computed(() => route.params.followUpId)
 const {
@@ -87,13 +90,18 @@ onFetchFollowUpResponse(async () => {
   actionLabel.value = existingFollowUp.value.actionLabel
   title.value = existingFollowUp.value.title
 
-  isFetching.value = false
+  isFetchingFollowUp.value = false
 })
 
-if (existingFollowUpId.value) executeFollowUpQuery()
+if (existingFollowUpId.value) {
+  executeFollowUpQuery()
+} else {
+  isFetchingFollowUp.value = false
+}
 /////////////////////////////////////////
 /////////////////////////////////////////
 
+const isFetchingSurvey = ref(true)
 const {
   execute: executeSurveyQuery,
   data: survey,
@@ -120,10 +128,14 @@ onFetchSurveyResponse(async () => {
 })
 
 onFetchSurveyFinally(() => {
-  isFetching.value = false
+  isFetchingSurvey.value = false
 })
 
 executeSurveyQuery()
+
+const isFetching = computed(
+  () => isFetchingFollowUp.value || isFetchingSurvey.value
+)
 
 const adminMemberships = computed(() =>
   store.loggedUser?.memberships.filter((x) => x.membershipType === "admin")
@@ -218,6 +230,14 @@ const pole = computed(() =>
 )
 
 const createOrUpdateFollowUp = async () => {
+  const hasPageWithoutTitle = schema.value.pages?.some(
+    (p) => !p.title || p.title.trim() === ""
+  )
+  if (hasPageWithoutTitle) {
+    pageTitleModalOpened.value = true
+    return
+  }
+
   try {
     validator.parse({
       title: title.value,
@@ -394,4 +414,5 @@ const validator = z
       />
     </div>
   </div>
+  <EmptyPageTitleModal v-model="pageTitleModalOpened" />
 </template>

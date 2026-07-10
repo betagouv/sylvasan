@@ -46,7 +46,10 @@ class FullSurveySerializer(serializers.ModelSerializer):
     pole = PoleSerializer(allow_null=True)
 
     def get_follow_ups(self, obj):
-        return SurveyFollowUpSerializer(obj.follow_ups.filter(is_active=True), many=True).data
+        # Uses the prefetch cache when the queryset was built with
+        # Prefetch('follow_ups', queryset=SurveyFollowUp.objects.filter(is_active=True)).
+        # Falls back to a direct filter when called without a prefetch (e.g. single retrieve).
+        return SurveyFollowUpSerializer(obj.follow_ups.all(), many=True).data
 
     class Meta:
         model = Survey

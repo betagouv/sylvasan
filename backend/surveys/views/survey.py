@@ -1,10 +1,10 @@
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 
 from organisations.models import Membership, MembershipType
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 
-from surveys.models import Survey
+from surveys.models import Survey, SurveyFollowUp
 from surveys.permissions import CanCreateSurvey, CanDeleteSurvey
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer, SurveySerializer
 
@@ -83,19 +83,27 @@ class SurveyResponderListAPIView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return _responder_survey_queryset(self.request.user)
+        active_follow_ups = Prefetch("follow_ups", queryset=SurveyFollowUp.objects.filter(is_active=True))
+        return _responder_survey_queryset(self.request.user).prefetch_related(active_follow_ups)
 
 
 class SurveyRetrieveUpdateDestroyAPIView(SurveyQuerySetMixin, RetrieveUpdateDestroyAPIView):
     serializer_class = FullSurveySerializer
 
+    def get_queryset(self):
+        active_follow_ups = Prefetch("follow_ups", queryset=SurveyFollowUp.objects.filter(is_active=True))
+        return super().get_queryset().prefetch_related(active_follow_ups)
+
     def perform_destroy(self, survey):
+        from responses.models import Response as ResponseModel
+
         survey.deactivate()
 
         # En utilsant "update" pour la désactivation des réponses on rend l'opération plus
         # rapide même si on bypass les triggers (comme par ex. django simple history). C'est
         # un choix qui peut évoluer plus tard
         survey.responses.update(is_active=False)
+        ResponseModel.objects.filter(survey_follow_up__parent_survey=survey).update(is_active=False)
 
     def get_permissions(self):
         if self.request.method == "DELETE" or self.request.method == "PUT" or self.request.method == "PATCH":

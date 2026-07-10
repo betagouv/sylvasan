@@ -99,6 +99,19 @@ class FollowUpResponseSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "status", "respondant")
 
+    def validate(self, data):
+        if not data.get("parent_response"):
+            raise serializers.ValidationError(
+                {"parent_response": "Ce champ est obligatoire pour une réponse de suivi."}
+            )
+        follow_up = data.get("survey_follow_up")
+        parent = data.get("parent_response")
+        if follow_up and parent and parent.survey_id != follow_up.parent_survey_id:
+            raise serializers.ValidationError(
+                {"parent_response": "La réponse parente doit appartenir à l'enquête parente du suivi."}
+            )
+        return data
+
     def create(self, validated_data):
         data = validated_data.get("data", {})
         schema = validated_data["survey_follow_up"].json_schema or {}

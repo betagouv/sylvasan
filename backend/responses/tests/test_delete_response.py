@@ -358,3 +358,21 @@ class TestDeleteFollowUpResponse(APITestCase):
         self.assertTrue(Response.objects.filter(pk=suivi_reponse.pk).exists())
         suivi_reponse.refresh_from_db()
         self.assertFalse(suivi_reponse.is_active)
+
+
+class TestDeleteResponseEdgeCases(APITestCase):
+    @authenticate
+    def test_suppression_reponse_sans_survey_ni_follow_up_retourne_403(self):
+        """
+        Supprimer une réponse dont survey et survey_follow_up sont tous les deux null
+        retourne un 403 plutôt qu'un crash HTTP 500.
+        La réponse est visible via le rôle RESPONDER (respondant = user), mais
+        CanDeleteResponse ne peut pas déterminer l'organisation → refuse l'accès.
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        orphan = ResponseFactory(survey=None, survey_follow_up=None, respondant=authenticate.user)
+
+        response = self.client.delete(response_url(orphan.id))
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

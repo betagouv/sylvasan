@@ -1,11 +1,12 @@
 from django.urls import reverse
 
 from common.utils import authenticate
-from organisations.factories import MembershipFactory, OrganisationFactory
+from organisations.factories import MembershipFactory, OrganisationFactory, PoleFactory
 from organisations.models import MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
+from surveys.factories.surveyfollowup import SurveyFollowUpFactory
 
 from responses.factories import ResponseFactory
 
@@ -139,6 +140,26 @@ class TestGetResponses(APITestCase):
 
         # Non visible : la réponse d'un·e autre dans org A (rôle RESPONDER uniquement)
         self.assertNotIn(survey_response_autre_org_a.id, ids)
+
+    @authenticate
+    def test_admin_pole_voit_les_reponses_au_suivi_niveau_org(self):
+        """
+        Un·e ADMIN de pôle voit les réponses aux suivis rattachés à l'organisation (pole=None),
+        et pas seulement ceux rattachés à son propre pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org)
+        follow_up_org = SurveyFollowUpFactory(organisation=org, pole=None, parent_survey=survey)
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        parent = ResponseFactory(survey=survey)
+        reponse_suivi_org = ResponseFactory(survey=None, survey_follow_up=follow_up_org, parent_response=parent)
+
+        response = self.client.get(reverse("response_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [r["id"] for r in self.get_results(response)]
+        self.assertIn(reponse_suivi_org.id, ids)
 
 
 class TestResponseFullList(APITestCase):
