@@ -6,6 +6,7 @@ from organisations.models import MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
+from surveys.factories.surveyfollowup import SurveyFollowUpFactory
 
 from responses.factories import ResponseFactory
 from responses.models import Response
@@ -255,3 +256,105 @@ class TestSoftDeleteBehavior(APITestCase):
         self.client.delete(response_url(survey_response.id))
 
         self.assertTrue(Response.objects.filter(pk=survey_response.pk).exists())
+
+
+class TestDeleteFollowUpResponse(APITestCase):
+    def _make_follow_up_response(self, org, pole=None):
+        """Crée une réponse parente et une réponse de suivi associée."""
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(organisation=org, pole=pole, parent_survey=survey)
+        parent = ResponseFactory(survey=survey)
+        return ResponseFactory(survey=None, survey_follow_up=follow_up, parent_response=parent), follow_up
+
+    @authenticate
+    def test_admin_org_peut_supprimer_une_reponse_de_suivi(self):
+        """
+        Un·e ADMIN au niveau organisation peut supprimer une réponse de suivi de son organisation
+        """
+        org = OrganisationFactory()
+        suivi_reponse, _ = self._make_follow_up_response(org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.delete(response_url(suivi_reponse.id))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    @authenticate
+    def test_responder_ne_peut_pas_supprimer_sa_reponse_de_suivi(self):
+        """
+        Un·e RESPONDER ne peut pas supprimer sa propre réponse de suivi — reçoit un 403
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        parent = ResponseFactory(survey=survey)
+        suivi_reponse = ResponseFactory(
+            survey=None,
+            survey_follow_up=follow_up,
+            parent_response=parent,
+            respondant=authenticate.user,
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        response = self.client.delete(response_url(suivi_reponse.id))
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_admin_autre_org_ne_peut_pas_supprimer_une_reponse_de_suivi(self):
+        """
+        Un·e ADMIN d'une autre organisation ne peut pas supprimer la réponse de suivi — reçoit un 404
+        """
+        org = OrganisationFactory()
+        autre_org = OrganisationFactory()
+        suivi_reponse, _ = self._make_follow_up_response(org)
+        MembershipFactory(user=authenticate.user, organisation=autre_org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.delete(response_url(suivi_reponse.id))
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_admin_pole_peut_supprimer_une_reponse_de_suivi_de_son_pole(self):
+        """
+        Un·e ADMIN de pôle peut supprimer une réponse de suivi rattachée à son pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        suivi_reponse, _ = self._make_follow_up_response(org, pole=pole)
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+
+        response = self.client.delete(response_url(suivi_reponse.id))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    @authenticate
+    def test_admin_pole_ne_peut_pas_supprimer_une_reponse_de_suivi_dun_autre_pole(self):
+        """
+        Un·e ADMIN de pôle ne peut pas supprimer une réponse de suivi d'un autre pôle — reçoit un 404
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        autre_pole = PoleFactory(organisation=org)
+        suivi_reponse, _ = self._make_follow_up_response(org, pole=autre_pole)
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+
+        response = self.client.delete(response_url(suivi_reponse.id))
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_suppression_reponse_de_suivi_est_un_soft_delete(self):
+        """
+        La suppression d'une réponse de suivi est un soft-delete :
+        l'enregistrement reste en base avec is_active=False
+        """
+        org = OrganisationFactory()
+        suivi_reponse, _ = self._make_follow_up_response(org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        self.client.delete(response_url(suivi_reponse.id))
+
+        self.assertTrue(Response.objects.filter(pk=suivi_reponse.pk).exists())
+        suivi_reponse.refresh_from_db()
+        self.assertFalse(suivi_reponse.is_active)

@@ -70,4 +70,5 @@ class CanDeleteResponse(permissions.BasePermission):
     message = "Vous n'avez pas l'autorisation pour supprimer cette réponse"
 
     def has_object_permission(self, request, view, obj):
-        return CanDeleteSurvey().has_object_permission(request, view, obj.survey)
+        source = obj.survey_follow_up if obj.survey_follow_up_id else obj.survey
+        return CanDeleteSurvey().has_object_permission(request, view, source)

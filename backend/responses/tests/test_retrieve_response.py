@@ -10,6 +10,7 @@ from organisations.models import MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
+from surveys.factories.surveyfollowup import SurveyFollowUpFactory
 
 from responses.factories import ResponseFactory
 
@@ -332,3 +333,111 @@ class TestResponseDataFieldNotCamelized(APITestCase):
         self.assertIn("nom_observateur", data)
         self.assertNotIn("nomObservateur", data)
         self.assertEqual(data["nom_observateur"], "Alice")
+
+
+class TestRetrieveFollowUpResponse(APITestCase):
+    def _make_follow_up_response(self, org, pole=None):
+        """Crée une réponse parente et une réponse de suivi associée."""
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(organisation=org, pole=pole, parent_survey=survey)
+        parent = ResponseFactory(survey=survey)
+        return ResponseFactory(survey=None, survey_follow_up=follow_up, parent_response=parent), follow_up, parent
+
+    @authenticate
+    def test_admin_org_peut_recuperer_une_reponse_de_suivi(self):
+        """
+        Un·e ADMIN au niveau organisation peut accéder à une réponse de suivi
+        rattachée à cette organisation
+        """
+        org = OrganisationFactory()
+        suivi_reponse, _, _ = self._make_follow_up_response(org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(response_url(suivi_reponse.id), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["id"], suivi_reponse.id)
+
+    @authenticate
+    def test_responder_peut_recuperer_sa_propre_reponse_de_suivi(self):
+        """
+        Un·e RESPONDER peut accéder à une réponse de suivi qu'il ou elle a créée
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        parent = ResponseFactory(survey=survey)
+        suivi_reponse = ResponseFactory(
+            survey=None,
+            survey_follow_up=follow_up,
+            parent_response=parent,
+            respondant=authenticate.user,
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        response = self.client.get(response_url(suivi_reponse.id), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["id"], suivi_reponse.id)
+
+    @authenticate
+    def test_admin_autre_org_ne_peut_pas_recuperer_une_reponse_de_suivi(self):
+        """
+        Un·e ADMIN d'une autre organisation ne peut pas accéder à la réponse de suivi — reçoit une 404
+        """
+        org = OrganisationFactory()
+        autre_org = OrganisationFactory()
+        suivi_reponse, _, _ = self._make_follow_up_response(org)
+        MembershipFactory(user=authenticate.user, organisation=autre_org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(response_url(suivi_reponse.id), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_admin_pole_peut_recuperer_une_reponse_de_suivi_de_son_pole(self):
+        """
+        Un·e ADMIN de pôle peut accéder à une réponse de suivi rattachée à son pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        suivi_reponse, _, _ = self._make_follow_up_response(org, pole=pole)
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(response_url(suivi_reponse.id), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    @authenticate
+    def test_admin_pole_ne_peut_pas_recuperer_une_reponse_de_suivi_dun_autre_pole(self):
+        """
+        Un·e ADMIN de pôle ne peut pas accéder aux réponses de suivi d'un autre pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        autre_pole = PoleFactory(organisation=org)
+        suivi_reponse, _, _ = self._make_follow_up_response(org, pole=autre_pole)
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(response_url(suivi_reponse.id), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_reponse_de_suivi_contient_les_champs_survey_follow_up_et_parent_response(self):
+        """
+        Le corps de la réponse contient les champs survey_follow_up (objet imbriqué)
+        et parent_response (identifiant), et le champ survey est null
+        """
+        org = OrganisationFactory()
+        suivi_reponse, follow_up, parent = self._make_follow_up_response(org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(response_url(suivi_reponse.id), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        body = response.json()
+        self.assertIsNone(body["survey"])
+        self.assertIsNotNone(body["surveyFollowUp"])
+        self.assertEqual(body["surveyFollowUp"]["id"], follow_up.id)
+        self.assertEqual(body["parentResponse"], parent.id)
