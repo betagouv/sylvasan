@@ -9,7 +9,7 @@
 </route>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue"
+import { computed, nextTick, ref } from "vue"
 import SurveyBuilder from "../components/SurveyBuilder/index.vue"
 import type { SurveySchema } from "@shared-types/survey"
 import { useApiFetch } from "../utils/data-fetching.ts"
@@ -20,6 +20,7 @@ import * as z from "zod"
 import { ZodError } from "zod"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
 import EmptyPageTitleModal from "../components/SurveyBuilder/EmptyPageTitleModal.vue"
+import { useAdminScopeSelection } from "../composables/useAdminScopeSelection.ts"
 
 ////////////////////////////////////////////////
 //////// MODIFICATION / DUPLICATION ////////////
@@ -75,102 +76,17 @@ const toast = useToastStore()
 
 const title = ref("")
 
-// TODO : Ces fonctions liées aux organisations, poles et rôles
-// pourraient être des composables
-
-const adminMemberships = computed(() =>
-  store.loggedUser?.memberships.filter((x) => x.membershipType === "admin")
-)
-
-// Organisations uniques parmi les rôles admin (un utilisateur peut avoir plusieurs rôles
-// dans la même organisation, ex. admin de deux pôles distincts)
-const uniqueAdminOrgs = computed(() => {
-  const seen = new Set<number>()
-  return (adminMemberships.value ?? [])
-    .filter((m) => {
-      if (seen.has(m.organisation.id)) return false
-      seen.add(m.organisation.id)
-      return true
-    })
-    .map((m) => m.organisation)
-})
-
-const orgOptions = computed(() =>
-  uniqueAdminOrgs.value.map((org) => ({
-    text: org.name,
-    value: String(org.id),
-  }))
-)
-
-const selectedOrganisationId = ref<string>("")
-
-const organisation = computed(() => {
-  if (uniqueAdminOrgs.value.length === 1) return uniqueAdminOrgs.value[0].id
-  return selectedOrganisationId.value
-    ? Number(selectedOrganisationId.value)
-    : undefined
-})
-
-// L'utilisateur a un rôle admin au niveau organisation (pole === null) pour l'org sélectionnée
-const hasOrgLevelAdmin = computed(
-  () =>
-    adminMemberships.value?.some(
-      (m) => m.organisation.id === organisation.value && m.pole === null
-    ) ?? false
-)
-
-// Pôles auxquels l'utilisateur a un rôle admin explicite dans l'org sélectionnée
-const adminPoles = computed(
-  () =>
-    adminMemberships.value
-      ?.filter(
-        (m) => m.organisation.id === organisation.value && m.pole !== null
-      )
-      .map((m) => m.pole!) ?? []
-)
-
-// Pôles de l'org sélectionnée issus du profil utilisateur (déjà chargés au login)
-const orgPoles = computed(
-  () =>
-    store.loggedUser?.organisations.find((o) => o.id === organisation.value)
-      ?.poles ?? []
-)
-
-// Toutes les valeurs sont des strings pour éviter les problèmes de coercition du DsfrSelect :
-// "" = aucun pôle, "123" = pôle avec id 123
-const poleOptions = computed(() => {
-  const opts: { text: string; value: string }[] = []
-  if (hasOrgLevelAdmin.value) {
-    // Les admins org voient "Aucun pôle" + tous les pôles de l'organisation
-    opts.push({ text: "Tous les pôles (niveau organisation)", value: "" })
-    for (const p of orgPoles.value) {
-      opts.push({ text: p.name, value: String(p.id) })
-    }
-  } else {
-    // Les admins pôle voient uniquement leurs pôles explicites
-    for (const p of adminPoles.value) {
-      opts.push({ text: p.name, value: String(p.id) })
-    }
-  }
-  return opts
-})
-
-// Le sélecteur n'est affiché que s'il y a un vrai choix à faire
-const showPoleSelect = computed(() => poleOptions.value.length > 1)
-
-const selectedPoleOption = ref<string>(
-  poleOptions.value.length === 1 ? poleOptions.value[0].value : ""
-)
-
-// Remise à zéro quand l'organisation change pour éviter une valeur obsolète
-watch(organisation, () => {
-  selectedPoleOption.value = ""
-})
-
-// null → enquête au niveau organisation ; number → enquête rattachée à un pôle
-const pole = computed(() =>
-  selectedPoleOption.value !== "" ? Number(selectedPoleOption.value) : null
-)
+const {
+  selectedOrganisationId,
+  selectedPoleOption,
+  organisation,
+  pole,
+  orgOptions,
+  poleOptions,
+  showPoleSelect,
+  hasOrgLevelAdmin,
+  uniqueAdminOrgs,
+} = useAdminScopeSelection()
 
 const validator = z
   .object({
