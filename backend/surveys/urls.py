@@ -11,6 +11,16 @@ urlpatterns = [
         views.SurveyRetrieveUpdateDestroyAPIView.as_view(),
         name="survey_retrieve_update_destroy",
     ),
+    path(
+        "api/surveys/<int:survey_pk>/follow-ups",
+        views.SurveyFollowUpListCreateAPIView.as_view(),
+        name="follow_up_list_create",
+    ),
+    path(
+        "api/surveys/<int:survey_pk>/follow-ups/<int:pk>",
+        views.SurveyFollowUpRetrieveUpdateDestroyAPIView.as_view(),
+        name="follow_up_retrieve_update_destroy",
+    ),
     path("api/mobile/surveys/", views.SurveyResponderListAPIView.as_view(), name="survey_responder_retrieve"),
     path("api/vocabularies/", views.VocabularySetListView.as_view(), name="vocabulary_set_list"),
     path("api/vocabularies/<str:code>/", views.VocabularySetDetailView.as_view(), name="vocabulary_set_detail"),

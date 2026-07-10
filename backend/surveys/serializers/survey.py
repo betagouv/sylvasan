@@ -3,6 +3,8 @@ from rest_framework import serializers
 
 from surveys.models import Survey
 
+from .surveyfollowup import SurveyFollowUpSerializer
+
 
 class SurveyDisplaySerializer(serializers.ModelSerializer):
     organisation_name = serializers.CharField(source="organisation.name", allow_null=True)
@@ -39,6 +41,7 @@ class SurveySerializer(serializers.ModelSerializer):
 
 
 class FullSurveySerializer(serializers.ModelSerializer):
+    follow_ups = SurveyFollowUpSerializer(many=True)
     organisation = OrganisationSerializer()
     pole = PoleSerializer(allow_null=True)
 
@@ -47,6 +50,7 @@ class FullSurveySerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "organisation",
+            "follow_ups",
             "pole",
             "title",
             "json_schema",
