@@ -2,12 +2,15 @@
 import { computed } from "vue"
 import { useIonRouter } from "@ionic/vue"
 import type { PinData } from "../composables/useMapPins"
+import { useSurveysStore } from "../stores/surveys"
+import { useCanAddFollowUp } from "../composables/useCanAddFollowUp"
 import ResponseBadge from "./ResponseBadge.vue"
 
 const props = defineProps<{ pin: PinData }>()
 const emit = defineEmits<{ close: [] }>()
 
 const router = useIonRouter()
+const surveysStore = useSurveysStore()
 
 const formattedDate = computed(() =>
   new Date(props.pin.date).toLocaleDateString("fr-FR", {
@@ -16,7 +19,6 @@ const formattedDate = computed(() =>
     year: "numeric",
   })
 )
-
 
 const navigate = () => {
   emit("close")
@@ -29,6 +31,25 @@ const navigate = () => {
     "push"
   )
 }
+
+const addFollowUp = () => {
+  emit("close")
+  router.navigate(
+    {
+      name: "FollowUpChooserPage",
+      params: { responseId: String(props.pin.responseId) },
+    },
+    "forward",
+    "push"
+  )
+}
+
+const survey = computed(() =>
+  props.pin.surveyId != null
+    ? surveysStore.getSurveyById(props.pin.surveyId)
+    : undefined
+)
+const canAddFollowUp = useCanAddFollowUp(survey)
 </script>
 
 <template>
@@ -50,13 +71,23 @@ const navigate = () => {
       <span>{{ formattedDate }}</span>
       <ResponseBadge :response="({ status: pin.status } as any)" />
     </div>
-    <DsfrButton
-      label="Voir le détail"
-      @click="navigate"
-      secondary
-      size="sm"
-      icon="ri-arrow-right-line"
-    />
+    <div class="flex gap-2">
+      <DsfrButton
+        v-if="canAddFollowUp"
+        label="Ajouter une étape de suivi"
+        size="sm"
+        @click="addFollowUp"
+        icon="ri-add-line"
+      />
+
+      <DsfrButton
+        label="Voir le détail"
+        @click="navigate"
+        secondary
+        size="sm"
+        icon="ri-arrow-right-line"
+      />
+    </div>
   </div>
 </template>
 

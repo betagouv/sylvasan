@@ -12,6 +12,8 @@ import SettingsPage from "../pages/SettingsPage.vue"
 import MapDownloadPage from "../pages/MapDownloadPage.vue"
 import MapPreviewPage from "../pages/MapPreviewPage.vue"
 import ResponseSummaryPage from "../pages/ResponseSummaryPage.vue"
+import FollowUpChooserPage from "../pages/FollowUpChooserPage.vue"
+import FollowUpSurveyPage from "../pages/FollowUpSurveyPage.vue"
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -73,6 +75,16 @@ const routes: Array<RouteRecordRaw> = [
     path: "/observations/:responseId",
     name: "ResponseSummaryPage",
     component: ResponseSummaryPage,
+  },
+  {
+    path: "/observations/:responseId/followUps",
+    name: "FollowUpChooserPage",
+    component: FollowUpChooserPage,
+  },
+  {
+    path: "/observations/:responseId/followUps/:followUpId",
+    name: "FollowUpSurveyPage",
+    component: FollowUpSurveyPage,
   },
 ]
 

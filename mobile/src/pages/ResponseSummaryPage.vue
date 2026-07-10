@@ -17,6 +17,7 @@ import { useRoute } from "vue-router"
 import { useResponsesStore } from "../stores/responses"
 import { useSurveysStore } from "../stores/surveys"
 import SurveySummary from "../components/SurveySummary.vue"
+import { useCanAddFollowUp } from "../composables/useCanAddFollowUp"
 
 const route = useRoute()
 const router = useIonRouter()
@@ -37,7 +38,7 @@ const surveyId = computed(() => {
   if (!response.value) return null
   return "surveyId" in response.value
     ? response.value.surveyId
-    : response.value.survey.id
+    : response.value.survey?.id
 })
 
 const survey = computed(() =>
@@ -73,6 +74,17 @@ const confirmDelete = async () => {
   })
   await alert.present()
 }
+const canAddFollowUp = useCanAddFollowUp(survey)
+const addFollowUp = () => {
+  router.navigate(
+    {
+      name: "FollowUpChooserPage",
+      params: { responseId: responseId },
+    },
+    "forward",
+    "push"
+  )
+}
 </script>
 
 <template>
@@ -95,6 +107,14 @@ const confirmDelete = async () => {
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
+      <div v-if="canAddFollowUp" class="p-4 bg-blue-france-975">
+        <DsfrButton
+          label="Ajouter une étape de suivi"
+          icon="ri-arrow-right-line"
+          size="sm"
+          @click="addFollowUp"
+        />
+      </div>
       <div v-if="!response || !survey">Observation introuvable.</div>
       <SurveySummary v-else :survey="survey" :response="response" />
     </ion-content>

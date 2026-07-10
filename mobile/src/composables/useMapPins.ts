@@ -9,6 +9,7 @@ import type { SurveySchema } from "@shared-types/survey"
 
 export interface PinData {
   responseId: string | number
+  surveyId: number | null
   isLocal: boolean
   lat: number
   lon: number
@@ -62,6 +63,9 @@ export function useMapPins(mapRef: ShallowRef<maplibregl.Map | null>) {
           responseId: isLocal
             ? (response as LocalResponse).localId
             : (response as ResponseFull).id,
+          surveyId: isLocal
+            ? (response as LocalResponse).surveyId
+            : ((response as ResponseFull).survey?.id ?? null),
           isLocal,
           lat: value.lat,
           lon: value.lon,
