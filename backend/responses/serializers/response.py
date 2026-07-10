@@ -85,6 +85,31 @@ class ResponseSerializer(serializers.ModelSerializer):
             response.save(update_fields=["data"])
 
 
+class FollowUpResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Response
+        fields = (
+            "id",
+            "survey_follow_up",
+            "parent_response",
+            "respondant",
+            "data",
+            "context",
+            "status",
+        )
+        read_only_fields = ("id", "status", "respondant")
+
+    def create(self, validated_data):
+        data = validated_data.get("data", {})
+        schema = validated_data["survey_follow_up"].json_schema or {}
+
+        with transaction.atomic():
+            response = Response.objects.create(**validated_data)
+            ResponseSerializer._create_images_from_data(response, data, schema)
+
+        return response
+
+
 class ResponseDisplaySerializer(serializers.ModelSerializer):
     respondant = UserDisplaySerializer(read_only=True)
     survey = SurveyDisplaySerializer(read_only=True)

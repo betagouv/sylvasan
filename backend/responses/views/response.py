@@ -20,8 +20,9 @@ from surveys.models import Survey
 from surveys.serializers import SurveyDisplaySerializer
 
 from responses.models import Response
-from responses.permissions import CanCreateResponse, CanDeleteResponse
+from responses.permissions import CanCreateFollowUpResponse, CanCreateResponse, CanDeleteResponse
 from responses.serializers import (
+    FollowUpResponseSerializer,
     FullResponseSerializer,
     ResponseDisplaySerializer,
     ResponseExportSerializer,
@@ -105,10 +106,14 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == "GET":
             return ResponseDisplaySerializer
+        if self.request.data.get("survey_follow_up"):
+            return FollowUpResponseSerializer
         return ResponseSerializer
 
     def get_permissions(self):
         if self.request.method == "POST":
+            if self.request.data.get("survey_follow_up"):
+                return [IsAuthenticated(), CanCreateFollowUpResponse()]
             return [IsAuthenticated(), CanCreateResponse()]
         return [IsAuthenticated()]
 

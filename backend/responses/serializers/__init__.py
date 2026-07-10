@@ -1,4 +1,5 @@
 from .response import (
+    FollowUpResponseSerializer,
     FullResponseSerializer,
     FullSurveySerializer,
     ResponseDisplaySerializer,

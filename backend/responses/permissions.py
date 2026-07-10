@@ -1,6 +1,6 @@
 from organisations.models import Membership, MembershipType
 from rest_framework import permissions
-from surveys.models import Survey
+from surveys.models import Survey, SurveyFollowUp
 from surveys.permissions import CanDeleteSurvey
 
 
@@ -31,6 +31,34 @@ class CanCreateResponse(permissions.BasePermission):
         if survey.pole is None:
             return qs.filter(pole__isnull=False).exists()
         return qs.filter(pole=survey.pole).exists()
+
+
+class CanCreateFollowUpResponse(permissions.BasePermission):
+    message = "Vous n'avez pas l'autorisation pour répondre à ce suivi"
+
+    def has_permission(self, request, view):
+        # TODO : Cette fonction est très similaire à CanCreateResponse.has_permission.
+        # Refactor
+
+        follow_up_id = request.data.get("survey_follow_up")
+
+        try:
+            follow_up = SurveyFollowUp.objects.get(pk=follow_up_id)
+        except SurveyFollowUp.DoesNotExist:
+            return False
+
+        qs = Membership.objects.filter(
+            user=request.user,
+            organisation=follow_up.organisation,
+            membership_type=MembershipType.RESPONDER,
+        )
+
+        if qs.filter(pole__isnull=True).exists():
+            return True
+
+        if follow_up.pole is None:
+            return qs.filter(pole__isnull=False).exists()
+        return qs.filter(pole=follow_up.pole).exists()
 
 
 class CanDeleteResponse(permissions.BasePermission):
