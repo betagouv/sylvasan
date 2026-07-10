@@ -1,4 +1,4 @@
-import type { SurveyDisplay, SurveySchema } from "./survey"
+import type { Survey, SurveyDisplay, SurveyFollowUp, SurveySchema } from "./survey"
 import type { UserDisplay } from "./api"
 
 export type LocalResponseStatus = "draft" | "pending" | "synced"
@@ -24,6 +24,14 @@ export interface ResponseWrite {
   context?: Record<string, unknown>
 }
 
+// Correspond à FollowUpResponseSerializer
+export interface FollowUpResponseWrite {
+  surveyFollowUp: number
+  parentResponse: number
+  data: Record<string, unknown>
+  context?: Record<string, unknown>
+}
+
 // Correspond à ResponseDisplaySerializer
 export interface ResponseDisplay {
   id: number
@@ -36,7 +44,9 @@ export interface ResponseDisplay {
 // Correspond à FullResponseSerializer
 export interface ResponseFull {
   id: number
-  survey: SurveyFull
+  survey: Survey | null
+  surveyFollowUp: SurveyFollowUp | null
+  parentResponse: number | null
   respondant: UserDisplay | null
   data: Record<string, unknown>
   context: Record<string, unknown> | null

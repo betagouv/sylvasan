@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { DsfrButton } from "@gouvminint/vue-dsfr"
+import type { SurveyFollowUp } from "@shared-types/survey"
 
-const { followUp } = defineProps(["followUp"])
+const { followUp } = defineProps<{ followUp: SurveyFollowUp }>()
 const emit = defineEmits(["delete", "edit"])
 </script>
 

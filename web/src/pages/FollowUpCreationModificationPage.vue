@@ -90,11 +90,7 @@ onFetchFollowUpResponse(async () => {
   isFetching.value = false
 })
 
-if (existingFollowUpId.value) {
-  executeFollowUpQuery()
-} else {
-  isFetching.value = false
-}
+if (existingFollowUpId.value) executeFollowUpQuery()
 /////////////////////////////////////////
 /////////////////////////////////////////
 
@@ -103,6 +99,7 @@ const {
   data: survey,
   onFetchError: onFetchSurveyError,
   onFetchResponse: onFetchSurveyResponse,
+  onFetchFinally: onFetchSurveyFinally,
 } = useApiFetch(`/surveys/${surveyId.value}`, {
   immediate: false,
 }).json()
@@ -120,6 +117,10 @@ onFetchSurveyResponse(async () => {
   selectedPoleOption.value = survey.value.pole?.id
     ? String(survey.value.pole?.id)
     : ""
+})
+
+onFetchSurveyFinally(() => {
+  isFetching.value = false
 })
 
 executeSurveyQuery()
@@ -230,9 +231,9 @@ const createOrUpdateFollowUp = async () => {
   }
   const saveFunction = existingFollowUpId.value
     ? useApiFetch(
-        `/surveys/${survey.value.id}/follow-ups/${existingFollowUpId.value}`
+        `/surveys/${surveyId.value}/follow-ups/${existingFollowUpId.value}`
       ).put
-    : useApiFetch(`/surveys/${survey.value.id}/follow-ups`).post
+    : useApiFetch(`/surveys/${surveyId.value}/follow-ups`).post
 
   const { response } = await saveFunction(payload).json()
   if (response.value?.ok) {
@@ -261,7 +262,6 @@ const payload = computed(() => ({
 const clearFieldError = (field: string) => {
   if (formErrors.value.fieldErrors[field])
     delete formErrors.value.fieldErrors[field]
-  console.log(field)
 }
 
 // Validators
@@ -296,6 +296,9 @@ const validator = z
         { text: 'Sous-enquête de suivi' },
       ]"
     />
+    <div v-if="isFetching" class="flex justify-center my-20">
+      <ProgressSpinner />
+    </div>
     <div v-if="survey">
       <div class="flex">
         <div class="border border-gray-300 rounded p-4">
