@@ -1,4 +1,5 @@
 import { computed, ref, watch } from "vue"
+import * as z from "zod"
 import { useRootStore } from "../stores/root.ts"
 
 /**
@@ -106,6 +107,25 @@ export function useAdminScopeSelection() {
     selectedPoleOption.value !== "" ? Number(selectedPoleOption.value) : null
   )
 
+  const scopeValidator = z
+    .object({
+      title: z.string().min(1, "Le titre est obligatoire"),
+      fields: z
+        .array(z.any())
+        .min(1, "L'enquête doit contenir au moins un champ"),
+      organisation: z.coerce.number("L'organisation est obligatoire"),
+      pole: z.number().nullable(),
+    })
+    .superRefine(({ pole }, ctx) => {
+      if (!hasOrgLevelAdmin.value && pole === null) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Le pôle est obligatoire",
+          path: ["pole"],
+        })
+      }
+    })
+
   return {
     selectedOrganisationId,
     selectedPoleOption,
@@ -116,5 +136,6 @@ export function useAdminScopeSelection() {
     showPoleSelect,
     hasOrgLevelAdmin,
     uniqueAdminOrgs,
+    scopeValidator,
   }
 }

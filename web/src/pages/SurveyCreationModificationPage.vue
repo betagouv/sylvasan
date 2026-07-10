@@ -17,7 +17,6 @@ import { useToastStore } from "../stores/toast.ts"
 import { useRouter, useRoute } from "vue-router"
 import { useRootStore } from "../stores/root.ts"
 import * as z from "zod"
-import { ZodError } from "zod"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
 import EmptyPageTitleModal from "../components/SurveyBuilder/EmptyPageTitleModal.vue"
 import { useAdminScopeSelection } from "../composables/useAdminScopeSelection.ts"
@@ -86,26 +85,8 @@ const {
   showPoleSelect,
   hasOrgLevelAdmin,
   uniqueAdminOrgs,
+  scopeValidator,
 } = useAdminScopeSelection()
-
-const validator = z
-  .object({
-    title: z.string().min(1, "Le titre est obligatoire"),
-    fields: z
-      .array(z.any())
-      .min(1, "L'enquête doit contenir au moins un champ"),
-    organisation: z.coerce.number("L'organisation est obligatoire"),
-    pole: z.number().nullable(),
-  })
-  .superRefine(({ pole }, ctx) => {
-    if (!hasOrgLevelAdmin.value && pole === null) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Le pôle est obligatoire",
-        path: ["pole"],
-      })
-    }
-  })
 
 const formErrors = ref<{
   formErrors: string[]
@@ -146,14 +127,14 @@ const createOrUpdateSurvey = async () => {
     return
   }
   try {
-    validator.parse({
+    scopeValidator.parse({
       title: title.value,
       fields: schema.value.fields,
       organisation: organisation.value,
       pole: pole.value,
     })
   } catch (error) {
-    if (error instanceof ZodError) formErrors.value = z.flattenError(error)
+    if (error instanceof z.ZodError) formErrors.value = z.flattenError(error)
     return
   }
   const saveFunction = existingSurveyId.value

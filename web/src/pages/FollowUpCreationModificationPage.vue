@@ -17,7 +17,6 @@ import { useRouter, useRoute } from "vue-router"
 import { useRootStore } from "../stores/root.ts"
 import ColorPicker from "../components/ColorPicker.vue"
 import * as z from "zod"
-import { ZodError } from "zod"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
 import type { SurveySchema } from "@shared-types/survey"
 import IconPicker from "../components/IconPicker.vue"
@@ -148,6 +147,7 @@ const {
   showPoleSelect,
   hasOrgLevelAdmin,
   uniqueAdminOrgs,
+  scopeValidator,
 } = useAdminScopeSelection()
 
 const createOrUpdateFollowUp = async () => {
@@ -160,14 +160,14 @@ const createOrUpdateFollowUp = async () => {
   }
 
   try {
-    validator.parse({
+    scopeValidator.parse({
       title: title.value,
       fields: schema.value.fields,
       organisation: organisation.value,
       pole: pole.value,
     })
   } catch (error) {
-    if (error instanceof ZodError) formErrors.value = z.flattenError(error)
+    if (error instanceof z.ZodError) formErrors.value = z.flattenError(error)
     return
   }
   const saveFunction = existingFollowUpId.value
@@ -204,27 +204,6 @@ const clearFieldError = (field: string) => {
   if (formErrors.value.fieldErrors[field])
     delete formErrors.value.fieldErrors[field]
 }
-
-// Validators
-
-const validator = z
-  .object({
-    title: z.string().min(1, "Le titre est obligatoire"),
-    fields: z
-      .array(z.any())
-      .min(1, "L'enquête doit contenir au moins un champ"),
-    organisation: z.coerce.number("L'organisation est obligatoire"),
-    pole: z.number().nullable(),
-  })
-  .superRefine(({ pole }, ctx) => {
-    if (!hasOrgLevelAdmin.value && pole === null) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Le pôle est obligatoire",
-        path: ["pole"],
-      })
-    }
-  })
 </script>
 
 <template>
