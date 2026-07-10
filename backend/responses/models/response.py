@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 
 from common.behaviours import Deactivable, DeactivableQuerySet, Historisable, TimeStampable
-from surveys.models import Survey
+from surveys.models import Survey, SurveyFollowUp
 
 
 class ResponseStatus(models.TextChoices):
@@ -14,7 +15,31 @@ class ResponseStatus(models.TextChoices):
 class Response(TimeStampable, Historisable, Deactivable):
     objects = DeactivableQuerySet.as_manager()
 
-    survey = models.ForeignKey(Survey, related_name="responses", verbose_name="enquête", on_delete=models.CASCADE)
+    survey = models.ForeignKey(
+        Survey,
+        related_name="responses",
+        verbose_name="enquête",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
+    survey_follow_up = models.ForeignKey(
+        SurveyFollowUp,
+        related_name="responses",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
+    parent_response = models.ForeignKey(
+        "self",
+        related_name="follow_up_responses",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+    )
+
     respondant = models.ForeignKey(
         get_user_model(),
         related_name="responses",
@@ -33,6 +58,12 @@ class Response(TimeStampable, Historisable, Deactivable):
 
     def __str__(self):
         return f"{self.survey} – {self.get_status_display()}"
+
+    def clean(self):
+        if bool(self.survey) and bool(self.survey_follow_up):
+            raise ValidationError("Une réponse doit avoir soit une enquête, soit un suivi, pas les deux.")
+        if self.follow_up_id and not self.parent_response_id:
+            raise ValidationError("Une réponse de suivi doit référencer une réponse parente.")
 
 
 class ResponseImage(TimeStampable):
