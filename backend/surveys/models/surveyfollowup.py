@@ -35,7 +35,7 @@ class SurveyFollowUp(TimeStampable, Deactivable, Historisable):
     title = models.CharField("titre")
 
     # Données pour la UI
-    action_label = models.CharField(max_length=100)
+    action_label = models.CharField(blank=True)
     action_icon = models.CharField(max_length=50, blank=True)
     action_color = models.CharField(max_length=20, blank=True)
 
