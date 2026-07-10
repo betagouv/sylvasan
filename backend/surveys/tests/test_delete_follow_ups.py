@@ -6,6 +6,8 @@ from organisations.models import MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from responses.factories import ResponseFactory
+from responses.models import Response
 from surveys.factories import SurveyFactory
 from surveys.factories.surveyfollowup import SurveyFollowUpFactory
 from surveys.models import SurveyFollowUp
@@ -144,6 +146,42 @@ class TestDeleteFollowUp(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
         response = self.client.delete(detail_url(survey, suivi))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_suppression_suivi_desactive_aussi_ses_reponses(self):
+        """
+        Supprimer un suivi désactive également toutes ses réponses
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        suivi = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        parent = ResponseFactory(survey=survey)
+        reponse_1 = ResponseFactory(survey=None, survey_follow_up=suivi, parent_response=parent)
+        reponse_2 = ResponseFactory(survey=None, survey_follow_up=suivi, parent_response=parent)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        self.client.delete(detail_url(survey, suivi))
+
+        reponse_1.refresh_from_db()
+        reponse_2.refresh_from_db()
+        self.assertFalse(reponse_1.is_active)
+        self.assertFalse(reponse_2.is_active)
+
+    @authenticate
+    def test_suppression_suivi_ne_supprime_pas_les_reponses_en_base(self):
+        """
+        Les réponses désactivées existent toujours en base après suppression du suivi
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        suivi = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        parent = ResponseFactory(survey=survey)
+        reponse = ResponseFactory(survey=None, survey_follow_up=suivi, parent_response=parent)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        self.client.delete(detail_url(survey, suivi))
+
+        self.assertTrue(Response.objects.filter(pk=reponse.pk).exists())
 
     @authenticate
     def test_admin_autre_organisation_ne_peut_pas_supprimer_un_suivi(self):

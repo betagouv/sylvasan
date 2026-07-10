@@ -63,3 +63,4 @@ class SurveyFollowUpRetrieveUpdateDestroyAPIView(SurveyFollowUpQuerySetMixin, Re
 
     def perform_destroy(self, follow_up):
         follow_up.deactivate()
+        follow_up.responses.update(is_active=False)

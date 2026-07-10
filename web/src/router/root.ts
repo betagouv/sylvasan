@@ -11,6 +11,7 @@ import { useRootStore } from "../stores/root.ts"
 import { routes, handleHotUpdate } from "vue-router/auto-routes"
 import NotFoundPage from "../pages/NotFoundPage.vue"
 import SurveyCreationModificationPage from "../pages/SurveyCreationModificationPage.vue"
+import FollowUpCreationModificationPage from "../pages/FollowUpCreationModificationPage.vue"
 
 const previousRoute = ref<RouteLocationNormalizedGeneric | null>(null)
 type SylvaSanRouter = Router & {
@@ -24,6 +25,15 @@ const extendedRoutes = [
     path: "/modification-enquete/:surveyId",
     component: SurveyCreationModificationPage,
     meta: { authenticationRequired: true, title: "Modification d'enquête" },
+  },
+  {
+    name: "FollowUpModification",
+    path: "/enquetes/:surveyId/modification-suivi/:followUpId",
+    component: FollowUpCreationModificationPage,
+    meta: {
+      authenticationRequired: true,
+      title: "Modification de sous-enquête de suivi",
+    },
   },
   {
     path: "/:pathMatch(.*)*",

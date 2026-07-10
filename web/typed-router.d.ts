@@ -115,6 +115,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/FollowUpCreationModificationPage': RouteRecordInfo<
+      '/FollowUpCreationModificationPage',
+      '/enquetes/:surveyId/creation-suivi',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/LegalNoticesPage': RouteRecordInfo<
       '/LegalNoticesPage',
       '/mentions-legales',
@@ -268,6 +275,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/SurveyListPage.vue': {
       routes:
         | '/SurveyListPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/FollowUpCreationModificationPage.vue': {
+      routes:
+        | '/FollowUpCreationModificationPage'
       views:
         | never
       pathParamNames:

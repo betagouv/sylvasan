@@ -41,9 +41,12 @@ class SurveySerializer(serializers.ModelSerializer):
 
 
 class FullSurveySerializer(serializers.ModelSerializer):
-    follow_ups = SurveyFollowUpSerializer(many=True)
+    follow_ups = serializers.SerializerMethodField()
     organisation = OrganisationSerializer()
     pole = PoleSerializer(allow_null=True)
+
+    def get_follow_ups(self, obj):
+        return SurveyFollowUpSerializer(obj.follow_ups.filter(is_active=True), many=True).data
 
     class Meta:
         model = Survey
