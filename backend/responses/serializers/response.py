@@ -10,6 +10,7 @@ from django.db import transaction
 from PIL import Image
 from rest_framework import serializers
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer
+from surveys.serializers.surveyfollowup import SurveyFollowUpSerializer
 from users.serializers import UserDisplaySerializer
 
 from responses.models import Response, ResponseImage
@@ -101,7 +102,8 @@ class ResponseDisplaySerializer(serializers.ModelSerializer):
 
 
 def _enrich_image_fields(ret, instance, image_serializer_class):
-    schema = instance.survey.json_schema or {}
+    source = instance.survey or instance.survey_follow_up
+    schema = (source.json_schema if source else None) or {}
     image_field_ids = [f["id"] for f in schema.get("fields", []) if f.get("ui", {}).get("widget") == "image"]
     if not image_field_ids:
         return ret
@@ -130,12 +132,16 @@ def _enrich_image_fields(ret, instance, image_serializer_class):
 class FullResponseSerializer(serializers.ModelSerializer):
     respondant = UserDisplaySerializer(read_only=True)
     survey = FullSurveySerializer(read_only=True)
+    survey_follow_up = SurveyFollowUpSerializer(read_only=True)
+    parent_response = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Response
         fields = (
             "id",
             "survey",
+            "survey_follow_up",
+            "parent_response",
             "respondant",
             "data",
             "context",

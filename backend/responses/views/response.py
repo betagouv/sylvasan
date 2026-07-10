@@ -79,15 +79,17 @@ class ResponseQuerySetMixin:
             if membership.membership_type == MembershipType.RESPONDER:
                 query |= Q(respondant=user)
             elif membership.pole_id is not None:
-                query |= Q(survey__pole_id=membership.pole_id)
+                query |= Q(survey__pole_id=membership.pole_id) | Q(survey_follow_up__pole_id=membership.pole_id)
             else:
-                query |= Q(survey__organisation_id=membership.organisation_id)
+                query |= Q(survey__organisation_id=membership.organisation_id) | Q(
+                    survey_follow_up__organisation_id=membership.organisation_id
+                )
 
         return (
             Response.objects.active()
             .filter(query)
             .distinct()
-            .select_related("survey", "survey__organisation", "survey__pole")
+            .select_related("survey", "survey__organisation", "survey__pole", "survey_follow_up")
         )
 
 
@@ -148,7 +150,7 @@ class ResponseFullListAPIView(ListAPIView):
         return (
             Response.objects.active()
             .filter(respondant=user)
-            .select_related("survey", "survey__organisation", "survey__pole")
+            .select_related("survey", "survey__organisation", "survey__pole", "survey_follow_up")
             .prefetch_related("images")
         )
 

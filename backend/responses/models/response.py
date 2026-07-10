@@ -62,7 +62,7 @@ class Response(TimeStampable, Historisable, Deactivable):
     def clean(self):
         if bool(self.survey) and bool(self.survey_follow_up):
             raise ValidationError("Une réponse doit avoir soit une enquête, soit un suivi, pas les deux.")
-        if self.follow_up_id and not self.parent_response_id:
+        if self.survey_follow_up and not self.parent_response:
             raise ValidationError("Une réponse de suivi doit référencer une réponse parente.")
 
 
