@@ -39,6 +39,17 @@ export interface FollowUpResponseWrite {
   context?: Record<string, unknown>
 }
 
+// Correspond à GeoResponseSerializer
+export interface ResponseGeo {
+  id: number
+  surveyId: number | null
+  surveyTitle: string | null
+  status: BackendResponseStatus
+  creationDate: string
+  lat: number
+  lon: number
+}
+
 // Correspond à ResponseDisplaySerializer
 export interface ResponseDisplay {
   id: number
