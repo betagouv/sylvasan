@@ -2,8 +2,12 @@ import { ref, watch, onBeforeUnmount } from "vue"
 import type { ShallowRef } from "vue"
 import maplibregl from "maplibre-gl"
 import { useApiFetch } from "../utils/data-fetching"
+import { useAuthStore } from "../stores/auth"
 import type { ResponseGeo } from "@shared-types/response"
 import type { PinData } from "./useMapPins"
+
+const COLOR_OWN = "#000091"      // --blue-france-sun-113
+const COLOR_OTHER = "#7ab1e8"    // bleu clair pour les réponses des collègues
 
 function toPin(r: ResponseGeo): PinData {
   return {
@@ -15,10 +19,12 @@ function toPin(r: ResponseGeo): PinData {
     surveyTitle: r.surveyTitle ?? "",
     date: r.creationDate,
     status: r.status,
+    respondant: r.respondant,
   }
 }
 
 export function useGeoPins(mapRef: ShallowRef<maplibregl.Map | null>) {
+  const authStore = useAuthStore()
   const selectedPin = ref<PinData | null>(null)
   const showSearchHere = ref(false)
   const loading = ref(false)
@@ -31,9 +37,11 @@ export function useGeoPins(mapRef: ShallowRef<maplibregl.Map | null>) {
   }
 
   const renderMarkers = (mapInstance: maplibregl.Map, pins: PinData[]) => {
+    const currentUserId = authStore.loggedUser?.id
     clearMarkers()
     for (const pin of pins) {
-      const marker = new maplibregl.Marker({ color: "#000091" })
+      const isOwn = pin.respondant?.id === currentUserId
+      const marker = new maplibregl.Marker({ color: isOwn ? COLOR_OWN : COLOR_OTHER })
         .setLngLat([pin.lon, pin.lat])
         .addTo(mapInstance)
 

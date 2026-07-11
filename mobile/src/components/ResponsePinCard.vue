@@ -3,6 +3,7 @@ import { computed } from "vue"
 import { useIonRouter, modalController } from "@ionic/vue"
 import type { PinData } from "../composables/useMapPins"
 import { useSurveysStore } from "../stores/surveys"
+import { useAuthStore } from "../stores/auth"
 import { useCanAddFollowUp } from "../composables/useCanAddFollowUp"
 import ResponseBadge from "./ResponseBadge.vue"
 import FollowUpChooserPage from "../pages/FollowUpChooserPage.vue"
@@ -12,6 +13,11 @@ const emit = defineEmits<{ close: [] }>()
 
 const router = useIonRouter()
 const surveysStore = useSurveysStore()
+const authStore = useAuthStore()
+
+const isOwnResponse = computed(() =>
+  !props.pin.respondant || props.pin.respondant.id === authStore.loggedUser?.id
+)
 
 const formattedDate = computed(() =>
   new Date(props.pin.date).toLocaleDateString("fr-FR", {
@@ -68,6 +74,9 @@ const canAddFollowUp = useCanAddFollowUp(survey)
     </div>
     <div class="flex flex-col gap-1 text-sm text-stone-500 mb-4">
       <span>{{ formattedDate }}</span>
+      <span v-if="!isOwnResponse && pin.respondant">
+        {{ pin.respondant.firstName }} {{ pin.respondant.lastName }}
+      </span>
       <ResponseBadge :response="({ status: pin.status } as any)" />
     </div>
     <div class="flex gap-2">
@@ -80,6 +89,7 @@ const canAddFollowUp = useCanAddFollowUp(survey)
       />
 
       <DsfrButton
+        v-if="isOwnResponse"
         label="Voir le détail"
         @click="navigate"
         secondary

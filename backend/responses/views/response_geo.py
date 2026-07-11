@@ -74,6 +74,6 @@ class ResponseGeoListAPIView(ListAPIView):
             Response.objects.active()
             .filter(query)
             .filter(geolocation_point__within=bbox)
-            .select_related("survey")
+            .select_related("survey", "respondant")
             .order_by("-creation_date")[:GEO_RESPONSE_LIMIT]
         )

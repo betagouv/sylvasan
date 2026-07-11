@@ -48,6 +48,7 @@ export interface ResponseGeo {
   creationDate: string
   lat: number
   lon: number
+  respondant: UserDisplay | null
 }
 
 // Correspond à ResponseDisplaySerializer

@@ -16,6 +16,7 @@ export interface PinData {
   surveyTitle: string
   date: string
   status: string
+  respondant?: { id: number; firstName: string; lastName: string } | null
 }
 
 function getSchema(
