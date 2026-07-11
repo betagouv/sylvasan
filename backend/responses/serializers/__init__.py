@@ -7,3 +7,4 @@ from .response import (
     ResponseSerializer,
     ResponseImageSerializer,
 )
+from .response_geo import GeoResponseSerializer
