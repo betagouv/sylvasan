@@ -12,6 +12,7 @@ import {
   IonButton,
   IonIcon,
   alertController,
+  modalController,
 } from "@ionic/vue"
 import { useRoute } from "vue-router"
 import { storeToRefs } from "pinia"
@@ -45,13 +46,29 @@ const responsesStore = useResponsesStore()
 const surveysStore = useSurveysStore()
 const toast = useToastStore()
 const { vocabularySets } = storeToRefs(useVocabulariesStore())
+const prefillData = ref<Record<string, unknown> | undefined>(undefined)
+const dataReady = ref(false)
+
+// Force validation immediately when a draft is opened (user already saw/filled the form)
+watch(prefillData, (val) => {
+  if (val) forceValidate.value = true
+})
 
 const responseId = props.responseId ?? (route.params.responseId as string)
 const followUpId = props.followUpId ?? Number(route.params.followUpId)
 
 onMounted(async () => {
   await responsesStore.loadFromStorage()
-  if (props.localId) currentLocalId.value = props.localId
+  const draftLocalId =
+    props.localId ?? (route.params.localId as string | undefined)
+  if (draftLocalId) {
+    const existingDraft = responsesStore.getByLocalId(draftLocalId)
+    if (existingDraft) {
+      currentLocalId.value = existingDraft.localId
+      prefillData.value = existingDraft.data
+    }
+  }
+  dataReady.value = true
 })
 
 const response = computed(
@@ -178,7 +195,7 @@ const saveResponse = async () => {
         "Votre suivi a été sauvegardé localement et sera envoyé dès que possible"
       )
     }
-    if (props.isModal) emit("close")
+    if (props.isModal) await modalController.dismiss()
     else router.navigate({ name: "ResponseListPage" }, "back", "replace")
   } finally {
     saving.value = false
@@ -196,7 +213,9 @@ const formatDate = (isoString: string | undefined): string => {
 const confirmDelete = async () => {
   const hasDraft = !!currentLocalId.value
   const alert = await alertController.create({
-    header: hasDraft ? "Supprimer le suivi en cours ?" : "Abandonner le suivi ?",
+    header: hasDraft
+      ? "Supprimer le suivi en cours ?"
+      : "Abandonner le suivi ?",
     message: hasDraft
       ? "Ce suivi sera définitivement supprimé."
       : "Les données saisies ne seront pas sauvegardées.",
@@ -209,8 +228,13 @@ const confirmDelete = async () => {
           if (hasDraft) {
             await responsesStore.deleteDraft(currentLocalId.value!)
           }
-          if (props.isModal) emit("close")
-          else router.navigate({ name: "FollowUpChooserPage", params: { responseId } }, "back", "replace")
+          if (props.isModal) await modalController.dismiss()
+          else
+            router.navigate(
+              { name: "FollowUpChooserPage", params: { responseId } },
+              "back",
+              "replace"
+            )
         },
       },
     ],
@@ -230,7 +254,7 @@ const confirmDelete = async () => {
           />
           <ion-button
             v-else
-            @click="saveDraftIfNeeded().then(() => emit('close'))"
+            @click="saveDraftIfNeeded().then(() => modalController.dismiss())"
           >
             <ion-icon slot="start" :icon="closeOutline" />
             Enregistrer et quitter
@@ -277,11 +301,12 @@ const confirmDelete = async () => {
         </div>
 
         <!-- Form -->
-        <div v-show="!showSummary" class="box-border! p-4!">
+        <div v-if="dataReady" v-show="!showSummary" class="box-border! p-4!">
           <SurveyRenderer
             :allowSubmit="true"
             :schema="followUp.jsonSchema"
             :forceValidate="forceValidate"
+            :prefillData="prefillData"
             :vocabularies="vocabularySets"
             :mapComponent="MapField"
             :resolveImagePath="resolveLocalImageSrc"
