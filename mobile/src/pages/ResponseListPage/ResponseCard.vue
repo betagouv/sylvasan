@@ -73,7 +73,9 @@ const isFollowUp = computed(() => {
       </div>
       <div class="flex flex-col">
         <span class="font-medium">{{ followUp?.title }}</span>
-        <span class="fr-text--sm mb-0! text-gray-500"
+        <span
+          class="fr-text--sm mb-0! text-gray-500"
+          v-if="parentResponse?.survey?.title"
           >Observation « {{ parentResponse?.survey?.title }} »</span
         >
       </div>

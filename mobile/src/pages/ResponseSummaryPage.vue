@@ -67,9 +67,10 @@ const followUp = computed(() => {
 const parentResponse = computed(() => {
   const r = response.value
   if (!r) return undefined
-  const id = "localId" in r
-    ? (r as LocalResponse).parentResponse
-    : (r as ResponseFull).parentResponse
+  const id =
+    "localId" in r
+      ? (r as LocalResponse).parentResponse
+      : (r as ResponseFull).parentResponse
   return id != null ? responsesStore.getResponseById(id) : undefined
 })
 
@@ -160,11 +161,16 @@ const isFollowUp = computed(() => followUp.value != null)
         >
           <v-icon :name="followUp?.actionIcon" scale="1.2" />
         </div>
-        <div class="flex flex-col">
+        <div class="flex flex-col" v-if="parentResponse?.survey?.title">
           <span class="fr-text--sm mb-0! text-gray-500"
             >Suivi effectué pour l'observation</span
           >
           <span class="font-medium">{{ parentResponse?.survey?.title }}</span>
+        </div>
+        <div class="flex flex-col" v-else>
+          <span class="fr-text--sm mb-0! text-gray-500"
+            >Suivi effectué pour une observation existante</span
+          >
         </div>
       </div>
       <div v-if="!response || !surveyForSummary">Observation introuvable.</div>

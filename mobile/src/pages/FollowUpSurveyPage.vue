@@ -86,14 +86,21 @@ const survey = computed(() =>
     : undefined
 )
 
-const followUp = computed(() =>
-  survey.value?.followUps.find((fu) => fu.id === followUpId)
+const followUp = computed(
+  () =>
+    survey.value?.followUps.find((fu) => fu.id === followUpId) ??
+    surveysStore.getFollowUpById(followUpId)
 )
 
 const parentBackendId = computed<number | null>(() => {
   const r = response.value
-  if (!r || !("id" in r)) return null
-  return (r as ResponseFull).id
+  if (r && "id" in r) return (r as ResponseFull).id
+  if (!r) {
+    // Réponse d'un collègue non présente dans le store local : responseId est l'id backend
+    const numericId = Number(responseId)
+    return !isNaN(numericId) && numericId > 0 ? numericId : null
+  }
+  return null
 })
 
 const label = computed(
@@ -285,8 +292,8 @@ const confirmDelete = async () => {
           </div>
           <div>
             <h2 class="fr-h6 mb-0!">{{ label }}</h2>
-            <p class="mb-0! fr-text--sm">
-              <span class="italic">{{ survey?.title }}</span> du
+            <p class="mb-0! fr-text--sm" v-if="survey?.title">
+              <span class="italic">{{ survey?.title }}</span>
               {{ formatDate(response?.creationDate) }}
             </p>
           </div>

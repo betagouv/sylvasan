@@ -7,7 +7,7 @@ import {
   onBeforeUnmount,
   nextTick,
 } from "vue"
-import { IonPage, IonContent, IonSpinner, IonIcon } from "@ionic/vue"
+import { IonPage, IonContent, IonSpinner, IonIcon, onIonViewDidEnter } from "@ionic/vue"
 import { cloudOfflineOutline } from "ionicons/icons"
 import { Network } from "@capacitor/network"
 import { Geolocation } from "@capacitor/geolocation"
@@ -97,6 +97,10 @@ onMounted(async () => {
     await nextTick()
     initMap()
   }
+})
+
+onIonViewDidEnter(() => {
+  fetchPins()
 })
 
 onBeforeUnmount(() => {
