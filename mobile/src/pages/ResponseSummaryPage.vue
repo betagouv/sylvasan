@@ -115,9 +115,10 @@ const confirmDelete = async () => {
 }
 const canAddFollowUp = useCanAddFollowUp(survey)
 const addFollowUp = async () => {
+  if (!survey.value) return
   const modal = await modalController.create({
     component: FollowUpChooserPage,
-    componentProps: { responseId },
+    componentProps: { responseId, survey: survey.value },
   })
   await modal.present()
 }

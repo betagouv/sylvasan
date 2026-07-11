@@ -34,10 +34,11 @@ const navigate = () => {
 }
 
 const addFollowUp = async () => {
+  if (!survey.value) return
   emit("close")
   const modal = await modalController.create({
     component: FollowUpChooserPage,
-    componentProps: { responseId: String(props.pin.responseId) },
+    componentProps: { responseId: String(props.pin.responseId), survey: survey.value },
   })
   await modal.present()
 }

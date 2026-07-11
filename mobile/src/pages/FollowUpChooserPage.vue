@@ -11,42 +11,19 @@ import {
   modalController,
 } from "@ionic/vue"
 import { closeOutline } from "ionicons/icons"
-import { useResponsesStore } from "../stores/responses"
-import { useSurveysStore } from "../stores/surveys"
 import { useAuthStore } from "../stores/auth"
 import { canRespondToFollowUp } from "../composables/useCanAddFollowUp"
 import FollowUpSurveyPage from "./FollowUpSurveyPage.vue"
+import type { Survey } from "@shared-types/survey"
 
-const props = defineProps<{ responseId: string }>()
-const responsesStore = useResponsesStore()
-const surveysStore = useSurveysStore()
+const props = defineProps<{ responseId: string; survey: Survey }>()
 const authStore = useAuthStore()
 
 const responseId = props.responseId
 
-const response = computed(
-  () =>
-    responsesStore.getByLocalId(responseId) ??
-    responsesStore.getResponseById(Number(responseId))
-)
-
-const surveyId = computed(() => {
-  if (!response.value) return null
-  return "surveyId" in response.value
-    ? response.value.surveyId
-    : response.value.survey?.id ?? null
-})
-
-const survey = computed(() =>
-  surveyId.value != null
-    ? surveysStore.getSurveyById(surveyId.value)
-    : undefined
-)
-
 const accessibleFollowUps = computed(() => {
-  if (!survey.value) return []
   const memberships = authStore.loggedUser?.memberships ?? []
-  return survey.value.followUps.filter((fu) =>
+  return props.survey.followUps.filter((fu) =>
     canRespondToFollowUp(fu, memberships)
   )
 })

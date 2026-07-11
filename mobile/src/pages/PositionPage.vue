@@ -61,7 +61,7 @@ const initMap = () => {
     positionOptions: { enableHighAccuracy: true, timeout: 5000 },
     trackUserLocation: false,
     showUserLocation: true,
-    showAccuracyCircle: true,
+    showAccuracyCircle: false,
     fitBoundsOptions: { maxZoom: 13 },
   })
   m.addControl(geolocate, "bottom-right")
