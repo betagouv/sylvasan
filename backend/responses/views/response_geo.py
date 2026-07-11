@@ -1,3 +1,5 @@
+import math
+
 from django.contrib.gis.geos import Polygon
 from django.db.models import Q
 
@@ -45,6 +47,9 @@ class ResponseGeoListAPIView(ListAPIView):
             raise ValidationError(
                 "Les paramètres south, west, north et east sont obligatoires et doivent être des nombres."
             )
+
+        if not all(math.isfinite(v) for v in (south, west, north, east)):
+            raise ValidationError("Les paramètres south, west, north et east doivent être des nombres finis.")
 
         if south >= north:
             raise ValidationError("south doit être strictement inférieur à north.")

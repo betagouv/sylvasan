@@ -69,6 +69,7 @@ class Response(TimeStampable, Historisable, Deactivable):
         try:
             survey = self.survey
             if survey is None or not isinstance(getattr(survey, "json_schema", None), dict):
+                self.geolocation_point = None
                 return
 
             map_field = next(
@@ -80,10 +81,12 @@ class Response(TimeStampable, Historisable, Deactivable):
                 None,
             )
             if map_field is None:
+                self.geolocation_point = None
                 return
 
             field_id = map_field.get("id")
             if not field_id:
+                self.geolocation_point = None
                 return
 
             data = self.data
