@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue"
-import { useIonRouter } from "@ionic/vue"
+import { useIonRouter, modalController } from "@ionic/vue"
 import type { PinData } from "../composables/useMapPins"
 import { useSurveysStore } from "../stores/surveys"
 import { useCanAddFollowUp } from "../composables/useCanAddFollowUp"
 import ResponseBadge from "./ResponseBadge.vue"
+import FollowUpChooserPage from "../pages/FollowUpChooserPage.vue"
 
 const props = defineProps<{ pin: PinData }>()
 const emit = defineEmits<{ close: [] }>()
@@ -32,16 +33,13 @@ const navigate = () => {
   )
 }
 
-const addFollowUp = () => {
+const addFollowUp = async () => {
   emit("close")
-  router.navigate(
-    {
-      name: "FollowUpChooserPage",
-      params: { responseId: String(props.pin.responseId) },
-    },
-    "forward",
-    "push"
-  )
+  const modal = await modalController.create({
+    component: FollowUpChooserPage,
+    componentProps: { responseId: String(props.pin.responseId) },
+  })
+  await modal.present()
 }
 
 const survey = computed(() =>

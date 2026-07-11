@@ -7,12 +7,11 @@ import {
   IonToolbar,
   IonContent,
   IonButtons,
-  IonBackButton,
-  useIonRouter,
   IonButton,
   IonIcon,
   alertController,
   modalController,
+  useIonRouter,
 } from "@ionic/vue"
 import { useRoute } from "vue-router"
 import { storeToRefs } from "pinia"
@@ -36,9 +35,7 @@ const props = defineProps<{
   responseId?: string
   followUpId?: number
   localId?: string
-  isModal?: boolean
 }>()
-const emit = defineEmits<{ close: [] }>()
 
 const route = useRoute()
 const router = useIonRouter()
@@ -195,11 +192,15 @@ const saveResponse = async () => {
         "Votre suivi a été sauvegardé localement et sera envoyé dès que possible"
       )
     }
-    if (props.isModal) await modalController.dismiss()
-    else router.navigate({ name: "ResponseListPage" }, "back", "replace")
+    closeAndNavigateToObservations()
   } finally {
     saving.value = false
   }
+}
+
+const closeAndNavigateToObservations = () => {
+  modalController.dismiss()
+  router.navigate({ name: "ResponseListPage" }, "forward", "replace")
 }
 const formatDate = (isoString: string | undefined): string => {
   if (!isoString) return ""
@@ -228,13 +229,7 @@ const confirmDelete = async () => {
           if (hasDraft) {
             await responsesStore.deleteDraft(currentLocalId.value!)
           }
-          if (props.isModal) await modalController.dismiss()
-          else
-            router.navigate(
-              { name: "FollowUpChooserPage", params: { responseId } },
-              "back",
-              "replace"
-            )
+          await modalController.dismiss()
         },
       },
     ],
@@ -248,13 +243,10 @@ const confirmDelete = async () => {
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button
-            v-if="!isModal"
-            :default-href="{ name: 'CartePage' }"
-          />
           <ion-button
-            v-else
-            @click="saveDraftIfNeeded().then(() => modalController.dismiss())"
+            @click="
+              saveDraftIfNeeded().then(() => closeAndNavigateToObservations())
+            "
           >
             <ion-icon slot="start" :icon="closeOutline" />
             Enregistrer et quitter

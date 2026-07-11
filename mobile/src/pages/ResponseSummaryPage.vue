@@ -11,6 +11,7 @@ import {
   IonIcon,
   useIonRouter,
   alertController,
+  modalController,
 } from "@ionic/vue"
 import { trashOutline } from "ionicons/icons"
 import { useRoute } from "vue-router"
@@ -18,6 +19,7 @@ import { useResponsesStore } from "../stores/responses"
 import { useSurveysStore } from "../stores/surveys"
 import SurveySummary from "../components/SurveySummary.vue"
 import { useCanAddFollowUp } from "../composables/useCanAddFollowUp"
+import FollowUpChooserPage from "./FollowUpChooserPage.vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 import type { Survey } from "@shared-types/survey"
 
@@ -112,15 +114,12 @@ const confirmDelete = async () => {
   await alert.present()
 }
 const canAddFollowUp = useCanAddFollowUp(survey)
-const addFollowUp = () => {
-  router.navigate(
-    {
-      name: "FollowUpChooserPage",
-      params: { responseId: responseId },
-    },
-    "forward",
-    "push"
-  )
+const addFollowUp = async () => {
+  const modal = await modalController.create({
+    component: FollowUpChooserPage,
+    componentProps: { responseId },
+  })
+  await modal.present()
 }
 const isFollowUp = computed(() => followUp.value != null)
 </script>

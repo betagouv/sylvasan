@@ -6,22 +6,23 @@ import {
   IonToolbar,
   IonContent,
   IonButtons,
-  IonBackButton,
+  IonButton,
+  IonIcon,
   modalController,
 } from "@ionic/vue"
-import { useRoute } from "vue-router"
+import { closeOutline } from "ionicons/icons"
 import { useResponsesStore } from "../stores/responses"
 import { useSurveysStore } from "../stores/surveys"
 import { useAuthStore } from "../stores/auth"
 import { canRespondToFollowUp } from "../composables/useCanAddFollowUp"
 import FollowUpSurveyPage from "./FollowUpSurveyPage.vue"
 
-const route = useRoute()
+const props = defineProps<{ responseId: string }>()
 const responsesStore = useResponsesStore()
 const surveysStore = useSurveysStore()
 const authStore = useAuthStore()
 
-const responseId = route.params.responseId as string
+const responseId = props.responseId
 
 const response = computed(
   () =>
@@ -53,13 +54,15 @@ const accessibleFollowUps = computed(() => {
 const labelFor = (followUp: (typeof accessibleFollowUps.value)[number]) =>
   followUp.actionLabel?.trim() || followUp.title
 
-const navigateToFollowUp = async (followUp: (typeof accessibleFollowUps.value)[number]) => {
+const navigateToFollowUp = async (
+  followUp: (typeof accessibleFollowUps.value)[number]
+) => {
+  modalController.dismiss()
   const modal = await modalController.create({
     component: FollowUpSurveyPage,
     componentProps: {
       responseId,
       followUpId: followUp.id,
-      isModal: true,
     },
   })
   await modal.present()
@@ -71,12 +74,10 @@ const navigateToFollowUp = async (followUp: (typeof accessibleFollowUps.value)[n
     <ion-header>
       <ion-toolbar>
         <ion-buttons slot="start">
-          <ion-back-button
-            :default-href="{
-              name: 'ResponseSummaryPage',
-              params: { responseId },
-            }"
-          />
+          <ion-button @click="modalController.dismiss()">
+            <ion-icon slot="icon-only" :icon="closeOutline" />
+            Quitter
+          </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>
