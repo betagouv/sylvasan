@@ -118,6 +118,7 @@ onFetchSurveyError(() => {
 })
 
 onFetchSurveyResponse(async () => {
+  if (existingFollowUpId) return
   selectedOrganisationId.value = survey.value.organisation?.id
     ? String(survey.value.organisation.id)
     : ""

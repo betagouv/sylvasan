@@ -51,7 +51,12 @@ const parentResponse = computed(() => {
   return id != null ? responsesStore.getResponseById(id) : undefined
 })
 
-const isFollowUp = computed(() => followUp.value != null)
+const isFollowUp = computed(() => {
+  if (isLocal(response)) {
+    return (response as LocalResponse).surveyFollowUp != null
+  }
+  return (response as ResponseFull).surveyFollowUp?.id != null
+})
 </script>
 
 <template>

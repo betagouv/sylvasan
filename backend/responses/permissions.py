@@ -25,7 +25,7 @@ class CanCreateResponse(permissions.BasePermission):
         survey_id = request.data.get("survey")
         try:
             survey = Survey.objects.get(pk=survey_id)
-        except Survey.DoesNotExist:
+        except (SurveyFollowUp.DoesNotExist, ValueError):
             return False
         return _has_responder_permission(request, survey.organisation, survey.pole)
 

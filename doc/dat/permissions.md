@@ -1,6 +1,6 @@
 # Permissions
 
-Nous avons actuellement deux rôles : Admin et Responder. Pour chacun de ces rôles, le scope peut être au niveau de toute l'organisation, ou au niveau d'un ou plusiers pôles.
+Nous avons actuellement deux rôles : Admin et Responder. Pour chacun de ces rôles, le scope peut être au niveau de toute l'organisation, ou au niveau d'un ou plusieurs pôles.
 
 Le rôle *Django super-admin* décrit ce qui est possible de faire via l'interface administration de Django.
 
@@ -101,7 +101,7 @@ Lors que les réponses sont encore en brouillon dans le téléphone, elles peuve
 
 À noter que les réponses supprimées restent en base de données mais ne sont plus prises en compte dans l'application.
 
-|  | Modifier des réponses au niveau organisation | Modifier des réponses au niveau de son pôle | Modifier des réponses au niveau d'un autre pôle |
+|  | Supprimer des réponses au niveau organisation | Supprimer des réponses au niveau de son pôle | Supprimer des réponses au niveau d'un autre pôle |
 |----------------|--------------------------------------------|-----------------------------------------|---------------------------------------------|
 | Admin org      | ✅ | ✅ | ✅ |
 | Admin pôle     | ❌ | ✅ | ❌ |

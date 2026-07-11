@@ -99,7 +99,8 @@ export function useAdminScopeSelection() {
 
   // Remise à zéro quand l'organisation change pour éviter une valeur obsolète
   watch(organisation, () => {
-    selectedPoleOption.value = ""
+    selectedPoleOption.value =
+      poleOptions.value.length === 1 ? poleOptions.value[0].value : ""
   })
 
   // null → ressource au niveau organisation ; number → ressource rattachée à un pôle
