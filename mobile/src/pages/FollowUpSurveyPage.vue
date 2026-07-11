@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from "vue"
+import { closeOutline, trashOutline } from "ionicons/icons"
 import {
   IonPage,
   IonHeader,
@@ -8,6 +9,9 @@ import {
   IonButtons,
   IonBackButton,
   useIonRouter,
+  IonButton,
+  IonIcon,
+  alertController,
 } from "@ionic/vue"
 import { useRoute } from "vue-router"
 import { storeToRefs } from "pinia"
@@ -18,29 +22,37 @@ import type { Survey } from "@shared-types/survey"
 import type { ResponseFull } from "@shared-types/response"
 import { useResponsesStore } from "../stores/responses"
 import { useSurveysStore } from "../stores/surveys"
-import { useAuthStore } from "../stores/auth"
 import { useToastStore } from "../stores/toast"
 import { useVocabulariesStore } from "../stores/vocabularies"
-import { useApiFetch } from "../utils/data-fetching"
 import {
-  loadImagesFromFilesystem,
+  saveImagesToFilesystem,
   resolveLocalImageSrc,
 } from "../utils/imageStorage"
 import { validateResponse } from "@shared-utils/validateField"
 import { evaluateCondition } from "@shared-utils/survey"
 
+const props = defineProps<{
+  responseId?: string
+  followUpId?: number
+  localId?: string
+  isModal?: boolean
+}>()
+const emit = defineEmits<{ close: [] }>()
+
 const route = useRoute()
 const router = useIonRouter()
 const responsesStore = useResponsesStore()
 const surveysStore = useSurveysStore()
-const authStore = useAuthStore()
 const toast = useToastStore()
 const { vocabularySets } = storeToRefs(useVocabulariesStore())
 
-const responseId = route.params.responseId as string
-const followUpId = Number(route.params.followUpId)
+const responseId = props.responseId ?? (route.params.responseId as string)
+const followUpId = props.followUpId ?? Number(route.params.followUpId)
 
-onMounted(() => responsesStore.loadFromStorage())
+onMounted(async () => {
+  await responsesStore.loadFromStorage()
+  if (props.localId) currentLocalId.value = props.localId
+})
 
 const response = computed(
   () =>
@@ -87,6 +99,7 @@ const followUpAsSurvey = computed((): Survey | undefined => {
 })
 
 // Form state
+const currentLocalId = ref<string | undefined>(undefined)
 const currentFormData = ref<Record<string, unknown>>({})
 const showSummary = ref(false)
 const summaryData = ref<Record<string, unknown>>({})
@@ -118,32 +131,55 @@ const onSurveyDone = (data: Record<string, unknown>) => {
   showSummary.value = true
 }
 
+const saveDraftIfNeeded = async () => {
+  const parentId = parentBackendId.value
+  if (
+    Object.keys(currentFormData.value).length === 0 ||
+    !followUp.value ||
+    !parentId
+  )
+    return
+  const schema = followUp.value.jsonSchema
+  const draftData = schema
+    ? await saveImagesToFilesystem(currentFormData.value, schema)
+    : currentFormData.value
+  const localId = await responsesStore.upsertFollowUpDraft(
+    followUp.value,
+    parentId,
+    draftData,
+    currentLocalId.value
+  )
+  currentLocalId.value = localId
+}
+
 const saveResponse = async () => {
-  if (!followUp.value || !parentBackendId.value) return
+  const parentId = parentBackendId.value
+  if (!followUp.value || !parentId) return
   saving.value = true
   try {
-    const submissionData = await loadImagesFromFilesystem(summaryData.value)
-    const { response: apiResponse } = await useApiFetch("/responses/")
-      .post({
-        survey_follow_up: followUp.value.id,
-        parent_response: parentBackendId.value,
-        data: submissionData,
-        respondant: authStore.loggedUser?.id,
-      })
-      .json()
+    const schema = followUp.value.jsonSchema
+    const draftData = schema
+      ? await saveImagesToFilesystem(summaryData.value, schema)
+      : summaryData.value
 
-    if (apiResponse.value?.ok) {
+    const localId = await responsesStore.upsertFollowUpDraft(
+      followUp.value,
+      parentId,
+      draftData,
+      currentLocalId.value
+    )
+    currentLocalId.value = localId
+
+    const success = await responsesStore.submitFollowUpResponse(localId)
+    if (success) {
       toast.show("Votre suivi a été envoyé", "success")
-      router.navigate(
-        { name: "ResponseSummaryPage", params: { responseId } },
-        "back",
-        "replace"
-      )
     } else {
-      toast.show("Une erreur est survenue. Veuillez réessayer.")
+      toast.show(
+        "Votre suivi a été sauvegardé localement et sera envoyé dès que possible"
+      )
     }
-  } catch {
-    toast.show("Impossible d'envoyer le suivi. Vérifiez votre connexion.")
+    if (props.isModal) emit("close")
+    else router.navigate({ name: "ResponseListPage" }, "back", "replace")
   } finally {
     saving.value = false
   }
@@ -156,6 +192,31 @@ const formatDate = (isoString: string | undefined): string => {
     year: "numeric",
   })
 }
+
+const confirmDelete = async () => {
+  const hasDraft = !!currentLocalId.value
+  const alert = await alertController.create({
+    header: hasDraft ? "Supprimer le suivi en cours ?" : "Abandonner le suivi ?",
+    message: hasDraft
+      ? "Ce suivi sera définitivement supprimé."
+      : "Les données saisies ne seront pas sauvegardées.",
+    buttons: [
+      { text: "Continuer la saisie", role: "cancel" },
+      {
+        text: hasDraft ? "Supprimer" : "Abandonner",
+        role: "destructive",
+        handler: async () => {
+          if (hasDraft) {
+            await responsesStore.deleteDraft(currentLocalId.value!)
+          }
+          if (props.isModal) emit("close")
+          else router.navigate({ name: "FollowUpChooserPage", params: { responseId } }, "back", "replace")
+        },
+      },
+    ],
+  })
+  await alert.present()
+}
 </script>
 
 <template>
@@ -164,11 +225,21 @@ const formatDate = (isoString: string | undefined): string => {
       <ion-toolbar>
         <ion-buttons slot="start">
           <ion-back-button
-            :default-href="{
-              name: 'FollowUpChooserPage',
-              params: { responseId },
-            }"
+            v-if="!isModal"
+            :default-href="{ name: 'CartePage' }"
           />
+          <ion-button
+            v-else
+            @click="saveDraftIfNeeded().then(() => emit('close'))"
+          >
+            <ion-icon slot="start" :icon="closeOutline" />
+            Enregistrer et quitter
+          </ion-button>
+        </ion-buttons>
+        <ion-buttons slot="end">
+          <ion-button color="danger" @click="confirmDelete" class="pr-2">
+            <ion-icon slot="icon-only" :icon="trashOutline" />
+          </ion-button>
         </ion-buttons>
       </ion-toolbar>
     </ion-header>

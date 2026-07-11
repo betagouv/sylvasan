@@ -7,16 +7,16 @@ import {
   IonContent,
   IonButtons,
   IonBackButton,
-  useIonRouter,
+  modalController,
 } from "@ionic/vue"
 import { useRoute } from "vue-router"
 import { useResponsesStore } from "../stores/responses"
 import { useSurveysStore } from "../stores/surveys"
 import { useAuthStore } from "../stores/auth"
 import { canRespondToFollowUp } from "../composables/useCanAddFollowUp"
+import FollowUpSurveyPage from "./FollowUpSurveyPage.vue"
 
 const route = useRoute()
-const router = useIonRouter()
 const responsesStore = useResponsesStore()
 const surveysStore = useSurveysStore()
 const authStore = useAuthStore()
@@ -53,15 +53,16 @@ const accessibleFollowUps = computed(() => {
 const labelFor = (followUp: (typeof accessibleFollowUps.value)[number]) =>
   followUp.actionLabel?.trim() || followUp.title
 
-const navigateToFollowUp = (followUp: (typeof accessibleFollowUps.value)[number]) => {
-  router.navigate(
-    {
-      name: "FollowUpSurveyPage",
-      params: { responseId, followUpId: String(followUp.id) },
+const navigateToFollowUp = async (followUp: (typeof accessibleFollowUps.value)[number]) => {
+  const modal = await modalController.create({
+    component: FollowUpSurveyPage,
+    componentProps: {
+      responseId,
+      followUpId: followUp.id,
+      isModal: true,
     },
-    "forward",
-    "push"
-  )
+  })
+  await modal.present()
 }
 </script>
 

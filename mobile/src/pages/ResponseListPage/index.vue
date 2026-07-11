@@ -14,6 +14,7 @@ import { useResponsesStore } from "../../stores/responses"
 import { useSyncStore } from "../../stores/sync"
 import ResponseCard from "./ResponseCard.vue"
 import SurveyPage from "../SurveyPage.vue"
+import FollowUpSurveyPage from "../FollowUpSurveyPage.vue"
 import { computed, ref } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 
@@ -36,11 +37,16 @@ const nondraftResponses = computed(() =>
 )
 
 const selectedDraft = ref<LocalResponse | null>(null)
+const selectedFollowUpDraft = ref<LocalResponse | null>(null)
 const ionRouter = useIonRouter()
 
 const onOpen = (response: LocalResponse | ResponseFull) => {
   if (isLocal(response) && response.status === "draft") {
-    selectedDraft.value = response
+    if (response.surveyFollowUp) {
+      selectedFollowUpDraft.value = response
+    } else {
+      selectedDraft.value = response
+    }
   } else {
     const responseId = isLocal(response)
       ? response.localId
@@ -124,6 +130,20 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
         :local-id="selectedDraft.localId"
         :is-modal="true"
         @close="selectedDraft = null"
+      />
+    </ion-modal>
+
+    <ion-modal
+      :is-open="selectedFollowUpDraft !== null"
+      @did-dismiss="selectedFollowUpDraft = null"
+    >
+      <FollowUpSurveyPage
+        v-if="selectedFollowUpDraft !== null"
+        :response-id="String(selectedFollowUpDraft.parentResponse)"
+        :follow-up-id="selectedFollowUpDraft.surveyFollowUp?.id"
+        :local-id="selectedFollowUpDraft.localId"
+        :is-modal="true"
+        @close="selectedFollowUpDraft = null"
       />
     </ion-modal>
   </ion-page>

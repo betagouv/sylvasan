@@ -37,14 +37,17 @@ const formatDate = (isoString: string): string => {
 }
 
 const followUp = computed(() => {
-  if (isLocal(response)) return undefined
+  if (isLocal(response)) {
+    return (response as LocalResponse).surveyFollowUp ?? undefined
+  }
   const id = (response as ResponseFull).surveyFollowUp?.id
   return id != null ? surveysStore.getFollowUpById(id) : undefined
 })
 
 const parentResponse = computed(() => {
-  if (isLocal(response)) return undefined
-  const id = (response as ResponseFull).parentResponse
+  const id = isLocal(response)
+    ? (response as LocalResponse).parentResponse
+    : (response as ResponseFull).parentResponse
   return id != null ? responsesStore.getResponseById(id) : undefined
 })
 
