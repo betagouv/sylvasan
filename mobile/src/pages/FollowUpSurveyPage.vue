@@ -55,7 +55,9 @@ const surveyId = computed(() => {
 })
 
 const survey = computed(() =>
-  surveyId.value != null ? surveysStore.getSurveyById(surveyId.value) : undefined
+  surveyId.value != null
+    ? surveysStore.getSurveyById(surveyId.value)
+    : undefined
 )
 
 const followUp = computed(() =>
@@ -117,16 +119,14 @@ const onSurveyDone = (data: Record<string, unknown>) => {
 }
 
 const saveResponse = async () => {
-  const fu = followUp.value
-  const parentId = parentBackendId.value
-  if (!fu || !parentId) return
+  if (!followUp.value || !parentBackendId.value) return
   saving.value = true
   try {
     const submissionData = await loadImagesFromFilesystem(summaryData.value)
     const { response: apiResponse } = await useApiFetch("/responses/")
       .post({
-        survey_follow_up: fu.id,
-        parent_response: parentId,
+        survey_follow_up: followUp.value.id,
+        parent_response: parentBackendId.value,
         data: submissionData,
         respondant: authStore.loggedUser?.id,
       })
@@ -147,6 +147,14 @@ const saveResponse = async () => {
   } finally {
     saving.value = false
   }
+}
+const formatDate = (isoString: string | undefined): string => {
+  if (!isoString) return ""
+  return new Date(isoString).toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  })
 }
 </script>
 
@@ -169,8 +177,8 @@ const saveResponse = async () => {
         Suivi introuvable.
       </div>
       <div v-else-if="!parentBackendId" class="p-4 text-stone-500">
-        Cette observation n'a pas encore été synchronisée. Synchronisez-la
-        avant d'ajouter un suivi.
+        Cette observation n'a pas encore été synchronisée. Synchronisez-la avant
+        d'ajouter un suivi.
       </div>
       <template v-else>
         <!-- Contextual banner -->
@@ -182,11 +190,18 @@ const saveResponse = async () => {
             class="shrink-0 w-12 h-12 rounded-full flex items-center justify-center"
             :style="{ background: followUp.actionColor ?? '#000091' }"
           >
-            <v-icon :name="followUp.actionIcon" scale="1.4" class="text-white" />
+            <v-icon
+              :name="followUp.actionIcon"
+              scale="1.4"
+              class="text-white"
+            />
           </div>
           <div>
-            <p class="fr-text--sm text-stone-500 mb-0!">Ajout d'un suivi</p>
             <h2 class="fr-h6 mb-0!">{{ label }}</h2>
+            <p class="mb-0! fr-text--sm">
+              <span class="italic">{{ survey?.title }}</span> du
+              {{ formatDate(response?.creationDate) }}
+            </p>
           </div>
         </div>
 

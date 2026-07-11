@@ -1,4 +1,9 @@
-import type { Survey, SurveyDisplay, SurveyFollowUp, SurveySchema } from "./survey"
+import type {
+  Survey,
+  SurveyDisplay,
+  SurveyFollowUp,
+  SurveySchema,
+} from "./survey"
 import type { UserDisplay } from "./api"
 
 export type LocalResponseStatus = "draft" | "pending" | "synced"
@@ -14,6 +19,8 @@ export interface LocalResponse {
   context: Record<string, unknown>
   creationDate: string
   modificationDate: string
+  surveyFollowUp: SurveyFollowUp | null
+  parentResponse: number | null
 }
 
 // Correspond à ResponseSerializer
