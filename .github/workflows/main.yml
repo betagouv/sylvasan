@@ -9,7 +9,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgis/postgis:15-3.4
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -48,7 +48,14 @@ jobs:
       - name: Install system deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcairo2-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libjpeg-dev
+          sudo apt-get install -y libcairo2-dev libffi-dev pkg-config libxml2-dev libxslt1-dev libjpeg-dev \
+            gdal-bin libgdal-dev libgeos-dev libproj-dev
+
+      - name: Create PostGIS template database
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE template_postgis;"
+          PGPASSWORD=postgres psql -h localhost -U postgres -d template_postgis -c "CREATE EXTENSION postgis;"
+          PGPASSWORD=postgres psql -h localhost -U postgres -c "UPDATE pg_database SET datistemplate = true WHERE datname = 'template_postgis';"
 
       - name: Install Python dependencies
         run: |
