@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from surveys.factories import SurveyFactory
+from surveys.factories.surveyfollowup import SurveyFollowUpFactory
 
 
 def survey_url(survey_id):
@@ -372,6 +373,27 @@ class TestSurveyResponderList(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ids = [s["id"] for s in response.json()]
         self.assertNotIn(other_survey.id, ids)
+
+    @authenticate
+    def test_suivis_inactifs_exclus_de_la_serialisation(self):
+        """
+        FullSurveySerializer n'inclut pas les suivis soft-deletés (is_active=False)
+        dans le champ followUps de la réponse
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org, pole=None)
+        suivi_actif = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        suivi_inactif = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        suivi_inactif.deactivate()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        survey_data = next(s for s in response.json() if s["id"] == survey.id)
+        follow_up_ids = [f["id"] for f in survey_data["followUps"]]
+        self.assertIn(suivi_actif.id, follow_up_ids)
+        self.assertNotIn(suivi_inactif.id, follow_up_ids)
 
     @authenticate
     def test_response_includes_json_schema(self):

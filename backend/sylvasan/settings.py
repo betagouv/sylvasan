@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.gis",
     "simple_history",
     "rest_framework",
     "users",
@@ -88,13 +89,20 @@ ADMIN_URL = os.environ.get("ADMIN_URL", "admin")
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.contrib.gis.db.backends.postgis",
         "USER": env("DB_USER"),
         "NAME": env("DB_NAME"),
         "PASSWORD": env("DB_PASSWORD"),
         "HOST": env("DB_HOST"),
         "PORT": env("DB_PORT"),
         "CONN_MAX_AGE": 60,
+        "TEST": {
+            # template_postgis must exist with PostGIS already enabled before running tests.
+            # This avoids needing CREATE EXTENSION superuser privileges at test time.
+            # Local setup: psql -U <superuser> -c "CREATE DATABASE template_postgis;"
+            #              psql -U <superuser> -d template_postgis -c "CREATE EXTENSION postgis;"
+            "TEMPLATE": "template_postgis",
+        },
     },
 }
 
@@ -308,15 +316,18 @@ SECURE_CSP = {
         CSP.SELF,
         CSP.NONCE,
         "*.gouv.fr",
+        "https://cdn.jsdelivr.net/",
     ],
     "style-src": [
         CSP.SELF,
         CSP.NONCE,
+        "https://cdn.jsdelivr.net/",
     ],
     "img-src": [
         CSP.SELF,
         "*.services.clever-cloud.com",
         "data:",
+        "*.nasa.gov",
     ],
     "connect-src": [
         CSP.SELF,

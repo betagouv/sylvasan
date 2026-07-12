@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from surveys.factories import SurveyFactory
+from surveys.factories.surveyfollowup import SurveyFollowUpFactory
 from surveys.models import Survey
 
 
@@ -200,6 +201,26 @@ class TestSoftDeleteSurvey(APITestCase):
         )
         response = self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_suppression_enquete_desactive_les_reponses_de_ses_suivis(self):
+        """
+        Supprimer une enquête désactive également les réponses aux suivis de cette enquête
+        """
+        survey = SurveyFactory()
+        MembershipFactory(
+            user=authenticate.user,
+            organisation=survey.organisation,
+            membership_type=MembershipType.ADMIN,
+        )
+        suivi = SurveyFollowUpFactory(organisation=survey.organisation, parent_survey=survey)
+        parent = ResponseFactory(survey=survey)
+        reponse_suivi = ResponseFactory(survey=None, survey_follow_up=suivi, parent_response=parent)
+
+        self.client.delete(reverse("survey_retrieve_update_destroy", kwargs={"pk": survey.pk}))
+
+        reponse_suivi.refresh_from_db()
+        self.assertFalse(reponse_suivi.is_active)
 
     @authenticate
     def test_membre_autre_organisation_ne_peut_pas_supprimer_une_enquete(self):

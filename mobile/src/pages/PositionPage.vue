@@ -7,7 +7,7 @@ import {
   onBeforeUnmount,
   nextTick,
 } from "vue"
-import { IonPage, IonContent, IonSpinner, IonIcon } from "@ionic/vue"
+import { IonPage, IonContent, IonSpinner, IonIcon, onIonViewDidEnter } from "@ionic/vue"
 import { cloudOfflineOutline } from "ionicons/icons"
 import { Network } from "@capacitor/network"
 import { Geolocation } from "@capacitor/geolocation"
@@ -15,7 +15,7 @@ import { Capacitor } from "@capacitor/core"
 import type { PluginListenerHandle } from "@capacitor/core"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
 import ignStyle from "../assets/ign-style.json"
-import { useMapPins } from "../composables/useMapPins"
+import { useGeoPins } from "../composables/useGeoPins"
 import ResponsePinCard from "../components/ResponsePinCard.vue"
 
 const centerOfFrance: [number, number] = [2.35, 46.8]
@@ -27,7 +27,7 @@ const mapContainer = ref<HTMLDivElement | null>(null)
 const mapRef = shallowRef<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
 
-const { selectedPin } = useMapPins(mapRef)
+const { selectedPin, showSearchHere, loading, fetchPins } = useGeoPins(mapRef)
 
 const destroyMap = () => {
   mapRef.value?.remove()
@@ -61,7 +61,7 @@ const initMap = () => {
     positionOptions: { enableHighAccuracy: true, timeout: 5000 },
     trackUserLocation: false,
     showUserLocation: true,
-    showAccuracyCircle: true,
+    showAccuracyCircle: false,
     fitBoundsOptions: { maxZoom: 13 },
   })
   m.addControl(geolocate, "bottom-right")
@@ -97,6 +97,10 @@ onMounted(async () => {
     await nextTick()
     initMap()
   }
+})
+
+onIonViewDidEnter(() => {
+  fetchPins()
 })
 
 onBeforeUnmount(() => {
@@ -141,6 +145,26 @@ onBeforeUnmount(() => {
           </div>
         </Transition>
 
+        <Transition name="drop">
+          <div
+            v-if="showSearchHere && tilesLoaded"
+            class="absolute top-4 left-0 right-0 flex justify-center z-10 pointer-events-none"
+          >
+            <button
+              class="pointer-events-auto bg-white! px-4 py-2 shadow-md font-medium flex items-center gap-2 disabled:opacity-60!"
+              :disabled="loading"
+              @click="fetchPins"
+            >
+              <IonSpinner
+                v-if="loading"
+                name="crescent"
+                style="width: 1rem; height: 1rem"
+              />
+              Rechercher dans cette zone
+            </button>
+          </div>
+        </Transition>
+
         <Transition name="slide-up">
           <ResponsePinCard
             v-if="selectedPin"
@@ -165,6 +189,16 @@ ion-content {
   transition: opacity 0.4s ease;
 }
 .fade-leave-to {
+  opacity: 0;
+}
+
+.drop-enter-active,
+.drop-leave-active {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.drop-enter-from,
+.drop-leave-to {
+  transform: translateY(-0.5rem);
   opacity: 0;
 }
 

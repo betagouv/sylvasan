@@ -16,6 +16,9 @@ export const useSurveysStore = defineStore("surveys", {
   getters: {
     getSurveyById: (s) => (id: number) =>
       s.surveys.find((survey) => survey.id === id),
+
+    getFollowUpById: (s) => (id: number) =>
+      s.surveys.flatMap((survey) => survey.followUps).find((fu) => fu.id === id),
   },
 
   actions: {

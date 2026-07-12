@@ -2,6 +2,7 @@ import { defineStore } from "pinia"
 import { Preferences } from "@capacitor/preferences"
 import { useApiFetch } from "../utils/data-fetching"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
+import type { SurveyFollowUp } from "@shared-types/survey"
 import { useAuthStore } from "../stores/auth"
 import { storeToRefs } from "pinia"
 import {
@@ -94,6 +95,8 @@ export const useResponsesStore = defineStore("responses", {
           localId: newLocalId,
           surveyId,
           surveyTitle,
+          surveyFollowUp: null,
+          parentResponse: null,
           status: "draft",
           data,
           context: {},
@@ -105,23 +108,18 @@ export const useResponsesStore = defineStore("responses", {
       }
     },
 
-    async submitResponse(localId: string) {
-      const authStore = useAuthStore()
-      const { loggedUser } = storeToRefs(authStore)
-
-      const localResponse = this.localResponses.find(
-        (r) => r.localId === localId
-      )
-      if (!localResponse) return false
-
+    async _postDraft(
+      localResponse: LocalResponse,
+      extraFields: Record<string, unknown>
+    ): Promise<boolean> {
+      const { loggedUser } = storeToRefs(useAuthStore())
       try {
         const submissionData = await loadImagesFromFilesystem(
           localResponse.data
         )
-
         const { response } = await useApiFetch("/responses/")
           .post({
-            survey: localResponse.surveyId,
+            ...extraFields,
             data: submissionData,
             respondant: loggedUser.value?.id,
           })
@@ -138,12 +136,19 @@ export const useResponsesStore = defineStore("responses", {
           return false
         }
       } catch {
-        // Pas de connexion
         localResponse.status = "pending"
         localResponse.modificationDate = new Date().toISOString()
         await this.persistLocal()
         return false
       }
+    },
+
+    async submitResponse(localId: string) {
+      const localResponse = this.localResponses.find(
+        (r) => r.localId === localId
+      )
+      if (!localResponse) return false
+      return this._postDraft(localResponse, { survey: localResponse.surveyId })
     },
 
     async deleteDraft(localId: string) {
@@ -155,10 +160,65 @@ export const useResponsesStore = defineStore("responses", {
       await this.persistLocal()
     },
 
+    async upsertFollowUpDraft(
+      followUp: SurveyFollowUp,
+      parentResponseId: number,
+      data: Record<string, unknown>,
+      localId?: string
+    ): Promise<string> {
+      const now = new Date().toISOString()
+      const existing = localId
+        ? this.localResponses.find((r) => r.localId === localId)
+        : null
+
+      if (existing) {
+        existing.data = data
+        existing.modificationDate = now
+        await this.persistLocal()
+        return existing.localId
+      } else {
+        const newLocalId = crypto.randomUUID()
+        this.localResponses.push({
+          localId: newLocalId,
+          surveyId: 0,
+          surveyTitle: followUp.actionLabel?.trim() || followUp.title,
+          surveyFollowUp: followUp,
+          parentResponse: parentResponseId,
+          status: "draft",
+          data,
+          context: {},
+          creationDate: now,
+          modificationDate: now,
+        })
+        await this.persistLocal()
+        return newLocalId
+      }
+    },
+
+    async submitFollowUpResponse(localId: string) {
+      const localResponse = this.localResponses.find(
+        (r) => r.localId === localId
+      )
+      if (
+        !localResponse?.surveyFollowUp ||
+        localResponse.parentResponse == null
+      )
+        return false
+      return this._postDraft(localResponse, {
+        surveyFollowUp: localResponse.surveyFollowUp.id,
+        parentResponse: localResponse.parentResponse,
+      })
+    },
+
     async retryPending() {
       const pendingIds = this.pending.map((r) => r.localId)
       const results = await Promise.allSettled(
-        pendingIds.map((localId) => this.submitResponse(localId))
+        pendingIds.map((localId) => {
+          const r = this.localResponses.find((r) => r.localId === localId)!
+          return r.surveyFollowUp
+            ? this.submitFollowUpResponse(localId)
+            : this.submitResponse(localId)
+        })
       )
       // Retourne le nombre de soumissions réussies
       return results.filter((r) => r.status === "fulfilled" && r.value === true)

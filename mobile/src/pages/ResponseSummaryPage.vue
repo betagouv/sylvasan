@@ -11,12 +11,17 @@ import {
   IonIcon,
   useIonRouter,
   alertController,
+  modalController,
 } from "@ionic/vue"
 import { trashOutline } from "ionicons/icons"
 import { useRoute } from "vue-router"
 import { useResponsesStore } from "../stores/responses"
 import { useSurveysStore } from "../stores/surveys"
 import SurveySummary from "../components/SurveySummary.vue"
+import { useCanAddFollowUp } from "../composables/useCanAddFollowUp"
+import FollowUpChooserPage from "./FollowUpChooserPage.vue"
+import type { ResponseFull, LocalResponse } from "@shared-types/response"
+import type { Survey } from "@shared-types/survey"
 
 const route = useRoute()
 const router = useIonRouter()
@@ -37,7 +42,7 @@ const surveyId = computed(() => {
   if (!response.value) return null
   return "surveyId" in response.value
     ? response.value.surveyId
-    : response.value.survey.id
+    : response.value.survey?.id
 })
 
 const survey = computed(() =>
@@ -45,6 +50,37 @@ const survey = computed(() =>
     ? surveysStore.getSurveyById(surveyId.value)
     : undefined
 )
+
+const followUp = computed(() => {
+  const r = response.value
+  if (!r) return undefined
+  if ("localId" in r) return (r as LocalResponse).surveyFollowUp ?? undefined
+  const id = (r as ResponseFull).surveyFollowUp?.id
+  return id != null ? surveysStore.getFollowUpById(id) : undefined
+})
+
+const parentResponse = computed(() => {
+  const r = response.value
+  if (!r) return undefined
+  const id =
+    "localId" in r
+      ? (r as LocalResponse).parentResponse
+      : (r as ResponseFull).parentResponse
+  return id != null ? responsesStore.getResponseById(id) : undefined
+})
+
+const surveyForSummary = computed((): Survey | undefined => {
+  if (survey.value) return survey.value
+  const fu = followUp.value
+  if (!fu?.jsonSchema) return undefined
+  return {
+    id: fu.id,
+    title: fu.title,
+    jsonSchema: fu.jsonSchema,
+    surveyType: "",
+    followUps: [],
+  }
+})
 
 const isDeletable = computed(
   () =>
@@ -73,6 +109,16 @@ const confirmDelete = async () => {
   })
   await alert.present()
 }
+const canAddFollowUp = useCanAddFollowUp(survey)
+const addFollowUp = async () => {
+  if (!survey.value) return
+  const modal = await modalController.create({
+    component: FollowUpChooserPage,
+    componentProps: { responseId, survey: survey.value },
+  })
+  await modal.present()
+}
+const isFollowUp = computed(() => followUp.value != null)
 </script>
 
 <template>
@@ -95,8 +141,35 @@ const confirmDelete = async () => {
       </ion-toolbar>
     </ion-header>
     <ion-content class="ion-padding">
-      <div v-if="!response || !survey">Observation introuvable.</div>
-      <SurveySummary v-else :survey="survey" :response="response" />
+      <div v-if="canAddFollowUp" class="p-4 bg-blue-france-975">
+        <DsfrButton
+          label="Ajouter une étape de suivi"
+          icon="ri-arrow-right-line"
+          size="sm"
+          @click="addFollowUp"
+        />
+      </div>
+      <div v-if="isFollowUp" class="flex items-center gap-2 p-4">
+        <div
+          class="shrink-0 w-10 h-10 rounded-full flex items-center justify-center"
+          :style="{ background: followUp?.actionColor }"
+        >
+          <v-icon :name="followUp?.actionIcon" scale="1.2" />
+        </div>
+        <div class="flex flex-col" v-if="parentResponse?.survey?.title">
+          <span class="fr-text--sm mb-0! text-gray-500"
+            >Suivi effectué pour l'observation</span
+          >
+          <span class="font-medium">{{ parentResponse?.survey?.title }}</span>
+        </div>
+        <div class="flex flex-col" v-else>
+          <span class="fr-text--sm mb-0! text-gray-500"
+            >Suivi effectué pour une observation existante</span
+          >
+        </div>
+      </div>
+      <div v-if="!response || !surveyForSummary">Observation introuvable.</div>
+      <SurveySummary v-else :survey="surveyForSummary" :response="response" />
     </ion-content>
   </ion-page>
 </template>

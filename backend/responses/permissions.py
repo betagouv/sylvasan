@@ -1,7 +1,21 @@
 from organisations.models import Membership, MembershipType
 from rest_framework import permissions
-from surveys.models import Survey
+from surveys.models import Survey, SurveyFollowUp
 from surveys.permissions import CanDeleteSurvey
+
+
+def _has_responder_permission(request, organisation, pole):
+    """Vérifie qu'un·e utilisateur·ice a le rôle RESPONDER pour une ressource donnée."""
+    qs = Membership.objects.filter(
+        user=request.user,
+        organisation=organisation,
+        membership_type=MembershipType.RESPONDER,
+    )
+    if qs.filter(pole__isnull=True).exists():
+        return True
+    if pole is None:
+        return qs.filter(pole__isnull=False).exists()
+    return qs.filter(pole=pole).exists()
 
 
 class CanCreateResponse(permissions.BasePermission):
@@ -9,28 +23,23 @@ class CanCreateResponse(permissions.BasePermission):
 
     def has_permission(self, request, view):
         survey_id = request.data.get("survey")
-
         try:
             survey = Survey.objects.get(pk=survey_id)
-        except Survey.DoesNotExist:
+        except (SurveyFollowUp.DoesNotExist, ValueError):
             return False
+        return _has_responder_permission(request, survey.organisation, survey.pole)
 
-        qs = Membership.objects.filter(
-            user=request.user,
-            organisation=survey.organisation,
-            membership_type=MembershipType.RESPONDER,
-        )
 
-        # Un·e RESPONDER au niveau de l'organisation peut répondre à toutes les enquêtes de l'organisation
-        if qs.filter(pole__isnull=True).exists():
-            return True
+class CanCreateFollowUpResponse(permissions.BasePermission):
+    message = "Vous n'avez pas l'autorisation pour répondre à ce suivi"
 
-        # Un·e RESPONDER au niveau d'un pôle peut répondre :
-        # - aux enquêtes de son pôle spécifique
-        # - aux enquêtes au niveau organisation (sans pôle)
-        if survey.pole is None:
-            return qs.filter(pole__isnull=False).exists()
-        return qs.filter(pole=survey.pole).exists()
+    def has_permission(self, request, view):
+        follow_up_id = request.data.get("survey_follow_up")
+        try:
+            follow_up = SurveyFollowUp.objects.active().get(pk=follow_up_id)
+        except (SurveyFollowUp.DoesNotExist, ValueError):
+            return False
+        return _has_responder_permission(request, follow_up.organisation, follow_up.pole)
 
 
 class CanDeleteResponse(permissions.BasePermission):
@@ -42,4 +51,7 @@ class CanDeleteResponse(permissions.BasePermission):
     message = "Vous n'avez pas l'autorisation pour supprimer cette réponse"
 
     def has_object_permission(self, request, view, obj):
-        return CanDeleteSurvey().has_object_permission(request, view, obj.survey)
+        source = obj.survey_follow_up if obj.survey_follow_up_id else obj.survey
+        if source is None:
+            return False
+        return CanDeleteSurvey().has_object_permission(request, view, source)

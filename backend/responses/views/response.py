@@ -7,12 +7,7 @@ from django.http import HttpResponse
 from django_filters import rest_framework as django_filters
 from organisations.models import Membership, MembershipType
 from rest_framework.filters import OrderingFilter
-from rest_framework.generics import (
-    GenericAPIView,
-    ListAPIView,
-    ListCreateAPIView,
-    RetrieveDestroyAPIView,
-)
+from rest_framework.generics import GenericAPIView, ListAPIView, ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
@@ -20,9 +15,11 @@ from surveys.models import Survey
 from surveys.serializers import SurveyDisplaySerializer
 
 from responses.models import Response
-from responses.permissions import CanCreateResponse, CanDeleteResponse
+from responses.permissions import CanCreateFollowUpResponse, CanCreateResponse, CanDeleteResponse
 from responses.serializers import (
+    FollowUpResponseSerializer,
     FullResponseSerializer,
+    FullResponseSerializerWithFollowUps,
     ResponseDisplaySerializer,
     ResponseExportSerializer,
     ResponseSerializer,
@@ -60,10 +57,22 @@ class ResponseFilterSet(django_filters.FilterSet):
     created_after = django_filters.DateTimeFilter(field_name="creation_date", lookup_expr="gte")
     created_before = django_filters.DateTimeFilter(field_name="creation_date", lookup_expr="lte")
     survey = django_filters.NumberFilter(field_name="survey_id")
+    include_follow_ups = django_filters.BooleanFilter(method="filter_include_follow_ups")
 
     class Meta:
         model = Response
         fields = []
+
+    def filter_include_follow_ups(self, queryset, name, value):
+        if not value:
+            return queryset.filter(survey_follow_up__isnull=True)
+        return queryset
+
+    def filter_queryset(self, queryset):
+        # Quand le paramètre est absent, on exclut les suivis par défaut
+        if "include_follow_ups" not in self.data:
+            queryset = queryset.filter(survey_follow_up__isnull=True)
+        return super().filter_queryset(queryset)
 
 
 class ResponseQuerySetMixin:
@@ -79,15 +88,24 @@ class ResponseQuerySetMixin:
             if membership.membership_type == MembershipType.RESPONDER:
                 query |= Q(respondant=user)
             elif membership.pole_id is not None:
-                query |= Q(survey__pole_id=membership.pole_id)
+                query |= (
+                    Q(survey__pole_id=membership.pole_id)
+                    | Q(survey_follow_up__pole_id=membership.pole_id)
+                    | Q(
+                        survey_follow_up__organisation_id=membership.organisation_id,
+                        survey_follow_up__pole__isnull=True,
+                    )
+                )
             else:
-                query |= Q(survey__organisation_id=membership.organisation_id)
+                query |= Q(survey__organisation_id=membership.organisation_id) | Q(
+                    survey_follow_up__organisation_id=membership.organisation_id
+                )
 
         return (
             Response.objects.active()
             .filter(query)
             .distinct()
-            .select_related("survey", "survey__organisation", "survey__pole")
+            .select_related("survey", "survey__organisation", "survey__pole", "survey_follow_up")
         )
 
 
@@ -103,10 +121,14 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == "GET":
             return ResponseDisplaySerializer
+        if self.request.data.get("survey_follow_up"):
+            return FollowUpResponseSerializer
         return ResponseSerializer
 
     def get_permissions(self):
         if self.request.method == "POST":
+            if self.request.data.get("survey_follow_up"):
+                return [IsAuthenticated(), CanCreateFollowUpResponse()]
             return [IsAuthenticated(), CanCreateResponse()]
         return [IsAuthenticated()]
 
@@ -115,13 +137,23 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
 
 
 class ResponseRetrieveDestroyAPIView(ResponseQuerySetMixin, RetrieveDestroyAPIView):
-    serializer_class = FullResponseSerializer
+    serializer_class = FullResponseSerializerWithFollowUps
 
     def perform_destroy(self, response):
         response.deactivate()
 
     def get_queryset(self):
-        return super().get_queryset().prefetch_related("images")
+        return (
+            super()
+            .get_queryset()
+            .prefetch_related(
+                "images",
+                "follow_up_responses",
+                "follow_up_responses__images",
+                "follow_up_responses__survey_follow_up",
+                "follow_up_responses__respondant",
+            )
+        )
 
     def get_permissions(self):
         if self.request.method == "DELETE":
@@ -148,7 +180,7 @@ class ResponseFullListAPIView(ListAPIView):
         return (
             Response.objects.active()
             .filter(respondant=user)
-            .select_related("survey", "survey__organisation", "survey__pole")
+            .select_related("survey", "survey__organisation", "survey__pole", "survey_follow_up")
             .prefetch_related("images")
         )
 

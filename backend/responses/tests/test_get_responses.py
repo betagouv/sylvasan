@@ -1,11 +1,12 @@
 from django.urls import reverse
 
 from common.utils import authenticate
-from organisations.factories import MembershipFactory, OrganisationFactory
+from organisations.factories import MembershipFactory, OrganisationFactory, PoleFactory
 from organisations.models import MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
+from surveys.factories.surveyfollowup import SurveyFollowUpFactory
 
 from responses.factories import ResponseFactory
 
@@ -140,6 +141,26 @@ class TestGetResponses(APITestCase):
         # Non visible : la réponse d'un·e autre dans org A (rôle RESPONDER uniquement)
         self.assertNotIn(survey_response_autre_org_a.id, ids)
 
+    @authenticate
+    def test_admin_pole_voit_les_reponses_au_suivi_niveau_org(self):
+        """
+        Un·e ADMIN de pôle voit les réponses aux suivis rattachés à l'organisation (pole=None),
+        et pas seulement ceux rattachés à son propre pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org)
+        follow_up_org = SurveyFollowUpFactory(organisation=org, pole=None, parent_survey=survey)
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        parent = ResponseFactory(survey=survey)
+        reponse_suivi_org = ResponseFactory(survey=None, survey_follow_up=follow_up_org, parent_response=parent)
+
+        response = self.client.get(reverse("response_list_create"), {"include_follow_ups": "true"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [r["id"] for r in self.get_results(response)]
+        self.assertIn(reponse_suivi_org.id, ids)
+
 
 class TestResponseFullList(APITestCase):
     def test_unauthenticated_cannot_list_full_responses(self):
@@ -243,6 +264,102 @@ class TestInactiveResponsesExclues(APITestCase):
         ids = [r["id"] for r in response.json()["results"]]
         self.assertIn(reponse_active.id, ids)
         self.assertNotIn(reponse_inactive.id, ids)
+
+
+class TestFiltreIncludeFollowUps(APITestCase):
+    """
+    Vérifie que les réponses de suivi sont exclues par défaut et incluses
+    uniquement si le paramètre include_follow_ups=true est fourni.
+    """
+
+    def get_ids(self, response):
+        return [r["id"] for r in response.json()["results"]]
+
+    def _setup_org_with_followup(self):
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        reponse_principale = ResponseFactory(survey=survey)
+        reponse_suivi = ResponseFactory(survey=None, survey_follow_up=follow_up, parent_response=reponse_principale)
+        return reponse_principale, reponse_suivi
+
+    @authenticate
+    def test_followups_exclus_par_defaut(self):
+        """
+        Sans paramètre include_follow_ups, les réponses de suivi ne sont pas retournées
+        """
+        reponse_principale, reponse_suivi = self._setup_org_with_followup()
+
+        response = self.client.get(reverse("response_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = self.get_ids(response)
+        self.assertIn(reponse_principale.id, ids)
+        self.assertNotIn(reponse_suivi.id, ids)
+
+    @authenticate
+    def test_followups_exclus_si_parametre_false(self):
+        """
+        Avec include_follow_ups=false, les réponses de suivi sont exclues explicitement
+        """
+        reponse_principale, reponse_suivi = self._setup_org_with_followup()
+
+        response = self.client.get(reverse("response_list_create"), {"include_follow_ups": "false"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = self.get_ids(response)
+        self.assertIn(reponse_principale.id, ids)
+        self.assertNotIn(reponse_suivi.id, ids)
+
+    @authenticate
+    def test_followups_inclus_si_parametre_true(self):
+        """
+        Avec include_follow_ups=true, les réponses de suivi apparaissent dans la liste
+        """
+        reponse_principale, reponse_suivi = self._setup_org_with_followup()
+
+        response = self.client.get(reverse("response_list_create"), {"include_follow_ups": "true"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = self.get_ids(response)
+        self.assertIn(reponse_principale.id, ids)
+        self.assertIn(reponse_suivi.id, ids)
+
+    @authenticate
+    def test_reponses_de_premier_niveau_toujours_visibles(self):
+        """
+        Les réponses de premier niveau apparaissent quelle que soit la valeur du paramètre
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        reponse = ResponseFactory(survey=survey)
+
+        for params in [{}, {"include_follow_ups": "false"}, {"include_follow_ups": "true"}]:
+            with self.subTest(params=params):
+                resp = self.client.get(reverse("response_list_create"), params, format="json")
+                self.assertIn(reponse.id, self.get_ids(resp))
+
+
+class TestRetrieveResponseWithFollowUps(APITestCase):
+    @authenticate
+    def test_follow_up_responses_inclus_dans_le_payload(self):
+        """
+        GET /api/responses/<pk>/ retourne les réponses de suivi dans follow_up_responses
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        parent = ResponseFactory(survey=survey)
+        child = ResponseFactory(survey=None, survey_follow_up=follow_up, parent_response=parent)
+
+        response = self.client.get(reverse("response_retrieve_destroy", kwargs={"pk": parent.id}), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        follow_up_ids = [r["id"] for r in response.json()["followUpResponses"]]
+        self.assertIn(child.id, follow_up_ids)
 
 
 class TestFilterResponses(APITestCase):

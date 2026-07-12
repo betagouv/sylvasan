@@ -10,6 +10,7 @@ from django.db import transaction
 from PIL import Image
 from rest_framework import serializers
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer
+from surveys.serializers.surveyfollowup import SurveyFollowUpSerializer
 from users.serializers import UserDisplaySerializer
 
 from responses.models import Response, ResponseImage
@@ -84,6 +85,44 @@ class ResponseSerializer(serializers.ModelSerializer):
             response.save(update_fields=["data"])
 
 
+class FollowUpResponseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Response
+        fields = (
+            "id",
+            "survey_follow_up",
+            "parent_response",
+            "respondant",
+            "data",
+            "context",
+            "status",
+        )
+        read_only_fields = ("id", "status", "respondant")
+
+    def validate(self, data):
+        if not data.get("parent_response"):
+            raise serializers.ValidationError(
+                {"parent_response": "Ce champ est obligatoire pour une réponse de suivi."}
+            )
+        follow_up = data.get("survey_follow_up")
+        parent = data.get("parent_response")
+        if follow_up and parent and parent.survey_id != follow_up.parent_survey_id:
+            raise serializers.ValidationError(
+                {"parent_response": "La réponse parente doit appartenir à l'enquête parente du suivi."}
+            )
+        return data
+
+    def create(self, validated_data):
+        data = validated_data.get("data", {})
+        schema = validated_data["survey_follow_up"].json_schema or {}
+
+        with transaction.atomic():
+            response = Response.objects.create(**validated_data)
+            ResponseSerializer._create_images_from_data(response, data, schema)
+
+        return response
+
+
 class ResponseDisplaySerializer(serializers.ModelSerializer):
     respondant = UserDisplaySerializer(read_only=True)
     survey = SurveyDisplaySerializer(read_only=True)
@@ -101,7 +140,8 @@ class ResponseDisplaySerializer(serializers.ModelSerializer):
 
 
 def _enrich_image_fields(ret, instance, image_serializer_class):
-    schema = instance.survey.json_schema or {}
+    source = instance.survey or instance.survey_follow_up
+    schema = (source.json_schema if source else None) or {}
     image_field_ids = [f["id"] for f in schema.get("fields", []) if f.get("ui", {}).get("widget") == "image"]
     if not image_field_ids:
         return ret
@@ -130,12 +170,16 @@ def _enrich_image_fields(ret, instance, image_serializer_class):
 class FullResponseSerializer(serializers.ModelSerializer):
     respondant = UserDisplaySerializer(read_only=True)
     survey = FullSurveySerializer(read_only=True)
+    survey_follow_up = SurveyFollowUpSerializer(read_only=True)
+    parent_response = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Response
         fields = (
             "id",
             "survey",
+            "survey_follow_up",
+            "parent_response",
             "respondant",
             "data",
             "context",
@@ -146,6 +190,14 @@ class FullResponseSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         return _enrich_image_fields(super().to_representation(instance), instance, ResponseImageSerializer)
+
+
+class FullResponseSerializerWithFollowUps(FullResponseSerializer):
+    follow_up_responses = FullResponseSerializer(many=True, read_only=True)
+
+    class Meta(FullResponseSerializer.Meta):
+        fields = FullResponseSerializer.Meta.fields + ("follow_up_responses",)
+        read_only_fields = fields
 
 
 class ResponseImageSerializer(serializers.ModelSerializer):

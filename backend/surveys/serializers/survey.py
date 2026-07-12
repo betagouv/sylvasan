@@ -3,6 +3,8 @@ from rest_framework import serializers
 
 from surveys.models import Survey
 
+from .surveyfollowup import SurveyFollowUpSerializer
+
 
 class SurveyDisplaySerializer(serializers.ModelSerializer):
     organisation_name = serializers.CharField(source="organisation.name", allow_null=True)
@@ -39,14 +41,22 @@ class SurveySerializer(serializers.ModelSerializer):
 
 
 class FullSurveySerializer(serializers.ModelSerializer):
+    follow_ups = serializers.SerializerMethodField()
     organisation = OrganisationSerializer()
     pole = PoleSerializer(allow_null=True)
+
+    def get_follow_ups(self, obj):
+        # Uses the prefetch cache when the queryset was built with
+        # Prefetch('follow_ups', queryset=SurveyFollowUp.objects.filter(is_active=True)).
+        # Falls back to a direct filter when called without a prefetch (e.g. single retrieve).
+        return SurveyFollowUpSerializer(obj.follow_ups.all(), many=True).data
 
     class Meta:
         model = Survey
         fields = (
             "id",
             "organisation",
+            "follow_ups",
             "pole",
             "title",
             "json_schema",

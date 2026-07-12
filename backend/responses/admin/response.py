@@ -7,4 +7,10 @@ from responses.models import Response
 
 @admin.register(Response)
 class ResponseAdmin(SimpleHistoryAdmin):
-    list_display = ("survey", "respondant", "status", "submission_date", "activity_icon")
+    list_display = ("survey_or_follow_up", "respondant", "status", "submission_date", "activity_icon")
+
+    @admin.display(description="Enquête")
+    def survey_or_follow_up(self, obj):
+        if obj.survey_follow_up:
+            return f"{obj.survey_follow_up.parent_survey} — {obj.survey_follow_up.title}"
+        return obj.survey

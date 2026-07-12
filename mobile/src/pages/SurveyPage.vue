@@ -26,7 +26,10 @@ import MapField from "../components/MapField.vue"
 import { useResponsesStore } from "../stores/responses"
 import { storeToRefs } from "pinia"
 import { useVocabulariesStore } from "../stores/vocabularies"
-import { saveImagesToFilesystem, resolveLocalImageSrc } from "../utils/imageStorage"
+import {
+  saveImagesToFilesystem,
+  resolveLocalImageSrc,
+} from "../utils/imageStorage"
 import { validateResponse } from "@shared-utils/validateField"
 import { evaluateCondition } from "@shared-utils/survey"
 
@@ -166,14 +169,18 @@ const saveResponse = async (data: Record<string, unknown>) => {
 
     if (success) {
       toast.show("Votre réponse a été envoyée", "success")
-      if (props.isModal) emit("close")
-      else router.navigate({ name: "ResponseListPage" }, "back", "replace")
+      if (props.isModal) {
+        emit("close")
+        router.navigate({ name: "ResponseListPage" })
+      } else router.navigate({ name: "ResponseListPage" }, "back", "replace")
     } else {
       toast.show(
         "Votre réponse a été sauvegardée localement et sera envoyée dès que possible"
       )
-      if (props.isModal) emit("close")
-      else router.navigate({ name: "ResponseListPage" }, "back", "replace")
+      if (props.isModal) {
+        emit("close")
+        router.navigate({ name: "ResponseListPage" })
+      } else router.navigate({ name: "ResponseListPage" }, "back", "replace")
     }
   } finally {
     saving.value = false

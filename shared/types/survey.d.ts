@@ -1,3 +1,5 @@
+import type { Organisation, Pole } from "./api"
+
 export type FieldType = "string" | "number" | "boolean" | "array" | "object"
 
 export type ConditionOperator =
@@ -98,11 +100,24 @@ export interface SurveySchema {
   pages?: SurveyPage[]
 }
 
+export interface SurveyFollowUp {
+  id: number
+  organisation: Organisation | null
+  pole: Pole | null
+  title: string
+  jsonSchema: SurveySchema | null
+  actionLabel: string
+  actionIcon: string
+  actionColor: string
+  createdBy: number | null
+}
+
 export interface Survey {
   id: number
   title: string
   jsonSchema: SurveySchema
   surveyType: string
+  followUps: SurveyFollowUp[]
 }
 
 export interface VocabularyEntry {

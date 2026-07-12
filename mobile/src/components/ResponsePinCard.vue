@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import { computed } from "vue"
-import { useIonRouter } from "@ionic/vue"
+import { useIonRouter, modalController } from "@ionic/vue"
 import type { PinData } from "../composables/useMapPins"
+import { useSurveysStore } from "../stores/surveys"
+import { useAuthStore } from "../stores/auth"
+import { useCanAddFollowUp } from "../composables/useCanAddFollowUp"
 import ResponseBadge from "./ResponseBadge.vue"
+import FollowUpChooserPage from "../pages/FollowUpChooserPage.vue"
 
 const props = defineProps<{ pin: PinData }>()
 const emit = defineEmits<{ close: [] }>()
 
 const router = useIonRouter()
+const surveysStore = useSurveysStore()
+const authStore = useAuthStore()
+
+const isOwnResponse = computed(() =>
+  !props.pin.respondant || props.pin.respondant.id === authStore.loggedUser?.id
+)
 
 const formattedDate = computed(() =>
   new Date(props.pin.date).toLocaleDateString("fr-FR", {
@@ -16,7 +26,6 @@ const formattedDate = computed(() =>
     year: "numeric",
   })
 )
-
 
 const navigate = () => {
   emit("close")
@@ -29,6 +38,23 @@ const navigate = () => {
     "push"
   )
 }
+
+const addFollowUp = async () => {
+  if (!survey.value) return
+  emit("close")
+  const modal = await modalController.create({
+    component: FollowUpChooserPage,
+    componentProps: { responseId: String(props.pin.responseId), survey: survey.value },
+  })
+  await modal.present()
+}
+
+const survey = computed(() =>
+  props.pin.surveyId != null
+    ? surveysStore.getSurveyById(props.pin.surveyId)
+    : undefined
+)
+const canAddFollowUp = useCanAddFollowUp(survey)
 </script>
 
 <template>
@@ -48,15 +74,29 @@ const navigate = () => {
     </div>
     <div class="flex flex-col gap-1 text-sm text-stone-500 mb-4">
       <span>{{ formattedDate }}</span>
+      <span v-if="!isOwnResponse && pin.respondant">
+        {{ pin.respondant.firstName }} {{ pin.respondant.lastName }}
+      </span>
       <ResponseBadge :response="({ status: pin.status } as any)" />
     </div>
-    <DsfrButton
-      label="Voir le détail"
-      @click="navigate"
-      secondary
-      size="sm"
-      icon="ri-arrow-right-line"
-    />
+    <div class="flex gap-2">
+      <DsfrButton
+        v-if="canAddFollowUp"
+        label="Ajouter une étape de suivi"
+        size="sm"
+        @click="addFollowUp"
+        icon="ri-add-line"
+      />
+
+      <DsfrButton
+        v-if="isOwnResponse"
+        label="Voir le détail"
+        @click="navigate"
+        secondary
+        size="sm"
+        icon="ri-arrow-right-line"
+      />
+    </div>
   </div>
 </template>
 
