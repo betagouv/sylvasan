@@ -192,6 +192,14 @@ class FullResponseSerializer(serializers.ModelSerializer):
         return _enrich_image_fields(super().to_representation(instance), instance, ResponseImageSerializer)
 
 
+class FullResponseSerializerWithFollowUps(FullResponseSerializer):
+    follow_up_responses = FullResponseSerializer(many=True, read_only=True)
+
+    class Meta(FullResponseSerializer.Meta):
+        fields = FullResponseSerializer.Meta.fields + ("follow_up_responses",)
+        read_only_fields = fields
+
+
 class ResponseImageSerializer(serializers.ModelSerializer):
     file = serializers.CharField(write_only=True)
     thumbnail = serializers.SerializerMethodField()

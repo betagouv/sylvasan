@@ -23,6 +23,7 @@ import ProgressSpinner from "../components/ProgressSpinner.vue"
 import ConfirmDeleteModal from "../components/SurveyBuilder/ConfirmDeleteModal.vue"
 import { useToastStore } from "../stores/toast"
 import { useRouter } from "vue-router"
+import FollowUpsTable from "../components/ResponsePage/FollowUpsTable.vue"
 
 const router = useRouter()
 const route = useRoute()
@@ -286,6 +287,12 @@ const onConfirmDelete = async () => {
           </div>
         </div>
       </div>
+
+      <FollowUpsTable
+        v-if="response?.followUpResponses?.length"
+        :follow-up-responses="response.followUpResponses"
+      />
+
       <div class="flex border border-gray-200 p-4 mb-4 items-center">
         <div class="grow"></div>
         <DsfrButton

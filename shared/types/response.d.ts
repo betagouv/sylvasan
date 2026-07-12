@@ -71,4 +71,5 @@ export interface ResponseFull {
   context: Record<string, unknown> | null
   status: BackendResponseStatus
   creationDate: string
+  followUpResponses?: ResponseFull[]
 }

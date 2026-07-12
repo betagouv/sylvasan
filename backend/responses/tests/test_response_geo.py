@@ -25,7 +25,10 @@ GEO_URL = reverse("response_geo_list")
 
 def _geo_response(survey, point=POINT_PARIS):
     """Crée une réponse avec un point géographique pré-renseigné."""
-    return ResponseFactory(survey=survey, geolocation_point=point)
+    r = ResponseFactory(survey=survey)
+    r.geolocation_point = point
+    r.save(update_fields=["geolocation_point"])
+    return r
 
 
 class TestResponseGeoAuthentification(APITestCase):
