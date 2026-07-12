@@ -137,7 +137,6 @@ const onConfirmDelete = async () => {
         <div class="col-span-12 sm:col-span-6 md:col-span-7 lg:col-span-8">
           <ResponseFieldsSection
             :response="response"
-            :surveyCodes="surveyCodes"
             @open-viewer="openViewer"
           />
         </div>

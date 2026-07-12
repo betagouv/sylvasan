@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, watch } from "vue"
 import type { ResponseFull } from "@shared-types/response"
 import { resolveFieldValue } from "@shared-utils/survey"
 import type { SurveyField, ImageItem } from "@shared-types/survey"
@@ -7,23 +7,47 @@ import { storeToRefs } from "pinia"
 import { useRootStore } from "../../stores/root.ts"
 
 const rootStore = useRootStore()
-const { response, surveyCodes } = defineProps<{
+const { response } = defineProps<{
   response: ResponseFull
-  surveyCodes: string[]
 }>()
+
+const jsonSchema = computed(
+  () => response.survey?.jsonSchema ?? response.surveyFollowUp?.jsonSchema
+)
+
+const surveyCodes = computed(() => {
+  const schema = jsonSchema.value
+  const allFields: SurveyField[] = [
+    ...(schema?.fields ?? []),
+    ...(schema?.fields ?? []).flatMap((f: SurveyField) => f.fields ?? []),
+  ]
+  const codes = [
+    ...new Set(
+      allFields.filter((f) => f.vocabulary).map((f) => f.vocabulary as string)
+    ),
+  ]
+  return codes
+})
+
+watch(surveyCodes, async () => {
+  await Promise.allSettled(
+    surveyCodes.value.map((code) => rootStore.fetchVocabularyDetail(code))
+  )
+})
+
 const { vocabularyDetails } = storeToRefs(rootStore)
 
 const emit = defineEmits(["open-viewer"])
 
 const surveyVocabularies = computed(() =>
-  surveyCodes.map((code) => vocabularyDetails.value[code]).filter(Boolean)
+  surveyCodes.value.map((code) => vocabularyDetails.value[code]).filter(Boolean)
 )
 const fieldLabel = (fieldId: string): string =>
-  response.survey?.jsonSchema.fields.find((f: SurveyField) => f.id === fieldId)
+  jsonSchema.value?.fields.find((f: SurveyField) => f.id === fieldId)
     ?.label ?? fieldId
 
 const resolveValue = (fieldId: string, raw: unknown): string => {
-  const field = response.survey?.jsonSchema.fields.find(
+  const field = jsonSchema.value?.fields.find(
     (f: SurveyField) => f.id === fieldId
   )
   return resolveFieldValue(field, raw, surveyVocabularies.value)
@@ -33,15 +57,15 @@ const resolveSubFieldValue = (subField: SurveyField, raw: unknown): string =>
   resolveFieldValue(subField, raw, surveyVocabularies.value)
 
 const isArrayField = (fieldId: string): boolean =>
-  response.survey?.jsonSchema.fields.find((f: SurveyField) => f.id === fieldId)
+  jsonSchema.value?.fields.find((f: SurveyField) => f.id === fieldId)
     ?.ui?.widget === "array"
 
 const isImageField = (fieldId: string): boolean =>
-  response.survey?.jsonSchema.fields.find((f: SurveyField) => f.id === fieldId)
+  jsonSchema.value?.fields.find((f: SurveyField) => f.id === fieldId)
     ?.ui?.widget === "image"
 
 const getSubFields = (fieldId: string): SurveyField[] =>
-  response.survey?.jsonSchema.fields.find((f: SurveyField) => f.id === fieldId)
+  jsonSchema.value?.fields.find((f: SurveyField) => f.id === fieldId)
     ?.fields ?? []
 
 const imageSrc = (item: ImageItem): string | null => {
