@@ -69,6 +69,9 @@ const handleRefresh = async (event: CustomEvent) => {
 
 const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
   (<LocalResponse>res).localId !== undefined
+
+const responseKey = (res: LocalResponse | ResponseFull): string =>
+  "localId" in res ? res.localId : String(res.id)
 </script>
 
 <template>
@@ -102,7 +105,7 @@ const isLocal = (res: LocalResponse | ResponseFull): res is LocalResponse =>
       >
         <ResponseCard
           v-for="response in nondraftResponses"
-          :key="isLocal(response) ? response.localId : response.id"
+          :key="responseKey(response)"
           :response="response"
           @open="onOpen($event)"
         />

@@ -51,11 +51,6 @@ const survey = computed(() =>
     : undefined
 )
 
-const isLocal = computed(() => {
-  const r = response.value
-  return !r || "localId" in r
-})
-
 const followUp = computed(() => {
   const r = response.value
   if (!r) return undefined
