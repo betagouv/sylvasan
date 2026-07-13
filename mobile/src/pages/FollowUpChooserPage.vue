@@ -53,7 +53,6 @@ const navigateToFollowUp = async (
         <ion-buttons slot="start">
           <ion-button @click="modalController.dismiss()">
             <ion-icon slot="icon-only" :icon="closeOutline" />
-            Quitter
           </ion-button>
         </ion-buttons>
       </ion-toolbar>
