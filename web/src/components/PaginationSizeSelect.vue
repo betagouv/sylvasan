@@ -9,7 +9,7 @@ const options = [10, 20, 30, 40, 50, 100]
     <DsfrSelect
       label="Réponses par page"
       :options="options"
-      @update:modelValue="(val: number) => emit('update:modelValue', val)"
+      @update:modelValue="(val: string | number) => emit('update:modelValue', Number(val))"
       :modelValue="limit"
       class="text-sm!"
     />

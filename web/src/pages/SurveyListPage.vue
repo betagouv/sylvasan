@@ -3,7 +3,7 @@
   "path": "/enquetes",
   "meta": {
     "authenticationRequired": true,
-    "title": "Mes enquête",
+    "title": "Mes enquêtes",
     "defaultQueryParams": {
       "page": 1,
       "limit": 10,
@@ -127,6 +127,10 @@ const updateOrdering = (value: string) => updateQuery({ triage: value })
 const updateOrganisation = (value: string) =>
   updateQuery({ organisation: value, page: 1 })
 
+const hasActiveFilters = computed(
+  () => !!createdAfter.value || !!createdBefore.value || !!organisationFilter.value
+)
+
 watch(
   [page, limit, createdAfter, createdBefore, ordering, organisationFilter],
   fetchSearchResults
@@ -187,10 +191,15 @@ watch(
     </div>
 
     <div
-      v-if="data && !data.results.length"
+      v-else-if="data && !data.results.length"
       class="border rounded border-slate-200 p-10 mb-10"
     >
-      <p class="text-stone-500 italic mb-0!">Aucune enquête n'a été créée</p>
+      <p class="text-stone-500 italic mb-0!">
+        <template v-if="hasActiveFilters"
+          >Aucune enquête ne correspond aux filtres sélectionnés</template
+        >
+        <template v-else>Aucune enquête n'a été créée</template>
+      </p>
     </div>
     <template v-else-if="data?.results.length">
       <DsfrTable :rows="rows" :headers="headers" />
