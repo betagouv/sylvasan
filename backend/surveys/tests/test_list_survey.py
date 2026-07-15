@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.utils import timezone
 
 from common.utils import authenticate
 from organisations.factories import MembershipFactory, OrganisationFactory, PoleFactory
@@ -25,7 +26,7 @@ class TestListSurvey(APITestCase):
         SurveyFactory()
         response = self.client.get(reverse("survey_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), [])
+        self.assertEqual(response.json()["results"], [])
 
     @authenticate
     def test_org_member_sees_org_surveys(self):
@@ -39,9 +40,9 @@ class TestListSurvey(APITestCase):
         response = self.client.get(reverse("survey_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        json_response = response.json()
-        self.assertEqual(len(json_response), 1)
-        self.assertEqual(json_response[0]["id"], survey.id)
+        results = response.json()["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], survey.id)
 
     @authenticate
     def test_org_member_sees_pole_surveys_within_org(self):
@@ -55,9 +56,9 @@ class TestListSurvey(APITestCase):
 
         response = self.client.get(reverse("survey_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        json_response = response.json()
-        self.assertEqual(len(json_response), 1)
-        self.assertEqual(json_response[0]["id"], survey.id)
+        results = response.json()["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], survey.id)
 
     @authenticate
     def test_pole_member_sees_pole_and_org_level_surveys(self):
@@ -76,7 +77,7 @@ class TestListSurvey(APITestCase):
         response = self.client.get(reverse("survey_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        ids = [s["id"] for s in response.json()]
+        ids = [s["id"] for s in response.json()["results"]]
         self.assertIn(pole_survey.id, ids)
         self.assertIn(org_survey.id, ids)
 
@@ -96,7 +97,7 @@ class TestListSurvey(APITestCase):
         response = self.client.get(reverse("survey_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertEqual(response.json(), [])
+        self.assertEqual(response.json()["results"], [])
 
     @authenticate
     def test_member_cannot_see_surveys_from_other_org(self):
@@ -111,7 +112,7 @@ class TestListSurvey(APITestCase):
         response = self.client.get(reverse("survey_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        self.assertEqual(response.json(), [])
+        self.assertEqual(response.json()["results"], [])
 
     @authenticate
     def test_enquete_inactive_non_retournee_dans_la_liste(self):
@@ -128,7 +129,7 @@ class TestListSurvey(APITestCase):
         response = self.client.get(reverse("survey_list_create"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        ids = [s["id"] for s in response.json()]
+        ids = [s["id"] for s in response.json()["results"]]
         self.assertIn(enquete_active.id, ids)
         self.assertNotIn(enquete_inactive.id, ids)
 
@@ -147,6 +148,106 @@ class TestListSurvey(APITestCase):
         response = self.client.get(reverse("survey_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        ids = [s["id"] for s in response.json()]
+        ids = [s["id"] for s in response.json()["results"]]
         self.assertIn(survey_a.id, ids)
         self.assertIn(survey_b.id, ids)
+
+    @authenticate
+    def test_response_is_paginated(self):
+        """
+        La réponse inclut les clés de pagination count, next, previous et results
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        SurveyFactory(organisation=org)
+
+        response = self.client.get(reverse("survey_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertIn("count", data)
+        self.assertIn("next", data)
+        self.assertIn("previous", data)
+        self.assertIn("results", data)
+
+    @authenticate
+    def test_pagination_limit_offset(self):
+        """
+        Les paramètres limit et offset permettent de paginer les résultats
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        SurveyFactory.create_batch(5, organisation=org)
+
+        response = self.client.get(reverse("survey_list_create"), {"limit": 2, "offset": 0}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertEqual(data["count"], 5)
+        self.assertEqual(len(data["results"]), 2)
+        self.assertIsNotNone(data["next"])
+
+    @authenticate
+    def test_filtre_par_organisation(self):
+        """
+        Le filtre organisation retourne uniquement les enquêtes de l'organisation demandée
+        """
+        org_a = OrganisationFactory()
+        org_b = OrganisationFactory()
+        survey_a = SurveyFactory(organisation=org_a)
+        SurveyFactory(organisation=org_b)
+        MembershipFactory(user=authenticate.user, organisation=org_a, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=authenticate.user, organisation=org_b, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(reverse("survey_list_create"), {"organisation": org_a.id}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.json()["results"]
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["id"], survey_a.id)
+
+    @authenticate
+    def test_filtre_created_after(self):
+        """
+        Le filtre created_after retourne uniquement les enquêtes créées après la date donnée
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        old_survey = SurveyFactory(organisation=org)
+        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=timezone.utc)
+        old_survey.save()
+        recent_survey = SurveyFactory(organisation=org)
+        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=timezone.utc)
+        recent_survey.save()
+
+        response = self.client.get(
+            reverse("survey_list_create"), {"created_after": "2023-01-01T00:00:00Z"}, format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()["results"]]
+        self.assertIn(recent_survey.id, ids)
+        self.assertNotIn(old_survey.id, ids)
+
+    @authenticate
+    def test_filtre_created_before(self):
+        """
+        Le filtre created_before retourne uniquement les enquêtes créées avant la date donnée
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        old_survey = SurveyFactory(organisation=org)
+        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=timezone.utc)
+        old_survey.save()
+        recent_survey = SurveyFactory(organisation=org)
+        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=timezone.utc)
+        recent_survey.save()
+
+        response = self.client.get(
+            reverse("survey_list_create"), {"created_before": "2023-01-01T00:00:00Z"}, format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()["results"]]
+        self.assertIn(old_survey.id, ids)
+        self.assertNotIn(recent_survey.id, ids)

@@ -23,9 +23,9 @@ import type { ResponseDisplay } from "@shared-types/response"
 import type { SurveyDisplay } from "@shared-types/api"
 import { useRouter, useRoute } from "vue-router"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
-import PaginationSizeSelect from "../components/ResponseListPage/PaginationSizeSelect.vue"
-import DateRangeFilter from "../components/ResponseListPage/DateRangeFilter.vue"
-import OrderingFilter from "../components/ResponseListPage/OrderingFilter.vue"
+import PaginationSizeSelect from "../components/PaginationSizeSelect.vue"
+import DateRangeFilter from "../components/DateRangeFilter.vue"
+import OrderingFilter from "../components/OrderingFilter.vue"
 import type { UserDisplay } from "@shared-types/api"
 
 const router = useRouter()
@@ -79,7 +79,7 @@ const { data, execute, isFetching } = useApiFetch(url)
 
 const fetchSearchResults = async () => {
   await execute()
-  // <- Gestion d'erreur
+  // TODO  <- Gestion d'erreur
 }
 
 const totalPages = computed(() =>
