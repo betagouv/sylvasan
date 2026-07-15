@@ -336,3 +336,45 @@ class TestAssignMembership(APITestCase):
                 user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER
             ).exists()
         )
+
+    def test_no_codes_does_not_delete_other_org_memberships(self):
+        """
+        Quand aucun code DSF n'est présent et que les adhésions DSF sont supprimées,
+        les adhésions d'autres organisations ne doivent pas être touchées.
+        """
+        other_org = OrganisationFactory.create(name="Foo")
+        other_membership = MembershipFactory.create(user=self.user, organisation=other_org)
+        MembershipFactory.create(user=self.user, organisation=self.org)
+
+        _assign_membership(self.user, self.org, "", [])
+
+        self.assertEqual(Membership.objects.filter(user=self.user, organisation=self.org).count(), 0)
+        self.assertTrue(Membership.objects.filter(pk=other_membership.pk).exists())
+
+    def test_assigning_roles_does_not_touch_other_org_memberships(self):
+        """
+        L'attribution de rôles DSF ne doit pas modifier les adhésions d'autres organisations.
+        """
+        other_org = OrganisationFactory.create(name="Foo")
+        other_membership = MembershipFactory.create(user=self.user, organisation=other_org)
+
+        _assign_membership(self.user, self.org, "", ["SYLV-EDIT-T"])
+
+        self.assertTrue(Membership.objects.filter(pk=other_membership.pk).exists())
+
+    def test_stale_role_removal_does_not_touch_other_org_memberships(self):
+        """
+        La suppression des rôles DSF obsolètes ne doit pas affecter les adhésions d'autres organisations.
+        """
+        other_org = OrganisationFactory.create(name="Foo")
+        other_membership = MembershipFactory.create(user=self.user, organisation=other_org)
+        MembershipFactory.create(user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN)
+
+        _assign_membership(self.user, self.org, "", ["SYLV-EDIT-T"])
+
+        self.assertFalse(
+            Membership.objects.filter(
+                user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN
+            ).exists()
+        )
+        self.assertTrue(Membership.objects.filter(pk=other_membership.pk).exists())
