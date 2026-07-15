@@ -46,7 +46,8 @@ const filterParams = computed(() => {
   if (createdAfter.value) params.set("created_after", createdAfter.value)
   if (createdBefore.value) params.set("created_before", createdBefore.value)
   if (ordering.value) params.set("ordering", String(ordering.value))
-  if (organisationFilter.value) params.set("survey", organisationFilter.value)
+  if (organisationFilter.value)
+    params.set("organisation", organisationFilter.value)
   return params
 })
 
@@ -63,7 +64,7 @@ type PaginatedSurvey = {
   organisations: Organisation[] | undefined
 }
 
-const { data, execute, isFetching } = useApiFetch("/surveys/")
+const { data, execute, isFetching } = useApiFetch(url)
   .get()
   .json<PaginatedSurvey>()
 

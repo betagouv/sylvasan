@@ -1,11 +1,13 @@
 from django.db.models import Prefetch, Q
 
 from django_filters import rest_framework as django_filters
-from organisations.models import Membership, MembershipType
+from organisations.models import Membership, MembershipType, Organisation
+from organisations.serializers import OrganisationSerializer
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response as DRFResponse
 
 from surveys.models import Survey, SurveyFollowUp
 from surveys.permissions import CanCreateSurvey, CanDeleteSurvey
@@ -15,6 +17,24 @@ from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer, S
 class SurveyPagination(LimitOffsetPagination):
     default_limit = 20
     max_limit = 100
+
+    organisations = []
+
+    def paginate_queryset(self, queryset, request, view=None):
+        org_ids = queryset.values_list("organisation_id", flat=True).distinct().order_by()
+        self.organisations = Organisation.objects.filter(id__in=org_ids)
+        return super().paginate_queryset(queryset, request, view)
+
+    def get_paginated_response(self, data):
+        return DRFResponse(
+            {
+                "count": self.count,
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+                "results": data,
+                "organisations": OrganisationSerializer(self.organisations, many=True).data,
+            }
+        )
 
 
 class SurveyFilterSet(django_filters.FilterSet):

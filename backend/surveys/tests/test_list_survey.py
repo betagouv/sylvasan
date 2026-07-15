@@ -251,3 +251,56 @@ class TestListSurvey(APITestCase):
         ids = [s["id"] for s in response.json()["results"]]
         self.assertIn(old_survey.id, ids)
         self.assertNotIn(recent_survey.id, ids)
+
+    @authenticate
+    def test_organisations_incluses_dans_la_reponse(self):
+        """
+        La réponse paginée inclut la clé "organisations" avec les organisations
+        correspondant aux enquêtes retournées.
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        SurveyFactory(organisation=org)
+
+        response = self.client.get(reverse("survey_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertIn("organisations", data)
+        org_ids = [o["id"] for o in data["organisations"]]
+        self.assertIn(org.id, org_ids)
+
+    @authenticate
+    def test_organisations_ne_contient_que_les_orgs_des_resultats(self):
+        """
+        "organisations" ne liste que les organisations des enquêtes visibles dans la page,
+        pas toutes les organisations existantes.
+        """
+        org_a = OrganisationFactory()
+        org_b = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org_a, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=authenticate.user, organisation=org_b, membership_type=MembershipType.ADMIN)
+        SurveyFactory(organisation=org_a)
+        SurveyFactory(organisation=org_b)
+
+        # On pagine pour n'obtenir qu'une enquête (celle de org_a)
+        response = self.client.get(reverse("survey_list_create"), {"organisation": org_a.id}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        org_ids = [o["id"] for o in data["organisations"]]
+        self.assertIn(org_a.id, org_ids)
+        self.assertNotIn(org_b.id, org_ids)
+
+    @authenticate
+    def test_organisations_vide_si_aucun_resultat(self):
+        """
+        "organisations" est une liste vide quand aucune enquête n'est retournée.
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(reverse("survey_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["organisations"], [])
