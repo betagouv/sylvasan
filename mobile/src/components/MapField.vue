@@ -45,12 +45,18 @@ const mapMode = ref<"online" | "offline">("online")
 const offlineMaps = ref<OfflineMapRecord[]>([])
 const selectedMapId = ref("")
 const mapError = ref<string | null>(null)
+const mapLoadError = ref(false)
 const mapInitialized = ref(false)
 const tilesLoaded = ref(false)
 const pickedPosition = ref<{ lat: number; lon: number } | null>(null)
 const latInput = ref("")
 const lonInput = ref("")
 let marker: maplibregl.Marker | null = null
+
+const livePosition = ref<{ lat: number; lon: number; accuracy: number } | null>(
+  null
+)
+let gpsWatchId: string | null = null
 
 const modeOptions = [
   { label: "Carte en ligne", value: "online", icon: "ri-global-fill" },
@@ -92,6 +98,7 @@ const destroyMap = () => {
   map = null
   mapInitialized.value = false
   tilesLoaded.value = false
+  mapLoadError.value = false
   pickedPosition.value = null
   latInput.value = ""
   lonInput.value = ""
@@ -136,14 +143,54 @@ const onCoordinatesInput = useDebounceFn(() => {
   if (map) map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
 }, 500)
 
+const startGpsWatch = async () => {
+  try {
+    if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
+    gpsWatchId = await Geolocation.watchPosition(
+      { enableHighAccuracy: true },
+      (pos, err) => {
+        if (err || !pos) return
+        livePosition.value = {
+          lat: Math.round(pos.coords.latitude * 1_000_000) / 1_000_000,
+          lon: Math.round(pos.coords.longitude * 1_000_000) / 1_000_000,
+          accuracy: Math.round(pos.coords.accuracy),
+        }
+      }
+    )
+  } catch {
+    // GPS non disponible
+  }
+}
+
+const stopGpsWatch = () => {
+  if (gpsWatchId !== null) {
+    Geolocation.clearWatch({ id: gpsWatchId })
+    gpsWatchId = null
+    livePosition.value = null
+  }
+}
+
+const fillWithGps = () => {
+  if (!livePosition.value) return
+  const { lat, lon } = livePosition.value
+  latInput.value = String(lat)
+  lonInput.value = String(lon)
+  pickedPosition.value = { lat, lon }
+  // N'affiche le marqueur que si la carte est déjà rendue ; sinon setupMapInteractions
+  // le placera à l'idle suivant en lisant pickedPosition.
+  if (map && tilesLoaded.value) updateMarker(lon, lat)
+}
+
 const setupMapInteractions = (m: maplibregl.Map) => {
   m.on("click", (e) => {
     placeMarker(e.lngLat.lng, e.lngLat.lat)
   })
   m.once("idle", () => {
     tilesLoaded.value = true
-    if (modelValue.value) {
-      placeMarker(modelValue.value.lon, modelValue.value.lat)
+    // Priorité : position GPS remplie pendant le chargement, sinon valeur sauvegardée
+    const pos = pickedPosition.value ?? modelValue.value
+    if (pos) {
+      placeMarker(pos.lon, pos.lat)
     }
   })
 }
@@ -178,6 +225,14 @@ const initOnlineMap = (container: HTMLDivElement) => {
 
   addGeolocateControl(map, !modelValue.value)
   setupMapInteractions(map)
+
+  map.on("error", (e) => {
+    // status 0 = réseau inaccessible (NetworkError)
+    if (e.error && (e.error.status === 0 || !navigator.onLine)) {
+      mapLoadError.value = true
+    }
+  })
+
   mapInitialized.value = true
 }
 
@@ -258,10 +313,12 @@ watch([mapMode, selectedMapId], () => {
 
 const onModalPresent = () => {
   initMap()
+  startGpsWatch()
 }
 
 const onModalDismiss = () => {
   opened.value = false
+  stopGpsWatch()
   destroyMap()
   deregisterOfflineProtocol()
   mapError.value = null
@@ -274,6 +331,7 @@ const confirm = () => {
 }
 
 onBeforeUnmount(() => {
+  stopGpsWatch()
   destroyMap()
   deregisterOfflineProtocol()
 })
@@ -378,12 +436,39 @@ onBeforeUnmount(() => {
             <Transition name="fade">
               <div
                 v-if="!tilesLoaded"
-                class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/70 z-10 pointer-events-none"
+                class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/70 z-10"
               >
-                <IonSpinner name="crescent" style="width: 2rem; height: 2rem" />
-                <span class="text-sm text-stone-500"
-                  >Chargement de la carte en cours</span
-                >
+                <template v-if="mapLoadError">
+                  <span class="text-sm text-stone-500">Hors connexion.</span>
+                </template>
+                <template v-else>
+                  <IonSpinner
+                    name="crescent"
+                    style="width: 2rem; height: 2rem"
+                  />
+                  <span class="text-sm text-stone-500"
+                    >Chargement de la carte en cours</span
+                  >
+                </template>
+                <div class="border rounded border-slate-200 p-4">
+                  <h6>Remplir avec ma position</h6>
+                  <p v-if="livePosition" class="text-sm mb-2!">
+                    <span class="live-dot">●</span>
+                    Précision actuelle :
+                    <strong>{{ livePosition.accuracy }} m</strong>
+                  </p>
+                  <p v-else class="text-sm text-stone-500 mb-2!">
+                    Recherche du signal GPS…
+                  </p>
+                  <DsfrButton
+                    label="Remplir avec ma position actuelle"
+                    icon="ri-focus-3-line"
+                    secondary
+                    size="sm"
+                    :disabled="!livePosition"
+                    @click="fillWithGps"
+                  />
+                </div>
               </div>
             </Transition>
 
@@ -449,5 +534,18 @@ onBeforeUnmount(() => {
 }
 .lat-lon :deep(.fr-input-group) {
   box-sizing: border-box;
+}
+.live-dot {
+  color: #18753c;
+  animation: gps-pulse 1.5s ease-in-out infinite;
+}
+@keyframes gps-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
 }
 </style>
