@@ -1,3 +1,5 @@
+import datetime
+
 from django.urls import reverse
 from django.utils import timezone
 
@@ -214,10 +216,10 @@ class TestListSurvey(APITestCase):
         org = OrganisationFactory()
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         old_survey = SurveyFactory(organisation=org)
-        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=timezone.utc)
+        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
         old_survey.save()
         recent_survey = SurveyFactory(organisation=org)
-        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=timezone.utc)
+        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=datetime.timezone.utc)
         recent_survey.save()
 
         response = self.client.get(
@@ -237,10 +239,10 @@ class TestListSurvey(APITestCase):
         org = OrganisationFactory()
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         old_survey = SurveyFactory(organisation=org)
-        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=timezone.utc)
+        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
         old_survey.save()
         recent_survey = SurveyFactory(organisation=org)
-        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=timezone.utc)
+        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=datetime.timezone.utc)
         recent_survey.save()
 
         response = self.client.get(
