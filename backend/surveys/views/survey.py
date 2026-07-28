@@ -1,12 +1,50 @@
 from django.db.models import Prefetch, Q
 
-from organisations.models import Membership, MembershipType
+from django_filters import rest_framework as django_filters
+from organisations.models import Membership, MembershipType, Organisation
+from organisations.serializers import OrganisationSerializer
+from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response as DRFResponse
 
 from surveys.models import Survey, SurveyFollowUp
 from surveys.permissions import CanCreateSurvey, CanDeleteSurvey
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer, SurveySerializer
+
+
+class SurveyPagination(LimitOffsetPagination):
+    default_limit = 20
+    max_limit = 100
+
+    organisations = []
+
+    def paginate_queryset(self, queryset, request, view=None):
+        org_ids = queryset.values_list("organisation_id", flat=True).distinct().order_by()
+        self.organisations = Organisation.objects.filter(id__in=org_ids)
+        return super().paginate_queryset(queryset, request, view)
+
+    def get_paginated_response(self, data):
+        return DRFResponse(
+            {
+                "count": self.count,
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+                "results": data,
+                "organisations": OrganisationSerializer(self.organisations, many=True).data,
+            }
+        )
+
+
+class SurveyFilterSet(django_filters.FilterSet):
+    created_after = django_filters.DateTimeFilter(field_name="creation_date", lookup_expr="gte")
+    created_before = django_filters.DateTimeFilter(field_name="creation_date", lookup_expr="lte")
+    organisation = django_filters.NumberFilter(field_name="organisation_id")
+
+    class Meta:
+        model = Survey
+        fields = []
 
 
 class SurveyQuerySetMixin:
@@ -32,6 +70,14 @@ class SurveyQuerySetMixin:
 
 
 class SurveyListCreateAPIView(SurveyQuerySetMixin, ListCreateAPIView):
+    pagination_class = SurveyPagination
+    filter_backends = [
+        django_filters.DjangoFilterBackend,
+        OrderingFilter,
+    ]
+    ordering_fields = ["creation_date", "id"]
+    filterset_class = SurveyFilterSet
+
     def get_serializer_class(self):
         if self.request.method == "GET":
             return SurveyDisplaySerializer
