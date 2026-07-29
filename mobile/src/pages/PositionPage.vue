@@ -227,5 +227,6 @@ div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
 
 div.sylvasan-search-container {
   padding-top: env(safe-area-inset-top);
+  z-index: 999999;
 }
 </style>
