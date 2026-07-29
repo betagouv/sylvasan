@@ -78,7 +78,7 @@ onMounted(async () => {
 
 const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
   const geolocate = new maplibregl.GeolocateControl({
-    positionOptions: { enableHighAccuracy: true, timeout: 5000 },
+    positionOptions: { enableHighAccuracy: true, timeout: 30000 },
     trackUserLocation: false,
     showUserLocation: true,
     showAccuracyCircle: true,
@@ -168,7 +168,7 @@ const startGpsWatch = async () => {
       }
     }
     const watchId = await Geolocation.watchPosition(
-      { enableHighAccuracy: true },
+      { enableHighAccuracy: true, timeout: 30000, minimumUpdateInterval: 1000 },
       (pos, err) => {
         if (err || !pos) {
           gpsUnavailable.value = true
@@ -267,7 +267,11 @@ const initOnlineMap = (container: HTMLDivElement) => {
     // status 0 = NetworkError via XHR (AJAXError) ; message = fetch sans réseau.
     if (!tilesLoaded.value && e.error) {
       const err = e.error as Error & { status?: number }
-      if (err.status === 0 || !navigator.onLine || err.message?.includes("NetworkError")) {
+      if (
+        err.status === 0 ||
+        !navigator.onLine ||
+        err.message?.includes("NetworkError")
+      ) {
         mapLoadError.value = true
       }
     }
