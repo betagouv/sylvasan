@@ -58,6 +58,7 @@ const livePosition = ref<{ lat: number; lon: number; accuracy: number } | null>(
 )
 const gpsUnavailable = ref(false)
 let gpsWatchId: string | null = null
+let gpsStartGeneration = 0
 
 const modeOptions = [
   { label: "Carte en ligne", value: "online", icon: "ri-global-fill" },
@@ -155,19 +156,24 @@ const onCoordinatesInput = useDebounceFn(() => {
 }, 500)
 
 const startGpsWatch = async () => {
+  const gen = ++gpsStartGeneration
   gpsUnavailable.value = false
   try {
     if (Capacitor.isNativePlatform()) {
       const { location } = await Geolocation.requestPermissions()
+      if (gen !== gpsStartGeneration) return // stopGpsWatch appelé pendant l'attente
       if (location === "denied") {
         gpsUnavailable.value = true
         return
       }
     }
-    gpsWatchId = await Geolocation.watchPosition(
+    const watchId = await Geolocation.watchPosition(
       { enableHighAccuracy: true },
       (pos, err) => {
-        if (err || !pos) return
+        if (err || !pos) {
+          gpsUnavailable.value = true
+          return
+        }
         livePosition.value = {
           lat: Math.round(pos.coords.latitude * 1_000_000) / 1_000_000,
           lon: Math.round(pos.coords.longitude * 1_000_000) / 1_000_000,
@@ -175,12 +181,19 @@ const startGpsWatch = async () => {
         }
       }
     )
-  } catch (e) {
+    if (gen !== gpsStartGeneration) {
+      // stopGpsWatch appelé pendant watchPosition — on nettoie immédiatement
+      Geolocation.clearWatch({ id: watchId })
+      return
+    }
+    gpsWatchId = watchId
+  } catch {
     gpsUnavailable.value = true
   }
 }
 
 const stopGpsWatch = () => {
+  gpsStartGeneration++ // invalide tout startGpsWatch en cours
   if (gpsWatchId !== null) {
     Geolocation.clearWatch({ id: gpsWatchId })
     gpsWatchId = null
@@ -197,7 +210,10 @@ const fillWithGps = () => {
   pickedPosition.value = { lat, lon }
   // N'affiche le marqueur que si la carte est déjà rendue ; sinon setupMapInteractions
   // le placera à l'idle suivant en lisant pickedPosition.
-  if (map && tilesLoaded.value) updateMarker(lon, lat)
+  if (map && tilesLoaded.value) {
+    updateMarker(lon, lat)
+    map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
+  }
 }
 
 const setupMapInteractions = (m: maplibregl.Map) => {
@@ -210,6 +226,7 @@ const setupMapInteractions = (m: maplibregl.Map) => {
     const pos = pickedPosition.value ?? modelValue.value
     if (pos) {
       placeMarker(pos.lon, pos.lat)
+      m.flyTo({ center: [pos.lon, pos.lat], zoom: Math.max(m.getZoom(), 13) })
     }
   })
 }
@@ -247,15 +264,12 @@ const initOnlineMap = (container: HTMLDivElement) => {
 
   map.on("error", (e) => {
     // Ne traiter que les erreurs survenant avant le premier rendu complet.
-    // status 0 = NetworkError via XHR ; message "NetworkError" = fetch sans réseau.
-    if (
-      !tilesLoaded.value &&
-      e.error &&
-      (e.error.status === 0 ||
-        !navigator.onLine ||
-        e.error.message?.includes("NetworkError"))
-    ) {
-      mapLoadError.value = true
+    // status 0 = NetworkError via XHR (AJAXError) ; message = fetch sans réseau.
+    if (!tilesLoaded.value && e.error) {
+      const err = e.error as Error & { status?: number }
+      if (err.status === 0 || !navigator.onLine || err.message?.includes("NetworkError")) {
+        mapLoadError.value = true
+      }
     }
   })
 

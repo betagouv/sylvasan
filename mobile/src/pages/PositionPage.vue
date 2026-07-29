@@ -7,7 +7,13 @@ import {
   onBeforeUnmount,
   nextTick,
 } from "vue"
-import { IonPage, IonContent, IonSpinner, IonIcon, onIonViewDidEnter } from "@ionic/vue"
+import {
+  IonPage,
+  IonContent,
+  IonSpinner,
+  IonIcon,
+  onIonViewDidEnter,
+} from "@ionic/vue"
 import { cloudOfflineOutline } from "ionicons/icons"
 import { Network } from "@capacitor/network"
 import { Geolocation } from "@capacitor/geolocation"
@@ -58,10 +64,10 @@ const initMap = () => {
   )
 
   const geolocate = new maplibregl.GeolocateControl({
-    positionOptions: { enableHighAccuracy: true, timeout: 5000 },
+    positionOptions: { enableHighAccuracy: true, timeout: 30000 },
     trackUserLocation: false,
     showUserLocation: true,
-    showAccuracyCircle: false,
+    showAccuracyCircle: true,
     fitBoundsOptions: { maxZoom: 13 },
   })
   m.addControl(geolocate, "bottom-right")
@@ -210,5 +216,12 @@ ion-content {
 .slide-up-leave-to {
   transform: translateY(1rem);
   opacity: 0;
+}
+div :deep(.maplibregl-marker.maplibregl-marker-anchor-center) {
+  z-index: 99999;
+}
+
+div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
+  z-index: 0;
 }
 </style>
