@@ -45,12 +45,20 @@ const mapMode = ref<"online" | "offline">("online")
 const offlineMaps = ref<OfflineMapRecord[]>([])
 const selectedMapId = ref("")
 const mapError = ref<string | null>(null)
+const mapLoadError = ref(false)
 const mapInitialized = ref(false)
 const tilesLoaded = ref(false)
 const pickedPosition = ref<{ lat: number; lon: number } | null>(null)
 const latInput = ref("")
 const lonInput = ref("")
 let marker: maplibregl.Marker | null = null
+
+const livePosition = ref<{ lat: number; lon: number; accuracy: number } | null>(
+  null
+)
+const gpsUnavailable = ref(false)
+let gpsWatchId: string | null = null
+let gpsStartGeneration = 0
 
 const modeOptions = [
   { label: "Carte en ligne", value: "online", icon: "ri-global-fill" },
@@ -92,6 +100,7 @@ const destroyMap = () => {
   map = null
   mapInitialized.value = false
   tilesLoaded.value = false
+  mapLoadError.value = false
   pickedPosition.value = null
   latInput.value = ""
   lonInput.value = ""
@@ -132,9 +141,80 @@ const onCoordinatesInput = useDebounceFn(() => {
     lon > 180
   )
     return
-  updateMarker(lon, lat)
-  if (map) map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
+  if (tilesLoaded.value) {
+    updateMarker(lon, lat)
+    if (map)
+      map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
+  } else {
+    // Carte pas encore rendue : on stocke la position sans placer de marqueur.
+    // setupMapInteractions la placera via pickedPosition une fois l'idle reçu.
+    pickedPosition.value = {
+      lat: Math.round(lat * 1_000_000) / 1_000_000,
+      lon: Math.round(lon * 1_000_000) / 1_000_000,
+    }
+  }
 }, 500)
+
+const startGpsWatch = async () => {
+  const gen = ++gpsStartGeneration
+  gpsUnavailable.value = false
+  try {
+    if (Capacitor.isNativePlatform()) {
+      const { location } = await Geolocation.requestPermissions()
+      if (gen !== gpsStartGeneration) return // stopGpsWatch appelé pendant l'attente
+      if (location === "denied") {
+        gpsUnavailable.value = true
+        return
+      }
+    }
+    const watchId = await Geolocation.watchPosition(
+      { enableHighAccuracy: true },
+      (pos, err) => {
+        if (err || !pos) {
+          gpsUnavailable.value = true
+          return
+        }
+        livePosition.value = {
+          lat: Math.round(pos.coords.latitude * 1_000_000) / 1_000_000,
+          lon: Math.round(pos.coords.longitude * 1_000_000) / 1_000_000,
+          accuracy: Math.round(pos.coords.accuracy),
+        }
+      }
+    )
+    if (gen !== gpsStartGeneration) {
+      // stopGpsWatch appelé pendant watchPosition — on nettoie immédiatement
+      Geolocation.clearWatch({ id: watchId })
+      return
+    }
+    gpsWatchId = watchId
+  } catch {
+    gpsUnavailable.value = true
+  }
+}
+
+const stopGpsWatch = () => {
+  gpsStartGeneration++ // invalide tout startGpsWatch en cours
+  if (gpsWatchId !== null) {
+    Geolocation.clearWatch({ id: gpsWatchId })
+    gpsWatchId = null
+    livePosition.value = null
+    gpsUnavailable.value = false
+  }
+}
+
+const fillWithGps = () => {
+  if (!livePosition.value) return
+  const { lat, lon } = livePosition.value
+  latInput.value = String(lat)
+  lonInput.value = String(lon)
+  pickedPosition.value = { lat, lon }
+  // N'affiche le marqueur que si la carte est déjà rendue ; sinon setupMapInteractions
+  // le placera à l'idle suivant en lisant pickedPosition.
+  if (map && tilesLoaded.value) {
+    updateMarker(lon, lat)
+    map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
+  }
+}
 
 const setupMapInteractions = (m: maplibregl.Map) => {
   m.on("click", (e) => {
@@ -142,8 +222,11 @@ const setupMapInteractions = (m: maplibregl.Map) => {
   })
   m.once("idle", () => {
     tilesLoaded.value = true
-    if (modelValue.value) {
-      placeMarker(modelValue.value.lon, modelValue.value.lat)
+    // Priorité : position GPS remplie pendant le chargement, sinon valeur sauvegardée
+    const pos = pickedPosition.value ?? modelValue.value
+    if (pos) {
+      placeMarker(pos.lon, pos.lat)
+      m.flyTo({ center: [pos.lon, pos.lat], zoom: Math.max(m.getZoom(), 13) })
     }
   })
 }
@@ -178,6 +261,18 @@ const initOnlineMap = (container: HTMLDivElement) => {
 
   addGeolocateControl(map, !modelValue.value)
   setupMapInteractions(map)
+
+  map.on("error", (e) => {
+    // Ne traiter que les erreurs survenant avant le premier rendu complet.
+    // status 0 = NetworkError via XHR (AJAXError) ; message = fetch sans réseau.
+    if (!tilesLoaded.value && e.error) {
+      const err = e.error as Error & { status?: number }
+      if (err.status === 0 || !navigator.onLine || err.message?.includes("NetworkError")) {
+        mapLoadError.value = true
+      }
+    }
+  })
+
   mapInitialized.value = true
 }
 
@@ -258,10 +353,13 @@ watch([mapMode, selectedMapId], () => {
 
 const onModalPresent = () => {
   initMap()
+  startGpsWatch()
 }
 
 const onModalDismiss = () => {
+  gpsUnavailable.value = false
   opened.value = false
+  stopGpsWatch()
   destroyMap()
   deregisterOfflineProtocol()
   mapError.value = null
@@ -274,6 +372,7 @@ const confirm = () => {
 }
 
 onBeforeUnmount(() => {
+  stopGpsWatch()
   destroyMap()
   deregisterOfflineProtocol()
 })
@@ -378,12 +477,28 @@ onBeforeUnmount(() => {
             <Transition name="fade">
               <div
                 v-if="!tilesLoaded"
-                class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/70 z-10 pointer-events-none"
+                class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/70 z-10"
               >
-                <IonSpinner name="crescent" style="width: 2rem; height: 2rem" />
-                <span class="text-sm text-stone-500"
-                  >Chargement de la carte en cours</span
-                >
+                <template v-if="mapLoadError">
+                  <p class="px-4 text-center">
+                    <span class="text-sm text-stone-500"
+                      >Vous êtes hors connexion.
+                      <span
+                        ><br />Vous pouvez néanmoins remplir votre position
+                        actuelle ci-dessous.</span
+                      >
+                    </span>
+                  </p>
+                </template>
+                <template v-else>
+                  <IonSpinner
+                    name="crescent"
+                    style="width: 2rem; height: 2rem"
+                  />
+                  <span class="text-sm text-stone-500"
+                    >Chargement de la carte en cours</span
+                  >
+                </template>
               </div>
             </Transition>
 
@@ -401,6 +516,36 @@ onBeforeUnmount(() => {
                 }}
               </span>
             </div>
+          </div>
+
+          <!-- Position actuelle -->
+
+          <div class="border rounded border-slate-200 p-4 pb-0">
+            <div class="mb-3">
+              <DsfrButton
+                label="Remplir avec ma position actuelle"
+                icon="ri-focus-3-line"
+                secondary
+                size="sm"
+                :disabled="!livePosition"
+                @click="fillWithGps"
+              />
+            </div>
+
+            <p v-if="livePosition" class="fr-text--sm mb-2!">
+              <span class="live-dot">●</span>
+              Précision actuelle :
+              <strong>{{ livePosition.accuracy }} m</strong>
+            </p>
+            <p
+              v-else-if="gpsUnavailable"
+              class="fr-text--sm text-red-600 mb-2!"
+            >
+              Localisation GPS non disponible.
+            </p>
+            <p v-else class="fr-text--sm text-stone-500 mb-2!">
+              Recherche du signal GPS…
+            </p>
           </div>
 
           <!-- Footer -->
@@ -449,5 +594,18 @@ onBeforeUnmount(() => {
 }
 .lat-lon :deep(.fr-input-group) {
   box-sizing: border-box;
+}
+.live-dot {
+  color: #18753c;
+  animation: gps-pulse 1.5s ease-in-out infinite;
+}
+@keyframes gps-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
 }
 </style>
