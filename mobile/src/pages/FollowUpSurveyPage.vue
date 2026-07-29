@@ -256,7 +256,7 @@ const confirmDelete = async () => {
             "
           >
             <ion-icon slot="start" :icon="closeOutline" />
-            Enregistrer et quitter
+            Enregistrer en brouillon
           </ion-button>
         </ion-buttons>
         <ion-buttons slot="end">
