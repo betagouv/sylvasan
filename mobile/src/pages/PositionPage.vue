@@ -154,7 +154,7 @@ onBeforeUnmount(() => {
         <Transition name="drop">
           <div
             v-if="showSearchHere && tilesLoaded"
-            class="absolute top-4 left-0 right-0 flex justify-center z-10 pointer-events-none"
+            class="absolute top-4 left-0 right-0 flex justify-center z-10 pointer-events-none sylvasan-search-container"
           >
             <button
               class="pointer-events-auto bg-white! px-4 py-2 shadow-md font-medium flex items-center gap-2 disabled:opacity-60!"
@@ -223,5 +223,9 @@ div :deep(.maplibregl-marker.maplibregl-marker-anchor-center) {
 
 div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
   z-index: 0;
+}
+
+div.sylvasan-search-container {
+  padding-top: env(safe-area-inset-top);
 }
 </style>
