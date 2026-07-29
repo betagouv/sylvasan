@@ -56,6 +56,7 @@ let marker: maplibregl.Marker | null = null
 const livePosition = ref<{ lat: number; lon: number; accuracy: number } | null>(
   null
 )
+const gpsUnavailable = ref(false)
 let gpsWatchId: string | null = null
 
 const modeOptions = [
@@ -139,13 +140,30 @@ const onCoordinatesInput = useDebounceFn(() => {
     lon > 180
   )
     return
-  updateMarker(lon, lat)
-  if (map) map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
+  if (tilesLoaded.value) {
+    updateMarker(lon, lat)
+    if (map)
+      map.flyTo({ center: [lon, lat], zoom: Math.max(map.getZoom(), 13) })
+  } else {
+    // Carte pas encore rendue : on stocke la position sans placer de marqueur.
+    // setupMapInteractions la placera via pickedPosition une fois l'idle reçu.
+    pickedPosition.value = {
+      lat: Math.round(lat * 1_000_000) / 1_000_000,
+      lon: Math.round(lon * 1_000_000) / 1_000_000,
+    }
+  }
 }, 500)
 
 const startGpsWatch = async () => {
+  gpsUnavailable.value = false
   try {
-    if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
+    if (Capacitor.isNativePlatform()) {
+      const { location } = await Geolocation.requestPermissions()
+      if (location === "denied") {
+        gpsUnavailable.value = true
+        return
+      }
+    }
     gpsWatchId = await Geolocation.watchPosition(
       { enableHighAccuracy: true },
       (pos, err) => {
@@ -157,8 +175,8 @@ const startGpsWatch = async () => {
         }
       }
     )
-  } catch {
-    // GPS non disponible
+  } catch (e) {
+    gpsUnavailable.value = true
   }
 }
 
@@ -167,6 +185,7 @@ const stopGpsWatch = () => {
     Geolocation.clearWatch({ id: gpsWatchId })
     gpsWatchId = null
     livePosition.value = null
+    gpsUnavailable.value = false
   }
 }
 
@@ -227,8 +246,15 @@ const initOnlineMap = (container: HTMLDivElement) => {
   setupMapInteractions(map)
 
   map.on("error", (e) => {
-    // status 0 = réseau inaccessible (NetworkError)
-    if (e.error && (e.error.status === 0 || !navigator.onLine)) {
+    // Ne traiter que les erreurs survenant avant le premier rendu complet.
+    // status 0 = NetworkError via XHR ; message "NetworkError" = fetch sans réseau.
+    if (
+      !tilesLoaded.value &&
+      e.error &&
+      (e.error.status === 0 ||
+        !navigator.onLine ||
+        e.error.message?.includes("NetworkError"))
+    ) {
       mapLoadError.value = true
     }
   })
@@ -317,6 +343,7 @@ const onModalPresent = () => {
 }
 
 const onModalDismiss = () => {
+  gpsUnavailable.value = false
   opened.value = false
   stopGpsWatch()
   destroyMap()
@@ -439,7 +466,15 @@ onBeforeUnmount(() => {
                 class="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/70 z-10"
               >
                 <template v-if="mapLoadError">
-                  <span class="text-sm text-stone-500">Hors connexion.</span>
+                  <p class="px-4 text-center">
+                    <span class="text-sm text-stone-500"
+                      >Vous êtes hors connexion.
+                      <span
+                        ><br />Vous pouvez néanmoins remplir votre position
+                        actuelle ci-dessous.</span
+                      >
+                    </span>
+                  </p>
                 </template>
                 <template v-else>
                   <IonSpinner
@@ -450,25 +485,6 @@ onBeforeUnmount(() => {
                     >Chargement de la carte en cours</span
                   >
                 </template>
-                <div class="border rounded border-slate-200 p-4">
-                  <h6>Remplir avec ma position</h6>
-                  <p v-if="livePosition" class="text-sm mb-2!">
-                    <span class="live-dot">●</span>
-                    Précision actuelle :
-                    <strong>{{ livePosition.accuracy }} m</strong>
-                  </p>
-                  <p v-else class="text-sm text-stone-500 mb-2!">
-                    Recherche du signal GPS…
-                  </p>
-                  <DsfrButton
-                    label="Remplir avec ma position actuelle"
-                    icon="ri-focus-3-line"
-                    secondary
-                    size="sm"
-                    :disabled="!livePosition"
-                    @click="fillWithGps"
-                  />
-                </div>
               </div>
             </Transition>
 
@@ -486,6 +502,36 @@ onBeforeUnmount(() => {
                 }}
               </span>
             </div>
+          </div>
+
+          <!-- Position actuelle -->
+
+          <div class="border rounded border-slate-200 p-4 pb-0">
+            <div class="mb-3">
+              <DsfrButton
+                label="Remplir avec ma position actuelle"
+                icon="ri-focus-3-line"
+                secondary
+                size="sm"
+                :disabled="!livePosition"
+                @click="fillWithGps"
+              />
+            </div>
+
+            <p v-if="livePosition" class="fr-text--sm mb-2!">
+              <span class="live-dot">●</span>
+              Précision actuelle :
+              <strong>{{ livePosition.accuracy }} m</strong>
+            </p>
+            <p
+              v-else-if="gpsUnavailable"
+              class="fr-text--sm text-red-600 mb-2!"
+            >
+              Localisation GPS non disponible.
+            </p>
+            <p v-else class="fr-text--sm text-stone-500 mb-2!">
+              Recherche du signal GPS…
+            </p>
           </div>
 
           <!-- Footer -->
