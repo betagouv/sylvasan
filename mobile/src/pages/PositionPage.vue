@@ -13,6 +13,7 @@ import {
   IonSpinner,
   IonIcon,
   onIonViewDidEnter,
+  onIonViewWillLeave,
 } from "@ionic/vue"
 import { cloudOfflineOutline } from "ionicons/icons"
 import { Network } from "@capacitor/network"
@@ -29,11 +30,36 @@ const centerOfFrance: [number, number] = [2.35, 46.8]
 const ready = ref(false)
 const isOnline = ref(false)
 const tilesLoaded = ref(false)
+const liveAccuracy = ref<number | null>(null)
 const mapContainer = ref<HTMLDivElement | null>(null)
 const mapRef = shallowRef<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
+let gpsWatchId: string | null = null
 
 const { selectedPin, showSearchHere, loading, fetchPins } = useGeoPins(mapRef)
+
+const startAccuracyWatch = async () => {
+  try {
+    if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
+    gpsWatchId = await Geolocation.watchPosition(
+      { enableHighAccuracy: true, timeout: 30000, minimumUpdateInterval: 1000 },
+      (pos, err) => {
+        if (err || !pos) return
+        liveAccuracy.value = Math.round(pos.coords.accuracy)
+      }
+    )
+  } catch {
+    // GPS non disponible
+  }
+}
+
+const stopAccuracyWatch = () => {
+  if (gpsWatchId !== null) {
+    Geolocation.clearWatch({ id: gpsWatchId })
+    gpsWatchId = null
+    liveAccuracy.value = null
+  }
+}
 
 const destroyMap = () => {
   mapRef.value?.remove()
@@ -56,6 +82,10 @@ const initMap = () => {
 
   m.addControl(
     new maplibregl.AttributionControl({ compact: true }),
+    "bottom-left"
+  )
+  m.addControl(
+    new maplibregl.ScaleControl({ maxWidth: 100, unit: "metric" }),
     "bottom-left"
   )
   m.addControl(
@@ -107,11 +137,17 @@ onMounted(async () => {
 
 onIonViewDidEnter(() => {
   fetchPins()
+  startAccuracyWatch()
+})
+
+onIonViewWillLeave(() => {
+  stopAccuracyWatch()
 })
 
 onBeforeUnmount(() => {
   destroyMap()
   networkListener?.remove()
+  stopAccuracyWatch()
 })
 </script>
 
@@ -150,6 +186,14 @@ onBeforeUnmount(() => {
             >
           </div>
         </Transition>
+
+        <div
+          v-if="tilesLoaded && liveAccuracy !== null"
+          class="accuracy-badge absolute right-2 z-10 bg-white/90 text-xs px-2 py-1 rounded-full shadow-sm flex items-center gap-1 pointer-events-none"
+        >
+          <span class="live-dot">●</span>
+          <span>{{ liveAccuracy }} m</span>
+        </div>
 
         <Transition name="drop">
           <div
@@ -228,5 +272,25 @@ div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
 div.sylvasan-search-container {
   padding-top: env(safe-area-inset-top);
   z-index: 999999;
+}
+
+.accuracy-badge {
+  top: calc(0.5rem + env(safe-area-inset-top));
+  margin-top: env(safe-area-inset-top);
+}
+
+.live-dot {
+  color: #18753c;
+  animation: gps-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes gps-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
 }
 </style>
