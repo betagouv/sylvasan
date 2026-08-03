@@ -243,7 +243,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
             />
             <div class="flex items-center gap-3">
               <DsfrButton
-                label="Sauvegarder"
+                label="Envoyer"
                 :icon="
                   saving
                     ? { name: 'ri-refresh-line', animation: 'spin' }
