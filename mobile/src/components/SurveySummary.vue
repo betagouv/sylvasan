@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed } from "vue"
 import type { ResponseFull, LocalResponse } from "@shared-types/response"
 import type { Survey, SurveyField, ImageItem } from "@shared-types/survey"
 import ResponseBadge from "./ResponseBadge.vue"
+import SummaryImage from "./SummaryImage.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
 import { resolveFieldValue, evaluateCondition } from "@shared-utils/survey"
 import { validateResponse, validateField } from "@shared-utils/validateField"
 import { useVocabulariesStore } from "../stores/vocabularies"
-import ImageViewer from "@shared-components/ImageViewer.vue"
-import { resolveLocalImageSrc } from "../utils/imageStorage"
 
 const { response, data, survey } = defineProps<{
   response?: ResponseFull | LocalResponse
@@ -36,32 +35,6 @@ const isImageField = (fieldId: string): boolean =>
 
 const getSubFields = (fieldId: string): SurveyField[] =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.fields ?? []
-
-const resolvedSrcs = ref<Record<string, string>>({})
-
-watch(
-  resolvedData,
-  async (data) => {
-    for (const field of survey.jsonSchema.fields) {
-      if (field.ui?.widget !== "image") continue
-      const images = data[field.id]
-      if (!Array.isArray(images)) continue
-      for (const item of images as ImageItem[]) {
-        if (!("type" in item) || resolvedSrcs.value[item.path]) continue
-        const src = await resolveLocalImageSrc(item.path).catch(() => null)
-        if (src) resolvedSrcs.value[item.path] = src
-      }
-    }
-  },
-  { immediate: true }
-)
-
-const imageSrc = (item: ImageItem): string | null => {
-  if ("type" in item) return resolvedSrcs.value[item.path] ?? null
-  if ("file" in item) return `data:image/jpeg;base64,${item.file}`
-  if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
-  return null
-}
 
 const visibleFields = computed(() =>
   survey.jsonSchema.fields.filter(
@@ -92,15 +65,6 @@ const getSubFieldError = (
   return validateField(subField, value ?? null)
 }
 
-const viewerOpen = ref(false)
-const viewerImages = ref<ImageItem[]>([])
-const viewerIndex = ref(0)
-
-const openViewer = (images: ImageItem[], index: number) => {
-  viewerImages.value = images
-  viewerIndex.value = index
-  viewerOpen.value = true
-}
 </script>
 
 <template>
@@ -143,36 +107,35 @@ const openViewer = (images: ImageItem[], index: number) => {
             class="border border-slate-200 rounded p-3 mb-2 bg-slate-50"
           >
             <div v-for="subField in getSubFields(field.id)" :key="subField.id">
-              <div class="flex gap-4">
-                <p class="fr-text--sm text-stone-400 mb-0!">
-                  {{ subField.label }}
-                </p>
-                <p
-                  class="font-medium mb-0!"
-                  v-if="
-                    resolveFieldValue(
-                      subField,
-                      item[subField.id],
-                      vocabularySets
-                    )
-                  "
-                >
-                  {{
-                    resolveFieldValue(
-                      subField,
-                      item[subField.id],
-                      vocabularySets
-                    )
-                  }}
-                </p>
-                <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
-              </div>
-              <p
-                v-if="getSubFieldError(subField, item[subField.id])"
-                class="fr-error-text fr-text--sm mt-0! mb-2!"
-              >
-                {{ getSubFieldError(subField, item[subField.id]) }}
+              <p class="fr-text--sm text-stone-400 mb-0!">
+                {{ subField.label }}
               </p>
+              <!-- Image sub-field -->
+              <template v-if="subField.ui?.widget === 'image'">
+                <SummaryImage
+                  v-if="Array.isArray(item[subField.id]) && (item[subField.id] as unknown[]).length"
+                  :images="(item[subField.id] as ImageItem[])"
+                />
+                <p v-else class="italic mb-0! text-stone-500">Non renseigné</p>
+              </template>
+              <!-- Other sub-fields -->
+              <template v-else>
+                <div class="flex gap-4">
+                  <p
+                    class="font-medium mb-0!"
+                    v-if="resolveFieldValue(subField, item[subField.id], vocabularySets)"
+                  >
+                    {{ resolveFieldValue(subField, item[subField.id], vocabularySets) }}
+                  </p>
+                  <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+                </div>
+                <p
+                  v-if="getSubFieldError(subField, item[subField.id])"
+                  class="fr-error-text fr-text--sm mt-0! mb-2!"
+                >
+                  {{ getSubFieldError(subField, item[subField.id]) }}
+                </p>
+              </template>
             </div>
           </div>
         </template>
@@ -189,29 +152,11 @@ const openViewer = (images: ImageItem[], index: number) => {
           >
             Non renseigné
           </p>
-          <div v-else class="grid grid-cols-4 gap-2 my-2">
-            <div
-              v-for="(img, idx) in (resolvedData[field.id] as ImageItem[])"
-              :key="idx"
-              class="aspect-square rounded overflow-hidden border border-slate-200 cursor-pointer"
-              @click="openViewer(resolvedData[field.id] as ImageItem[], idx)"
-            >
-              <img
-                v-if="imageSrc(img)"
-                :src="imageSrc(img)!"
-                class="w-full h-full object-cover"
-                alt=""
-              />
-              <div
-                v-else
-                class="w-full h-full bg-slate-100 flex items-center justify-center"
-              >
-                <v-icon name="ri-image-line" scale="2" class="text-slate-400" />
-              </div>
-            </div>
-          </div>
+          <SummaryImage
+            v-else
+            :images="(resolvedData[field.id] as ImageItem[])"
+          />
         </template>
-
         <!-- All other fields -->
         <template v-else>
           <p
@@ -222,7 +167,6 @@ const openViewer = (images: ImageItem[], index: number) => {
           </p>
           <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
         </template>
-
         <p
           v-if="validationErrors[field.id]"
           class="fr-error-text fr-text--sm mt-1! mb-0!"
@@ -235,11 +179,4 @@ const openViewer = (images: ImageItem[], index: number) => {
     </div>
   </div>
 
-  <ImageViewer
-    :images="viewerImages"
-    :startIndex="viewerIndex"
-    :opened="viewerOpen"
-    :resolvedSrcs="resolvedSrcs"
-    @close="viewerOpen = false"
-  />
 </template>
