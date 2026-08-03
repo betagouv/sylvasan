@@ -37,9 +37,8 @@ const stepTitles = computed(
 )
 
 const currentPageFields = computed(() => {
-  if (!hasPages.value) return props.schema.fields
   const page = props.schema.pages?.[currentStep.value - 1]
-  if (!page) return []
+  if (!page) return props.schema.fields
   return page.fields
     .map((fid) => props.schema.fields.find((f) => f.id === fid))
     .filter((f): f is SurveyField => f !== undefined)
