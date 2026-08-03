@@ -5,6 +5,7 @@ import { resolveFieldValue } from "@shared-utils/survey"
 import type { SurveyField, ImageItem } from "@shared-types/survey"
 import { storeToRefs } from "pinia"
 import { useRootStore } from "../../stores/root.ts"
+import SummaryImage from "./SummaryImage.vue"
 
 const rootStore = useRootStore()
 const { response } = defineProps<{
@@ -68,12 +69,6 @@ const getSubFields = (fieldId: string): SurveyField[] =>
   jsonSchema.value?.fields.find((f: SurveyField) => f.id === fieldId)
     ?.fields ?? []
 
-const imageSrc = (item: ImageItem): string | null => {
-  if ("type" in item) return null
-  if ("file" in item) return `data:image/jpeg;base64,${item.file}`
-  if (item.thumbnail) return `data:image/jpeg;base64,${item.thumbnail}`
-  return null
-}
 </script>
 
 <template>
@@ -101,13 +96,25 @@ const imageSrc = (item: ImageItem): string | null => {
               <p class="fr-text--sm text-stone-400 mb-0!">
                 {{ subField.label }}
               </p>
-              <p
-                class="font-medium mb-0!"
-                v-if="resolveSubFieldValue(subField, item[subField.id])"
-              >
-                {{ resolveSubFieldValue(subField, item[subField.id]) }}
-              </p>
-              <p class="italic text-stone-500 mb-0!" v-else>Non renseigné</p>
+              <!-- Image sub-field -->
+              <template v-if="subField.ui?.widget === 'image'">
+                <SummaryImage
+                  v-if="Array.isArray(item[subField.id]) && (item[subField.id] as unknown[]).length"
+                  :images="(item[subField.id] as ImageItem[])"
+                  @open-viewer="(imgs, idx) => emit('open-viewer', imgs, idx)"
+                />
+                <p v-else class="italic text-stone-500 mb-0!">Non renseigné</p>
+              </template>
+              <!-- Other sub-fields -->
+              <template v-else>
+                <p
+                  class="font-medium mb-0!"
+                  v-if="resolveSubFieldValue(subField, item[subField.id])"
+                >
+                  {{ resolveSubFieldValue(subField, item[subField.id]) }}
+                </p>
+                <p class="italic text-stone-500 mb-0!" v-else>Non renseigné</p>
+              </template>
             </div>
           </div>
         </div>
@@ -118,38 +125,11 @@ const imageSrc = (item: ImageItem): string | null => {
         <p v-if="!entry[1].length" class="italic text-stone-500 mb-0!">
           Non renseigné
         </p>
-        <div v-else class="grid grid-cols-7 gap-2 my-2">
-          <div
-            v-for="(img, idx) in (entry[1] as ImageItem[])"
-            :key="idx"
-            class="group aspect-square rounded overflow-hidden border border-slate-200 cursor-pointer relative"
-            @click="emit('open-viewer', entry[1] as ImageItem[], idx)"
-          >
-            <!-- @click="openViewer(entry[1] as ImageItem[], idx)" -->
-            <img
-              v-if="imageSrc(img)"
-              :src="imageSrc(img)!"
-              class="w-full h-full object-cover"
-              alt=""
-            />
-            <div
-              v-else
-              class="w-full h-full bg-slate-100 flex items-center justify-center"
-            >
-              <v-icon name="ri-image-line" scale="2" class="text-slate-400" />
-            </div>
-            <div
-              class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center"
-            >
-              <v-icon
-                name="ri-search-eye-line"
-                color="white"
-                scale="1.5"
-                class="text-white opacity-0 group-hover:opacity-100 transition-opacity"
-              />
-            </div>
-          </div>
-        </div>
+        <SummaryImage
+          v-else
+          :images="(entry[1] as ImageItem[])"
+          @open-viewer="(imgs, idx) => emit('open-viewer', imgs, idx)"
+        />
       </template>
 
       <!-- All other fields -->
