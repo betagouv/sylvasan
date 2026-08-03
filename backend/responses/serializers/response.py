@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import transaction
 
+from djangorestframework_camel_case.util import camelize
 from PIL import Image
 from rest_framework import serializers
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer
@@ -163,7 +164,7 @@ def _resolve_images(data, fields, images_by_id, image_serializer_class):
             if not isinstance(items, list):
                 continue
             data[field_id] = [
-                image_serializer_class(images_by_id[item["id"]]).data
+                camelize(image_serializer_class(images_by_id[item["id"]]).data)
                 if isinstance(item, dict) and "id" in item and item["id"] in images_by_id
                 else item
                 for item in items

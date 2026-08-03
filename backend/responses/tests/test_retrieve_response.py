@@ -253,7 +253,7 @@ class TestRetrieveResponseWithImages(APITestCase):
 
         retrieve = self.client.get(response_url(create.json()["id"]), format="json")
 
-        file_url = retrieve.json()["data"]["photo_arbre"][0]["file_url"]
+        file_url = retrieve.json()["data"]["photo_arbre"][0]["fileUrl"]
         self.assertTrue(file_url.startswith("http://hostname"))
 
 
@@ -290,7 +290,7 @@ class TestRetrieveResponseWithNestedImages(APITestCase):
     def test_retrieve_enrichit_images_dans_champ_array(self):
         """
         Récupérer une réponse dont les images sont dans un sous-champ d'un array
-        retourne des objets {id, thumbnail, file_url} — pas des stubs {id} nus
+        retourne des objets {id, thumbnail, fileUrl} — pas des stubs {id} nus
         """
         response_id = self._create_response_with_nested_image()
         retrieve = self.client.get(response_url(response_id), format="json")
@@ -300,7 +300,7 @@ class TestRetrieveResponseWithNestedImages(APITestCase):
         self.assertEqual(len(photo), 1)
         self.assertIn("id", photo[0])
         self.assertIn("thumbnail", photo[0])
-        self.assertIn("file_url", photo[0])
+        self.assertIn("fileUrl", photo[0])
 
     @authenticate
     def test_retrieve_ne_contient_pas_base64_dans_champ_array(self):
