@@ -293,6 +293,82 @@ class TestCreateResponseWithImages(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
+def _array_image_survey(**kwargs):
+    return SurveyFactory(
+        json_schema={
+            "fields": [
+                {
+                    "id": "prelevements",
+                    "type": "array",
+                    "fields": [
+                        {"id": "photo", "ui": {"widget": "image"}},
+                    ],
+                }
+            ]
+        },
+        **kwargs,
+    )
+
+
+class TestCreateResponseWithNestedImages(APITestCase):
+    def _post_with_nested_images(self, survey, *filenames):
+        MembershipFactory(
+            user=authenticate.user, organisation=survey.organisation, membership_type=MembershipType.RESPONDER
+        )
+        return self.client.post(
+            reverse("response_list_create"),
+            {
+                "survey": survey.id,
+                "data": {
+                    "prelevements": [{"photo": [{"file": _b64(f)}]} for f in filenames],
+                },
+            },
+            format="json",
+        )
+
+    @authenticate
+    def test_images_dans_champ_array_creent_des_objets_response_image(self):
+        """
+        Soumettre des images dans un sous-champ image d'un champ array
+        crée autant d'objets ResponseImage que d'images soumises
+        """
+        response = self._post_with_nested_images(_array_image_survey(), "Blue.jpg", "Green.jpg")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(ResponseImage.objects.count(), 2)
+
+    @authenticate
+    def test_images_dans_champ_array_remplacees_par_stub_id(self):
+        """
+        Après soumission, les images dans un sous-champ d'un array sont remplacées
+        par des objets {id} — le base64 n'est pas conservé en base de données
+        """
+        response = self._post_with_nested_images(_array_image_survey(), "Blue.jpg")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        item = response.json()["data"]["prelevements"][0]
+        photo = item["photo"]
+        self.assertEqual(len(photo), 1)
+        self.assertIn("id", photo[0])
+        self.assertNotIn("file", photo[0])
+
+    @authenticate
+    def test_images_dans_plusieurs_items_array_toutes_traitees(self):
+        """
+        Lorsque plusieurs items d'un array contiennent chacun une image,
+        chaque image est traitée indépendamment et tous les stubs {id} sont présents
+        """
+        response = self._post_with_nested_images(_array_image_survey(), "Blue.jpg", "Green.jpg")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        prelevements = response.json()["data"]["prelevements"]
+        self.assertEqual(len(prelevements), 2)
+        for item in prelevements:
+            self.assertEqual(len(item["photo"]), 1)
+            self.assertIn("id", item["photo"][0])
+            self.assertNotIn("file", item["photo"][0])
+
+
 def follow_up_response_payload(follow_up, parent_response):
     return {
         "survey_follow_up": follow_up.id,

@@ -257,6 +257,110 @@ class TestRetrieveResponseWithImages(APITestCase):
         self.assertTrue(file_url.startswith("http://hostname"))
 
 
+class TestRetrieveResponseWithNestedImages(APITestCase):
+    def _create_response_with_nested_image(self, filename="Blue.jpg"):
+        org = OrganisationFactory()
+        survey = SurveyFactory(
+            organisation=org,
+            json_schema={
+                "fields": [
+                    {
+                        "id": "prelevements",
+                        "type": "array",
+                        "fields": [
+                            {"id": "photo", "ui": {"widget": "image"}},
+                        ],
+                    }
+                ]
+            },
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        create = self.client.post(
+            reverse("response_list_create"),
+            {
+                "survey": survey.id,
+                "data": {"prelevements": [{"photo": [{"file": _b64(filename)}]}]},
+            },
+            format="json",
+        )
+        self.assertEqual(create.status_code, status.HTTP_201_CREATED)
+        return create.json()["id"]
+
+    @authenticate
+    def test_retrieve_enrichit_images_dans_champ_array(self):
+        """
+        Récupérer une réponse dont les images sont dans un sous-champ d'un array
+        retourne des objets {id, thumbnail, file_url} — pas des stubs {id} nus
+        """
+        response_id = self._create_response_with_nested_image()
+        retrieve = self.client.get(response_url(response_id), format="json")
+
+        self.assertEqual(retrieve.status_code, status.HTTP_200_OK)
+        photo = retrieve.json()["data"]["prelevements"][0]["photo"]
+        self.assertEqual(len(photo), 1)
+        self.assertIn("id", photo[0])
+        self.assertIn("thumbnail", photo[0])
+        self.assertIn("file_url", photo[0])
+
+    @authenticate
+    def test_retrieve_ne_contient_pas_base64_dans_champ_array(self):
+        """
+        Récupérer une réponse avec des images dans un array ne retourne
+        jamais le contenu base64 brut dans le champ photo
+        """
+        response_id = self._create_response_with_nested_image()
+        retrieve = self.client.get(response_url(response_id), format="json")
+
+        self.assertEqual(retrieve.status_code, status.HTTP_200_OK)
+        photo = retrieve.json()["data"]["prelevements"][0]["photo"]
+        self.assertNotIn("file", photo[0])
+
+    @authenticate
+    def test_retrieve_thumbnail_dans_champ_array_est_base64_valide(self):
+        """
+        La miniature retournée pour une image dans un array est une chaîne base64 valide
+        """
+        response_id = self._create_response_with_nested_image("Green.jpg")
+        retrieve = self.client.get(response_url(response_id), format="json")
+
+        thumbnail = retrieve.json()["data"]["prelevements"][0]["photo"][0]["thumbnail"]
+        decoded = base64.b64decode(thumbnail)
+        self.assertGreater(len(decoded), 0)
+
+    @authenticate
+    def test_reponse_existante_avec_base64_dans_array_retourne_base64(self):
+        """
+        Une réponse existante dont les images n'ont pas été migrées (base64 brut
+        stocké directement dans data) continue de retourner le base64 tel quel —
+        aucune donnée n'est perdue après le déploiement du correctif.
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(
+            organisation=org,
+            json_schema={
+                "fields": [
+                    {
+                        "id": "prelevements",
+                        "type": "array",
+                        "fields": [{"id": "photo", "ui": {"widget": "image"}}],
+                    }
+                ]
+            },
+        )
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        # Simulate a pre-migration response: base64 stored directly in data, no ResponseImage objects
+        old_response = ResponseFactory(
+            survey=survey,
+            data={"prelevements": [{"photo": [{"file": "aGVsbG8="}]}]},  # "hello" en base64
+        )
+
+        retrieve = self.client.get(response_url(old_response.id), format="json")
+
+        self.assertEqual(retrieve.status_code, status.HTTP_200_OK)
+        photo = retrieve.json()["data"]["prelevements"][0]["photo"]
+        self.assertEqual(photo[0].get("file"), "aGVsbG8=")
+
+
 class TestResponseDataFieldNotCamelized(APITestCase):
     """
     Le champ "data" des réponses ne doit pas être transformé par le CamelCaseJSONRenderer.
