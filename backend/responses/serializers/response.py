@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import transaction
 
+from djangorestframework_camel_case.util import camelize
 from PIL import Image
 from rest_framework import serializers
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer
@@ -49,37 +50,51 @@ class ResponseSerializer(serializers.ModelSerializer):
         return response
 
     @staticmethod
+    def _process_images(response, data, fields):
+        # Modifie `data` in-place. Retourne True si des modifications ont été effectuées.
+        modified = False
+        for field in fields:
+            field_id = field["id"]
+            widget = field.get("ui", {}).get("widget")
+
+            if widget == "image":
+                images = data.get(field_id, [])
+                if not isinstance(images, list):
+                    continue
+                processed = []
+                for item in images:
+                    if not isinstance(item, dict):
+                        continue
+                    try:
+                        serializer = ResponseImageSerializer(data=item)
+                        serializer.is_valid(raise_exception=True)
+                        img_obj = serializer.save(response=response)
+                        processed.append({"id": img_obj.id})
+                    except serializers.ValidationError:
+                        raise
+                    except Exception:
+                        logger.warning("Failed to process image for field %s", field_id, exc_info=True)
+                        continue
+                data[field_id] = processed
+                modified = True
+
+            elif field.get("type") == "array" and field.get("fields"):
+                items = data.get(field_id)
+                if not isinstance(items, list):
+                    continue
+                for item in items:
+                    if not isinstance(item, dict):
+                        continue
+                    if ResponseSerializer._process_images(response, item, field["fields"]):
+                        modified = True
+
+        return modified
+
+    @staticmethod
     def _create_images_from_data(response, data, schema):
         # Notez que cette fonction modifie "data" in-place, après que l'objet Response
         # est créé. C'est intentionnel mais pas très propre.
-
-        modified = False
-        for field in schema.get("fields", []):
-            if field.get("ui", {}).get("widget") != "image":
-                continue
-            field_id = field["id"]
-            images = data.get(field_id, [])
-            if not isinstance(images, list):
-                continue
-
-            processed = []
-            for item in images:
-                if not isinstance(item, dict):
-                    continue
-                try:
-                    serializer = ResponseImageSerializer(data=item)
-                    serializer.is_valid(raise_exception=True)
-                    img_obj = serializer.save(response=response)
-                    processed.append({"id": img_obj.id})
-                except serializers.ValidationError:
-                    raise
-                except Exception:
-                    logger.warning("Failed to process image for field %s", field_id, exc_info=True)
-                    continue
-
-            data[field_id] = processed
-            modified = True
-
+        modified = ResponseSerializer._process_images(response, data, schema.get("fields", []))
         if modified:
             response.data = data
             response.save(update_fields=["data"])
@@ -139,30 +154,41 @@ class ResponseDisplaySerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+def _resolve_images(data, fields, images_by_id, image_serializer_class):
+    for field in fields:
+        field_id = field["id"]
+        widget = field.get("ui", {}).get("widget")
+
+        if widget == "image":
+            items = data.get(field_id)
+            if not isinstance(items, list):
+                continue
+            data[field_id] = [
+                camelize(image_serializer_class(images_by_id[item["id"]]).data)
+                if isinstance(item, dict) and "id" in item and item["id"] in images_by_id
+                else item
+                for item in items
+            ]
+
+        elif field.get("type") == "array" and field.get("fields"):
+            items = data.get(field_id)
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                if isinstance(item, dict):
+                    _resolve_images(item, field["fields"], images_by_id, image_serializer_class)
+
+
 def _enrich_image_fields(ret, instance, image_serializer_class):
     source = instance.survey or instance.survey_follow_up
     schema = (source.json_schema if source else None) or {}
-    image_field_ids = [f["id"] for f in schema.get("fields", []) if f.get("ui", {}).get("widget") == "image"]
-    if not image_field_ids:
+    fields = schema.get("fields", [])
+    if not fields:
         return ret
 
     images_by_id = {img.id: img for img in instance.images.all()}
     data = ret.get("data") or {}
-
-    for field_id in image_field_ids:
-        items = data.get(field_id)
-        if not isinstance(items, list):
-            continue
-        enriched = []
-        for item in items:
-            if isinstance(item, dict) and "id" in item:
-                img = images_by_id.get(item["id"])
-                if img:
-                    enriched.append(image_serializer_class(img).data)
-            else:
-                enriched.append(item)
-        data[field_id] = enriched
-
+    _resolve_images(data, fields, images_by_id, image_serializer_class)
     ret["data"] = data
     return ret
 
