@@ -326,7 +326,7 @@ const confirmDelete = async () => {
               @click="showSummary = false"
             />
             <DsfrButton
-              label="Sauvegarder"
+              label="Envoyer"
               :icon="
                 saving
                   ? { name: 'ri-refresh-line', animation: 'spin' }
