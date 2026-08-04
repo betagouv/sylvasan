@@ -142,7 +142,6 @@ export function useGeoPins(mapRef: ShallowRef<maplibregl.Map | null>) {
       filter: ["has", "point_count"],
       layout: {
         "text-field": ["get", "point_count_abbreviated"],
-        "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
         "text-size": 13,
       },
       paint: {
@@ -246,11 +245,18 @@ export function useGeoPins(mapRef: ShallowRef<maplibregl.Map | null>) {
 
   watch(mapRef, (mapInstance) => {
     if (mapInstance) {
-      // Sources and layers require the style to be loaded first
-      mapInstance.once("load", () => {
+      // Les sources et couches nécessitent que le style soit chargé.
+      // Le style étant un objet JSON embarqué dans le bundle, l'événement `load`
+      // peut avoir déjà été émis avant que ce watcher s'exécute — on vérifie d'abord.
+      const init = () => {
         setupLayers(mapInstance)
         fetchPins()
-      })
+      }
+      if (mapInstance.isStyleLoaded()) {
+        init()
+      } else {
+        mapInstance.once("load", init)
+      }
 
       mapInstance.on("moveend", () => {
         showSearchHere.value = true
