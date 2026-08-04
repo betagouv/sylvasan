@@ -186,6 +186,7 @@ const openViewer = (index: number) => {
         type="file"
         accept="image/*"
         class="sr-only"
+        :aria-required="required ?? false"
         @change="handleChange"
       />
       <DsfrButton
