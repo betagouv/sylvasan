@@ -9,6 +9,7 @@ import ImageViewer from "./ImageViewer.vue"
 
 const props = defineProps<{
   field: SurveyField
+  required?: boolean
   disabled?: boolean
   resolveImagePath?: (path: string) => Promise<string | null>
 }>()
@@ -107,7 +108,9 @@ const compressImage = (file: File): Promise<LocalImageItem> =>
 
 const compressing = ref(false)
 watch(compressing, (val) => emit("busyChange", val))
-onUnmounted(() => { if (compressing.value) emit("busyChange", false) })
+onUnmounted(() => {
+  if (compressing.value) emit("busyChange", false)
+})
 
 const handleChange = async (event: Event) => {
   const files = (event.target as HTMLInputElement).files
@@ -139,7 +142,10 @@ const openViewer = (index: number) => {
 
 <template>
   <div class="mb-6">
-    <p class="fr-label mb-1!">{{ field.label }}</p>
+    <p class="fr-label mb-1!">
+      {{ field.label }}
+      <span v-if="required" class="required"> *</span>
+    </p>
     <p v-if="field.ui?.hint" class="fr-hint-text mb-2">{{ field.ui.hint }}</p>
 
     <div v-if="modelValue.length" class="grid grid-cols-3 gap-2 mb-4">
@@ -180,6 +186,7 @@ const openViewer = (index: number) => {
         type="file"
         accept="image/*"
         class="sr-only"
+        :aria-required="required ?? false"
         @change="handleChange"
       />
       <DsfrButton

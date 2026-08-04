@@ -119,10 +119,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div>
+  <div class="mb-6">
     <p class="fr-label mb-1!">
       {{ label }}
-      <span v-if="required" class="text-[var(--text-default-error)]"> *</span>
+      <span v-if="required" class="required"> *</span>
       <span v-if="hint" class="fr-hint-text">{{ hint }}</span>
     </p>
     <div class="flex items-center gap-3 flex-wrap mt-1">
