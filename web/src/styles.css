@@ -57,6 +57,7 @@
   font-size: 1.3em;
   display: inline-flex;
   align-items: end;
+  margin-left: 2px;
 }
 
 .preview-form span.required::after {
