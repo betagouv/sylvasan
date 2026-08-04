@@ -113,7 +113,10 @@ const errorMessage = computed(() =>
 
 const defaultValue = getDefaultValue(props.field)
 const emptyValue = getEmptyValue(props.field)
-if ((modelValue.value == null || modelValue.value === emptyValue) && defaultValue !== null)
+if (
+  (modelValue.value == null || modelValue.value === emptyValue) &&
+  defaultValue !== null
+)
   modelValue.value = defaultValue
 </script>
 
@@ -260,6 +263,7 @@ if ((modelValue.value == null || modelValue.value === emptyValue) && defaultValu
       v-else-if="field.ui?.widget === 'image'"
       :field="field"
       v-model="imagesModelValue as ImageItem[]"
+      :required="field.required ?? false"
       :disabled="disabled"
       :resolveImagePath="resolveImagePath"
       @busyChange="(val) => emit('busyChange', val)"
