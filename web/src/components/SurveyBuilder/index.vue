@@ -456,7 +456,7 @@ const confirmPageDeletion = async () => {
     </div>
 
     <!-- Aperçu -->
-    <div class="hidden md:block md:col-span-3">
+    <div class="hidden md:block md:col-span-3 preview-form">
       <div
         v-if="activePageFields.length"
         class="border rounded border-slate-300 p-4"

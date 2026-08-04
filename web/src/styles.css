@@ -50,3 +50,20 @@
   --breakpoint-xl: 1440px;
   --breakpoint-2xl: initial;
 }
+
+.preview-form span.required {
+  color: #d00101;
+  font-weight: bold;
+  font-size: 1.3em;
+  display: inline-flex;
+  align-items: end;
+}
+
+.preview-form span.required::after {
+  content: "Requis";
+  font-size: 0.6em;
+  font-weight: normal;
+  display: inline-block;
+  margin-left: 2px;
+  color: #785050;
+}
