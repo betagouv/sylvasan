@@ -15,8 +15,10 @@ const router = useIonRouter()
 const surveysStore = useSurveysStore()
 const authStore = useAuthStore()
 
-const isOwnResponse = computed(() =>
-  !props.pin.respondant || props.pin.respondant.id === authStore.loggedUser?.id
+const isOwnResponse = computed(
+  () =>
+    !props.pin.respondant ||
+    props.pin.respondant.id === authStore.loggedUser?.id
 )
 
 const formattedDate = computed(() =>
@@ -44,7 +46,10 @@ const addFollowUp = async () => {
   emit("close")
   const modal = await modalController.create({
     component: FollowUpChooserPage,
-    componentProps: { responseId: String(props.pin.responseId), survey: survey.value },
+    componentProps: {
+      responseId: String(props.pin.responseId),
+      survey: survey.value,
+    },
   })
   await modal.present()
 }
@@ -103,5 +108,6 @@ const canAddFollowUp = useCanAddFollowUp(survey)
 <style scoped>
 .shadow-drawer {
   box-shadow: 0px 0px 7px -1px #25252591;
+  z-index: 999999;
 }
 </style>
