@@ -1,7 +1,15 @@
 <script setup lang="ts">
+import { computed } from "vue"
 import type { GeoFollowUp } from "@shared-types/response"
 
-defineProps<{ followUps: GeoFollowUp[] }>()
+const MAX_VISIBLE = 7
+
+const props = defineProps<{ followUps: GeoFollowUp[] }>()
+
+const visibleFollowUps = computed(() => props.followUps.slice(0, MAX_VISIBLE))
+const hiddenCount = computed(() =>
+  Math.max(0, props.followUps.length - MAX_VISIBLE)
+)
 
 function followUpDate(creationDate: string): string {
   return new Date(creationDate).toLocaleDateString("fr-FR", {
@@ -18,7 +26,7 @@ function followUpDate(creationDate: string): string {
     class="flex flex-col gap-1.5 list-none p-0 border border-gray-300 p-2! rounded"
   >
     <li
-      v-for="followUp in followUps"
+      v-for="followUp in visibleFollowUps"
       :key="followUp.id"
       class="flex items-center gap-2 text-sm"
     >
@@ -39,6 +47,11 @@ function followUpDate(creationDate: string): string {
       <span class="ml-auto shrink-0 text-stone-400 text-xs">
         {{ followUpDate(followUp.creationDate) }}
       </span>
+    </li>
+    <li v-if="hiddenCount > 0" class="text-xs text-stone-500 mt-0.5 list-none">
+      ... et {{ hiddenCount }} autre{{ hiddenCount > 1 ? "s" : "" }} suivi{{
+        hiddenCount > 1 ? "s" : ""
+      }}
     </li>
   </ul>
 </template>

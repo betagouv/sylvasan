@@ -9,6 +9,7 @@ export const collectionsToFilter = [
     icons,
     [
       "add-circle-line",
+      "add-line",
       "arrow-left-s-line",
       "arrow-right-line",
       "arrow-right-s-line",
