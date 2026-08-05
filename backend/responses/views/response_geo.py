@@ -1,7 +1,7 @@
 import math
 
 from django.contrib.gis.geos import Polygon
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 
 from organisations.models import Membership
 from rest_framework.exceptions import ValidationError
@@ -75,10 +75,15 @@ class ResponseGeoListAPIView(ListAPIView):
                     survey__pole__isnull=True,
                 )
 
+        follow_up_qs = (
+            Response.objects.active().select_related("survey_follow_up", "respondant").order_by("-creation_date")
+        )
+
         return (
             Response.objects.active()
             .filter(query)
             .filter(geolocation_point__within=bbox)
             .select_related("survey", "respondant")
+            .prefetch_related(Prefetch("follow_up_responses", queryset=follow_up_qs))
             .order_by("-creation_date")[:GEO_RESPONSE_LIMIT]
         )

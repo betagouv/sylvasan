@@ -78,6 +78,7 @@ const initMap = () => {
     zoom: 6,
     maxZoom: 18.9,
     attributionControl: false,
+    fadeDuration: 0,
   })
 
   m.addControl(
@@ -261,10 +262,6 @@ ion-content {
   transform: translateY(1rem);
   opacity: 0;
 }
-div :deep(.maplibregl-marker.maplibregl-marker-anchor-center) {
-  z-index: 99999;
-}
-
 div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
   z-index: 0;
 }

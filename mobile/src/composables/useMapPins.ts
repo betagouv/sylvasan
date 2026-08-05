@@ -4,7 +4,7 @@ import maplibregl from "maplibre-gl"
 import { storeToRefs } from "pinia"
 import { useResponsesStore } from "../stores/responses"
 import { useSurveysStore } from "../stores/surveys"
-import type { LocalResponse, ResponseFull } from "@shared-types/response"
+import type { GeoFollowUp, LocalResponse, ResponseFull } from "@shared-types/response"
 import type { SurveySchema } from "@shared-types/survey"
 
 export interface PinData {
@@ -17,6 +17,7 @@ export interface PinData {
   date: string
   status: string
   respondant?: { id: number; firstName: string; lastName: string } | null
+  followUps: GeoFollowUp[]
 }
 
 function getSchema(
@@ -73,6 +74,7 @@ export function useMapPins(mapRef: ShallowRef<maplibregl.Map | null>) {
           surveyTitle: getSurveyTitle(response),
           date: response.creationDate,
           status: response.status,
+          followUps: [],
         },
       ]
     })
