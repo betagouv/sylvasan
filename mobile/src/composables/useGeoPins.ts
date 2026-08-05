@@ -253,8 +253,13 @@ export function useGeoPins(mapRef: ShallowRef<maplibregl.Map | null>) {
       // Les sources et couches nécessitent que le style soit chargé.
       // Le style étant un objet JSON embarqué dans le bundle, l'événement `load`
       // peut avoir déjà été émis avant que ce watcher s'exécute — on vérifie d'abord.
-      const init = () => {
-        setupLayers(mapInstance)
+      const init = async () => {
+        try {
+          await setupLayers(mapInstance)
+        } catch {
+          loading.value = false
+          return
+        }
         fetchPins()
       }
       if (mapInstance.isStyleLoaded()) {
