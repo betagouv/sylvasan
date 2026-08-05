@@ -1,10 +1,18 @@
+from django.contrib.gis.geos import Point
 from django.test import TestCase
+from django.urls import reverse
 
-from organisations.factories import OrganisationFactory
-from responses.factories import ResponseFactory
-from responses.models import Response, ResponseStatus
+from common.utils import authenticate
+from organisations.factories import MembershipFactory, OrganisationFactory
+from organisations.models import MembershipType
+from rest_framework import status
+from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
 from surveys.factories.surveyfollowup import SurveyFollowUpFactory
+from users.factories import UserFactory
+
+from responses.factories import ResponseFactory
+from responses.models import Response, ResponseStatus
 
 _MAP_SCHEMA = {
     "fields": [
@@ -113,3 +121,137 @@ class TestGeoPointPopulation(TestCase):
         response.refresh_from_db()
         self.assertAlmostEqual(response.geolocation_point.x, 5.3698, places=4)
         self.assertAlmostEqual(response.geolocation_point.y, 43.2965, places=4)
+
+
+_GEO_URL = reverse("response_geo_list")
+_BBOX_PARIS = {"south": 48.7, "west": 2.2, "north": 49.0, "east": 2.5}
+_POINT_PARIS = Point(2.35, 48.85, srid=4326)
+
+
+def _geo_response(survey):
+    r = ResponseFactory(survey=survey)
+    r.geolocation_point = _POINT_PARIS
+    r.save(update_fields=["geolocation_point"])
+    return r
+
+
+def _follow_up_response(parent, survey_follow_up, respondant=None):
+    return Response.objects.create(
+        survey_follow_up=survey_follow_up,
+        parent_response=parent,
+        data={},
+        status=ResponseStatus.SUBMITTED,
+        respondant=respondant,
+    )
+
+
+class TestResponseGeoFollowUps(APITestCase):
+    @authenticate
+    def test_sans_suivi_retourne_liste_vide(self):
+        """
+        Une réponse sans aucune réponse de suivi expose un tableau follow_ups vide
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        _geo_response(survey)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(_GEO_URL, _BBOX_PARIS)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["follow_ups"], [])
+
+    @authenticate
+    def test_avec_suivi_retourne_les_champs_attendus(self):
+        """
+        Une réponse de suivi est sérialisée avec son id, sa date, les infos de l'étape
+        (titre, couleur, icône) et le répondant
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(
+            parent_survey=survey,
+            organisation=org,
+            title="Signaler une anomalie",
+            action_color="#fde39c",
+            action_icon="ri-eye-line",
+        )
+        parent = _geo_response(survey)
+        respondant = UserFactory()
+        fu_response = _follow_up_response(parent, follow_up, respondant=respondant)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(_GEO_URL, _BBOX_PARIS)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        follow_ups = response.json()[0]["followUps"]
+        self.assertEqual(len(follow_ups), 1)
+
+        item = follow_ups[0]
+        self.assertEqual(item["id"], fu_response.id)
+        self.assertIn("creationDate", item)
+        self.assertEqual(item["survey"]["title"], "Signaler une anomalie")
+        self.assertEqual(item["survey"]["actionColor"], "#fde39c")
+        self.assertEqual(item["survey"]["actionIcon"], "ri-eye-line")
+        self.assertEqual(item["respondant"]["id"], respondant.id)
+        self.assertEqual(item["respondant"]["firstName"], respondant.first_name)
+        self.assertEqual(item["respondant"]["lastName"], respondant.last_name)
+
+    @authenticate
+    def test_plusieurs_suivis_retournes_dans_lordre_chronologique(self):
+        """
+        Plusieurs réponses de suivi sont toutes retournées, triées par date croissante
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(parent_survey=survey, organisation=org)
+        parent = _geo_response(survey)
+        fu1 = _follow_up_response(parent, follow_up)
+        fu2 = _follow_up_response(parent, follow_up)
+        fu3 = _follow_up_response(parent, follow_up)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(_GEO_URL, _BBOX_PARIS)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        ids = [item["id"] for item in response.data[0]["follow_ups"]]
+        self.assertEqual(ids, [fu1.id, fu2.id, fu3.id])
+
+    @authenticate
+    def test_suivi_visible_independamment_du_createur(self):
+        """
+        L'accès à une réponse parente donne accès à toutes ses réponses de suivi,
+        même si celles-ci ont été créées par un utilisateur d'une autre organisation
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(parent_survey=survey, organisation=org)
+        parent = _geo_response(survey)
+        utilisateur_externe = UserFactory()
+        fu_response = _follow_up_response(parent, follow_up, respondant=utilisateur_externe)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(_GEO_URL, _BBOX_PARIS)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        follow_ups = response.data[0]["follow_ups"]
+        self.assertEqual(len(follow_ups), 1)
+        self.assertEqual(follow_ups[0]["id"], fu_response.id)
+        self.assertEqual(follow_ups[0]["respondant"]["id"], utilisateur_externe.id)
+
+    @authenticate
+    def test_suivi_inactif_exclu(self):
+        """
+        Une réponse de suivi désactivée (is_active=False) n'apparaît pas dans follow_ups
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(parent_survey=survey, organisation=org)
+        parent = _geo_response(survey)
+        fu_response = _follow_up_response(parent, follow_up)
+        fu_response.is_active = False
+        fu_response.save(update_fields=["is_active"])
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(_GEO_URL, _BBOX_PARIS)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]["follow_ups"], [])
