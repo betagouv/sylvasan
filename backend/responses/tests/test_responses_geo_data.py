@@ -147,7 +147,7 @@ def _follow_up_response(parent, survey_follow_up, respondant=None):
 
 class TestResponseGeoFollowUps(APITestCase):
     @authenticate
-    def test_sans_suivi_retourne_liste_vide(self):
+    def test_no_follow_ups_returns_empty_list(self):
         """
         Une réponse sans aucune réponse de suivi expose un tableau follow_ups vide
         """
@@ -161,7 +161,7 @@ class TestResponseGeoFollowUps(APITestCase):
         self.assertEqual(response.data[0]["follow_ups"], [])
 
     @authenticate
-    def test_avec_suivi_retourne_les_champs_attendus(self):
+    def test_follow_up_fields_are_serialized(self):
         """
         Une réponse de suivi est sérialisée avec son id, sa date, les infos de l'étape
         (titre, couleur, icône) et le répondant
@@ -197,10 +197,13 @@ class TestResponseGeoFollowUps(APITestCase):
         self.assertEqual(item["respondant"]["lastName"], respondant.last_name)
 
     @authenticate
-    def test_plusieurs_suivis_retournes_dans_lordre_chronologique(self):
+    def test_follow_ups_ordered_most_recent_first(self):
         """
-        Plusieurs réponses de suivi sont toutes retournées, triées par date croissante
+        Plusieurs réponses de suivi sont retournées du plus récent au plus ancien
         """
+        from datetime import timedelta
+        from django.utils import timezone
+
         org = OrganisationFactory()
         survey = SurveyFactory(organisation=org)
         follow_up = SurveyFollowUpFactory(parent_survey=survey, organisation=org)
@@ -208,16 +211,21 @@ class TestResponseGeoFollowUps(APITestCase):
         fu1 = _follow_up_response(parent, follow_up)
         fu2 = _follow_up_response(parent, follow_up)
         fu3 = _follow_up_response(parent, follow_up)
+        now = timezone.now()
+        # Forcer des dates distinctes pour s'affranchir de la résolution temporelle du test
+        Response.objects.filter(id=fu1.id).update(creation_date=now - timedelta(hours=2))
+        Response.objects.filter(id=fu2.id).update(creation_date=now - timedelta(hours=1))
+        Response.objects.filter(id=fu3.id).update(creation_date=now)
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
 
         response = self.client.get(_GEO_URL, _BBOX_PARIS)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         ids = [item["id"] for item in response.data[0]["follow_ups"]]
-        self.assertEqual(ids, [fu1.id, fu2.id, fu3.id])
+        self.assertEqual(ids, [fu3.id, fu2.id, fu1.id])
 
     @authenticate
-    def test_suivi_visible_independamment_du_createur(self):
+    def test_follow_up_visible_regardless_of_creator(self):
         """
         L'accès à une réponse parente donne accès à toutes ses réponses de suivi,
         même si celles-ci ont été créées par un utilisateur d'une autre organisation
@@ -226,8 +234,8 @@ class TestResponseGeoFollowUps(APITestCase):
         survey = SurveyFactory(organisation=org)
         follow_up = SurveyFollowUpFactory(parent_survey=survey, organisation=org)
         parent = _geo_response(survey)
-        utilisateur_externe = UserFactory()
-        fu_response = _follow_up_response(parent, follow_up, respondant=utilisateur_externe)
+        external_user = UserFactory()
+        fu_response = _follow_up_response(parent, follow_up, respondant=external_user)
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
 
         response = self.client.get(_GEO_URL, _BBOX_PARIS)
@@ -236,10 +244,10 @@ class TestResponseGeoFollowUps(APITestCase):
         follow_ups = response.data[0]["follow_ups"]
         self.assertEqual(len(follow_ups), 1)
         self.assertEqual(follow_ups[0]["id"], fu_response.id)
-        self.assertEqual(follow_ups[0]["respondant"]["id"], utilisateur_externe.id)
+        self.assertEqual(follow_ups[0]["respondant"]["id"], external_user.id)
 
     @authenticate
-    def test_suivi_inactif_exclu(self):
+    def test_inactive_follow_up_excluded(self):
         """
         Une réponse de suivi désactivée (is_active=False) n'apparaît pas dans follow_ups
         """

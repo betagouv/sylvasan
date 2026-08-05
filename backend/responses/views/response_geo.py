@@ -76,7 +76,7 @@ class ResponseGeoListAPIView(ListAPIView):
                 )
 
         follow_up_qs = (
-            Response.objects.active().select_related("survey_follow_up", "respondant").order_by("creation_date")
+            Response.objects.active().select_related("survey_follow_up", "respondant").order_by("-creation_date")
         )
 
         return (
