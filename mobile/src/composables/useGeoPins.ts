@@ -3,7 +3,7 @@ import type { ShallowRef } from "vue"
 import maplibregl from "maplibre-gl"
 import { useApiFetch } from "../utils/data-fetching"
 import { useAuthStore } from "../stores/auth"
-import type { ResponseGeo } from "@shared-types/response"
+import type { GeoFollowUp, ResponseGeo } from "@shared-types/response"
 import type { PinData } from "./useMapPins"
 
 // Paramètres à ajuster pour le comportement du clustering
@@ -57,6 +57,7 @@ function toPin(r: ResponseGeo): PinData {
     date: r.creationDate,
     status: r.status,
     respondant: r.respondant,
+    followUps: r.followUps ?? [],
   }
 }
 
@@ -76,10 +77,11 @@ function pinToFeature(pin: PinData, currentUserId: number | undefined) {
       surveyTitle: pin.surveyTitle,
       date: pin.date,
       status: pin.status,
-      isOwn: pin.respondant?.id === currentUserId,
-      // Il nous faut sérialiser l'objet de sorte qu'on puisse le récupérer après le GeoJSON
+      isOwn: !pin.respondant || pin.respondant.id === currentUserId,
+      // Il nous faut sérialiser les objets de sorte qu'on puisse les récupérer après le GeoJSON
       respondant:
         pin.respondant != null ? JSON.stringify(pin.respondant) : null,
+      followUps: pin.followUps.length > 0 ? JSON.stringify(pin.followUps) : null,
     },
   }
 }
@@ -97,6 +99,9 @@ function pinFromProperties(props: Record<string, unknown>): PinData {
     respondant: props.respondant
       ? JSON.parse(props.respondant as string)
       : null,
+    followUps: props.followUps
+      ? (JSON.parse(props.followUps as string) as GeoFollowUp[])
+      : [],
   }
 }
 

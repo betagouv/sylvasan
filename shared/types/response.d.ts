@@ -39,6 +39,18 @@ export interface FollowUpResponseWrite {
   context?: Record<string, unknown>
 }
 
+// Correspond à GeoFollowUpSerializer
+export interface GeoFollowUp {
+  id: number
+  creationDate: string
+  survey: {
+    title: string
+    actionColor: string
+    actionIcon: string
+  } | null
+  respondant: UserDisplay | null
+}
+
 // Correspond à GeoResponseSerializer
 export interface ResponseGeo {
   id: number
@@ -49,6 +61,7 @@ export interface ResponseGeo {
   lat: number
   lon: number
   respondant: UserDisplay | null
+  followUps: GeoFollowUp[]
 }
 
 // Correspond à ResponseDisplaySerializer
