@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { useIonRouter, modalController } from "@ionic/vue"
 import type { PinData } from "../composables/useMapPins"
 import { useSurveysStore } from "../stores/surveys"
@@ -42,17 +42,24 @@ const navigate = () => {
   )
 }
 
+const openingFollowUp = ref(false)
+
 const addFollowUp = async () => {
-  if (!survey.value) return
+  if (!survey.value || openingFollowUp.value) return
+  openingFollowUp.value = true
   emit("close")
-  const modal = await modalController.create({
-    component: FollowUpChooserPage,
-    componentProps: {
-      responseId: String(props.pin.responseId),
-      survey: survey.value,
-    },
-  })
-  await modal.present()
+  try {
+    const modal = await modalController.create({
+      component: FollowUpChooserPage,
+      componentProps: {
+        responseId: String(props.pin.responseId),
+        survey: survey.value,
+      },
+    })
+    await modal.present()
+  } finally {
+    openingFollowUp.value = false
+  }
 }
 
 const survey = computed(() =>
