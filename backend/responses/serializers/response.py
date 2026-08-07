@@ -10,6 +10,7 @@ from django.db import transaction
 from djangorestframework_camel_case.util import camelize
 from PIL import Image
 from rest_framework import serializers
+from surveys.models import Survey
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer
 from surveys.serializers.surveyfollowup import SurveyFollowUpSerializer
 from users.serializers import UserDisplaySerializer, UserExportSerializer
@@ -292,9 +293,15 @@ class ResponseImageExportSerializer(serializers.ModelSerializer):
         return get_base_url().rstrip("/") + url
 
 
+class SurveyExportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Survey
+        fields = ("id", "title")
+
+
 class ResponseExportSerializer(serializers.ModelSerializer):
     respondant = UserExportSerializer(read_only=True)
-    survey = serializers.PrimaryKeyRelatedField(read_only=True)
+    survey = SurveyExportSerializer(read_only=True)
 
     class Meta:
         model = Response

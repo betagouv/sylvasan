@@ -58,6 +58,23 @@ class TestJsonExport(APITestCase):
         self.assertIn(response_b.id, ids)
 
     @authenticate
+    def test_json_survey_is_object_with_id_and_title(self):
+        """
+        L'export JSON représente l'enquête comme un objet avec id et title
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        survey = SurveyFactory(organisation=org, title="Enquête de satisfaction")
+        ResponseFactory(survey=survey)
+
+        response = self.client.get(reverse("response_export_json"))
+
+        data = json.loads(response.content)
+        survey_data = data[0]["survey"]
+        self.assertEqual(survey_data["id"], survey.id)
+        self.assertEqual(survey_data["title"], "Enquête de satisfaction")
+
+    @authenticate
     def test_json_respondant_includes_email_and_external_id(self):
         """
         L'export JSON inclut l'email et l'identifiant externe du répondant
@@ -214,7 +231,8 @@ class TestCsvExport(APITestCase):
             header,
             [
                 "ID",
-                "Enquête",
+                "ID enquête",
+                "Titre de l'enquête",
                 "ID externe répondant",
                 "Email répondant",
                 "Répondant",
@@ -223,6 +241,24 @@ class TestCsvExport(APITestCase):
                 "Données",
             ],
         )
+
+    @authenticate
+    def test_csv_survey_columns_contain_id_and_title(self):
+        """
+        Les colonnes enquête du CSV contiennent l'ID et le titre de l'enquête
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        survey = SurveyFactory(organisation=org, title="Enquête de satisfaction")
+        ResponseFactory(survey=survey)
+
+        response = self.client.get(reverse("response_export_csv"))
+
+        reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
+        next(reader)  # on ignore l'en-tête
+        row = next(reader)
+        self.assertEqual(row[1], str(survey.id))
+        self.assertEqual(row[2], "Enquête de satisfaction")
 
     @authenticate
     def test_csv_respondant_columns_contain_correct_data(self):
@@ -244,9 +280,9 @@ class TestCsvExport(APITestCase):
         reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
         next(reader)  # on ignore l'en-tête
         row = next(reader)
-        self.assertEqual(row[2], "EXT-42")
-        self.assertEqual(row[3], "alice@example.com")
-        self.assertEqual(row[4], "Alice Martin")
+        self.assertEqual(row[3], "EXT-42")
+        self.assertEqual(row[4], "alice@example.com")
+        self.assertEqual(row[5], "Alice Martin")
 
     @authenticate
     def test_csv_respondant_external_id_empty_when_not_set(self):
@@ -263,7 +299,7 @@ class TestCsvExport(APITestCase):
         reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
         next(reader)  # on ignore l'en-tête
         row = next(reader)
-        self.assertEqual(row[2], "")
+        self.assertEqual(row[3], "")
 
     @authenticate
     def test_csv_contains_one_row_per_response(self):
