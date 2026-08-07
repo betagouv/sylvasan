@@ -60,6 +60,18 @@ class UserDisplaySerializer(serializers.ModelSerializer):
         )
 
 
+class UserExportSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "external_id",
+            "email",
+            "first_name",
+            "last_name",
+        )
+
+
 class SimpleUserSerializer(serializers.ModelSerializer):
     memberships = MembershipSerializer(many=True, read_only=True)
     organisations = serializers.SerializerMethodField()
