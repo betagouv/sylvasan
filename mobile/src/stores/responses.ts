@@ -227,6 +227,7 @@ export const useResponsesStore = defineStore("responses", {
 
     async sync() {
       // À utiliser lors d'un pull to refresh par exemple
+      if (this.syncing) return
       this.syncing = true
       try {
         await this.retryPending()

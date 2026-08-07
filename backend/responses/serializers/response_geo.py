@@ -13,13 +13,13 @@ class GeoFollowUpSerializer(serializers.ModelSerializer):
         fields = ("id", "creation_date", "survey", "respondant")
 
     def get_survey(self, obj):
-        sfu = obj.survey_follow_up
-        if not sfu:
+        follow_up = obj.survey_follow_up
+        if not follow_up:
             return None
         return {
-            "title": sfu.title,
-            "action_color": sfu.action_color,
-            "action_icon": sfu.action_icon,
+            "title": follow_up.title,
+            "action_color": follow_up.action_color,
+            "action_icon": follow_up.action_icon,
         }
 
 
