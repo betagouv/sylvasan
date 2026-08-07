@@ -12,7 +12,7 @@ from PIL import Image
 from rest_framework import serializers
 from surveys.serializers import FullSurveySerializer, SurveyDisplaySerializer
 from surveys.serializers.surveyfollowup import SurveyFollowUpSerializer
-from users.serializers import UserDisplaySerializer
+from users.serializers import UserDisplaySerializer, UserExportSerializer
 
 from responses.models import Response, ResponseImage
 
@@ -293,7 +293,7 @@ class ResponseImageExportSerializer(serializers.ModelSerializer):
 
 
 class ResponseExportSerializer(serializers.ModelSerializer):
-    respondant = UserDisplaySerializer(read_only=True)
+    respondant = UserExportSerializer(read_only=True)
     survey = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:

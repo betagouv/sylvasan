@@ -13,6 +13,7 @@ from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
 
 from responses.factories import ResponseFactory
+from users.factories import UserFactory
 
 
 class TestJsonExport(APITestCase):
@@ -55,6 +56,45 @@ class TestJsonExport(APITestCase):
         ids = [item["id"] for item in data]
         self.assertIn(response_a.id, ids)
         self.assertIn(response_b.id, ids)
+
+    @authenticate
+    def test_json_respondant_includes_email_and_external_id(self):
+        """
+        L'export JSON inclut l'email et l'identifiant externe du répondant
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        respondant = UserFactory(
+            first_name="Alice",
+            last_name="Martin",
+            email="alice@example.com",
+            external_id="EXT-42",
+        )
+        ResponseFactory(survey=SurveyFactory(organisation=org), respondant=respondant)
+
+        response = self.client.get(reverse("response_export_json"))
+
+        data = json.loads(response.content)
+        respondant_data = data[0]["respondant"]
+        self.assertEqual(respondant_data["email"], "alice@example.com")
+        self.assertEqual(respondant_data["external_id"], "EXT-42")
+        self.assertEqual(respondant_data["first_name"], "Alice")
+        self.assertEqual(respondant_data["last_name"], "Martin")
+
+    @authenticate
+    def test_json_respondant_external_id_null_when_not_set(self):
+        """
+        L'identifiant externe est null dans l'export JSON quand le répondant n'en a pas
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        respondant = UserFactory(external_id=None)
+        ResponseFactory(survey=SurveyFactory(organisation=org), respondant=respondant)
+
+        response = self.client.get(reverse("response_export_json"))
+
+        data = json.loads(response.content)
+        self.assertIsNone(data[0]["respondant"]["external_id"])
 
     @authenticate
     def test_export_excludes_inaccessible_responses(self):
@@ -170,7 +210,60 @@ class TestCsvExport(APITestCase):
 
         reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
         header = next(reader)
-        self.assertEqual(header, ["ID", "Enquête", "Répondant", "Statut", "Date de création", "Données"])
+        self.assertEqual(
+            header,
+            [
+                "ID",
+                "Enquête",
+                "ID externe répondant",
+                "Email répondant",
+                "Répondant",
+                "Statut",
+                "Date de création",
+                "Données",
+            ],
+        )
+
+    @authenticate
+    def test_csv_respondant_columns_contain_correct_data(self):
+        """
+        Les colonnes répondant du CSV contiennent l'ID externe, l'email et le nom complet
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        respondant = UserFactory(
+            first_name="Alice",
+            last_name="Martin",
+            email="alice@example.com",
+            external_id="EXT-42",
+        )
+        ResponseFactory(survey=SurveyFactory(organisation=org), respondant=respondant)
+
+        response = self.client.get(reverse("response_export_csv"))
+
+        reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
+        next(reader)  # on ignore l'en-tête
+        row = next(reader)
+        self.assertEqual(row[2], "EXT-42")
+        self.assertEqual(row[3], "alice@example.com")
+        self.assertEqual(row[4], "Alice Martin")
+
+    @authenticate
+    def test_csv_respondant_external_id_empty_when_not_set(self):
+        """
+        La colonne ID externe est vide quand le répondant n'en a pas
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        respondant = UserFactory(external_id=None)
+        ResponseFactory(survey=SurveyFactory(organisation=org), respondant=respondant)
+
+        response = self.client.get(reverse("response_export_csv"))
+
+        reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
+        next(reader)  # on ignore l'en-tête
+        row = next(reader)
+        self.assertEqual(row[2], "")
 
     @authenticate
     def test_csv_contains_one_row_per_response(self):

@@ -198,7 +198,7 @@ class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
     ordering_fields = ["creation_date", "id"]
 
     def get_queryset(self):
-        return super().get_queryset().prefetch_related("images")
+        return super().get_queryset().select_related("respondant").prefetch_related("images")
 
     def get_filtered_queryset(self):
         queryset = self.get_queryset()
@@ -224,15 +224,28 @@ class ResponseCsvExportView(ResponseExportBaseView):
 
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(["ID", "Enquête", "Répondant", "Statut", "Date de création", "Données"])
+        writer.writerow(
+            [
+                "ID",
+                "Enquête",
+                "ID externe répondant",
+                "Email répondant",
+                "Répondant",
+                "Statut",
+                "Date de création",
+                "Données",
+            ]
+        )
         for item in serializer.data:
             respondant = item.get("respondant") or {}
-            first = respondant.get("firstName", "")
-            last = respondant.get("lastName", "")
+            first = respondant.get("first_name", "")
+            last = respondant.get("last_name", "")
             writer.writerow(
                 [
                     item["id"],
                     item["survey"],
+                    respondant.get("external_id", ""),
+                    respondant.get("email", ""),
                     f"{first} {last}".strip(),
                     item["status"],
                     item["creation_date"],
