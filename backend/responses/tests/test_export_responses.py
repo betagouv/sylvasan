@@ -11,9 +11,10 @@ from organisations.models import MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
+from surveys.factories.surveyfollowup import SurveyFollowUpFactory
+from users.factories import UserFactory
 
 from responses.factories import ResponseFactory
-from users.factories import UserFactory
 
 
 class TestJsonExport(APITestCase):
@@ -112,6 +113,45 @@ class TestJsonExport(APITestCase):
 
         data = json.loads(response.content)
         self.assertIsNone(data[0]["respondant"]["external_id"])
+
+    @authenticate
+    def test_json_follow_up_responses_nested_under_parent(self):
+        """
+        Les suivis apparaissent dans le tableau follow_ups de leur réponse parente
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        survey = SurveyFactory(organisation=org)
+        parent = ResponseFactory(survey=survey)
+        survey_follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        follow_up = ResponseFactory(survey=None, survey_follow_up=survey_follow_up, parent_response=parent)
+
+        response = self.client.get(reverse("response_export_json"))
+
+        data = json.loads(response.content)
+        parent_item = next(item for item in data if item["id"] == parent.id)
+        self.assertEqual(len(parent_item["follow_ups"]), 1)
+        self.assertEqual(parent_item["follow_ups"][0]["id"], follow_up.id)
+
+    @authenticate
+    def test_json_follow_up_survey_shows_follow_up_survey_info(self):
+        """
+        Le champ survey d'un suivi contient les infos du SurveyFollowUp, pas du survey parent
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        survey = SurveyFactory(organisation=org, title="Enquête principale")
+        parent = ResponseFactory(survey=survey)
+        survey_follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey, title="Enquête de suivi")
+        ResponseFactory(survey=None, survey_follow_up=survey_follow_up, parent_response=parent)
+
+        response = self.client.get(reverse("response_export_json"))
+
+        data = json.loads(response.content)
+        parent_item = next(item for item in data if item["id"] == parent.id)
+        follow_up_survey = parent_item["follow_ups"][0]["survey"]
+        self.assertEqual(follow_up_survey["id"], survey_follow_up.id)
+        self.assertEqual(follow_up_survey["title"], "Enquête de suivi")
 
     @authenticate
     def test_export_excludes_inaccessible_responses(self):
@@ -231,6 +271,7 @@ class TestCsvExport(APITestCase):
             header,
             [
                 "ID",
+                "Type",
                 "ID enquête",
                 "Titre de l'enquête",
                 "ID externe répondant",
@@ -257,8 +298,8 @@ class TestCsvExport(APITestCase):
         reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
         next(reader)  # on ignore l'en-tête
         row = next(reader)
-        self.assertEqual(row[1], str(survey.id))
-        self.assertEqual(row[2], "Enquête de satisfaction")
+        self.assertEqual(row[2], str(survey.id))
+        self.assertEqual(row[3], "Enquête de satisfaction")
 
     @authenticate
     def test_csv_respondant_columns_contain_correct_data(self):
@@ -280,9 +321,9 @@ class TestCsvExport(APITestCase):
         reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
         next(reader)  # on ignore l'en-tête
         row = next(reader)
-        self.assertEqual(row[3], "EXT-42")
-        self.assertEqual(row[4], "alice@example.com")
-        self.assertEqual(row[5], "Alice Martin")
+        self.assertEqual(row[4], "EXT-42")
+        self.assertEqual(row[5], "alice@example.com")
+        self.assertEqual(row[6], "Alice Martin")
 
     @authenticate
     def test_csv_respondant_external_id_empty_when_not_set(self):
@@ -299,7 +340,7 @@ class TestCsvExport(APITestCase):
         reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
         next(reader)  # on ignore l'en-tête
         row = next(reader)
-        self.assertEqual(row[3], "")
+        self.assertEqual(row[4], "")
 
     @authenticate
     def test_csv_contains_one_row_per_response(self):
@@ -360,3 +401,49 @@ class TestCsvExport(APITestCase):
         ids = [int(row[0]) for row in data_rows]
         self.assertIn(recent_response.id, ids)
         self.assertNotIn(old_response.id, ids)
+
+    @authenticate
+    def test_csv_parent_row_has_type_principale(self):
+        """
+        La colonne Type vaut 'Principale' pour une réponse principale
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        ResponseFactory(survey=SurveyFactory(organisation=org))
+
+        response = self.client.get(reverse("response_export_csv"))
+
+        reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
+        next(reader)  # on ignore l'en-tête
+        row = next(reader)
+        self.assertEqual(row[1], "Principale")
+
+    @authenticate
+    def test_csv_follow_up_row_appears_after_parent_with_type_suivi(self):
+        """
+        Le suivi apparaît juste après sa réponse parente avec le type '↳ Suivi'
+        et les colonnes enquête affichent les infos du SurveyFollowUp
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        survey = SurveyFactory(organisation=org, title="Enquête principale")
+        parent = ResponseFactory(survey=survey)
+        survey_follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey, title="Enquête de suivi")
+        follow_up = ResponseFactory(survey=None, survey_follow_up=survey_follow_up, parent_response=parent)
+
+        response = self.client.get(reverse("response_export_csv"))
+
+        reader = csv.reader(io.StringIO(response.content.decode("utf-8-sig")))
+        rows = list(reader)
+        data_rows = rows[1:]  # on ignore l'en-tête
+        self.assertEqual(len(data_rows), 2)  # 1 parent + 1 suivi
+
+        parent_row = next(r for r in data_rows if int(r[0]) == parent.id)
+        follow_up_row = next(r for r in data_rows if int(r[0]) == follow_up.id)
+
+        # le parent apparaît avant son suivi
+        self.assertLess(data_rows.index(parent_row), data_rows.index(follow_up_row))
+
+        self.assertEqual(follow_up_row[1], "↳ Suivi")
+        self.assertEqual(follow_up_row[2], str(survey_follow_up.id))
+        self.assertEqual(follow_up_row[3], "Enquête de suivi")

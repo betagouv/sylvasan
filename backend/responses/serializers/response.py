@@ -299,9 +299,15 @@ class SurveyExportSerializer(serializers.ModelSerializer):
         fields = ("id", "title")
 
 
-class ResponseExportSerializer(serializers.ModelSerializer):
+class FollowUpExportSerializer(serializers.ModelSerializer):
     respondant = UserExportSerializer(read_only=True)
-    survey = SurveyExportSerializer(read_only=True)
+    survey = serializers.SerializerMethodField()
+
+    def get_survey(self, obj):
+        follow_up = obj.survey_follow_up
+        if not follow_up:
+            return None
+        return {"id": follow_up.id, "title": follow_up.title}
 
     class Meta:
         model = Response
@@ -313,6 +319,29 @@ class ResponseExportSerializer(serializers.ModelSerializer):
             "context",
             "status",
             "creation_date",
+        )
+        read_only_fields = fields
+
+    def to_representation(self, instance):
+        return _enrich_image_fields(super().to_representation(instance), instance, ResponseImageExportSerializer)
+
+
+class ResponseExportSerializer(serializers.ModelSerializer):
+    respondant = UserExportSerializer(read_only=True)
+    survey = SurveyExportSerializer(read_only=True)
+    follow_ups = FollowUpExportSerializer(many=True, source="follow_up_responses", read_only=True)
+
+    class Meta:
+        model = Response
+        fields = (
+            "id",
+            "survey",
+            "respondant",
+            "data",
+            "context",
+            "status",
+            "creation_date",
+            "follow_ups",
         )
         read_only_fields = fields
 

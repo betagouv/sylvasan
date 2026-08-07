@@ -1,7 +1,7 @@
 import csv
 import json
 
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import HttpResponse
 
 from django_filters import rest_framework as django_filters
@@ -198,7 +198,21 @@ class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
     ordering_fields = ["creation_date", "id"]
 
     def get_queryset(self):
-        return super().get_queryset().select_related("respondant", "survey").prefetch_related("images")
+        follow_up_qs = (
+            Response.objects.active()
+            .select_related("survey_follow_up", "respondant")
+            .prefetch_related("images")
+            .order_by("creation_date")
+        )
+        return (
+            super()
+            .get_queryset()
+            .select_related("respondant", "survey")
+            .prefetch_related(
+                "images",
+                Prefetch("follow_up_responses", queryset=follow_up_qs),
+            )
+        )
 
     def get_filtered_queryset(self):
         queryset = self.get_queryset()
@@ -227,6 +241,7 @@ class ResponseCsvExportView(ResponseExportBaseView):
         writer.writerow(
             [
                 "ID",
+                "Type",
                 "ID enquête",
                 "Titre de l'enquête",
                 "ID externe répondant",
@@ -238,23 +253,9 @@ class ResponseCsvExportView(ResponseExportBaseView):
             ]
         )
         for item in serializer.data:
-            survey = item.get("survey") or {}
-            respondant = item.get("respondant") or {}
-            first = respondant.get("first_name", "")
-            last = respondant.get("last_name", "")
-            writer.writerow(
-                [
-                    item["id"],
-                    survey.get("id", ""),
-                    survey.get("title", ""),
-                    respondant.get("external_id", ""),
-                    respondant.get("email", ""),
-                    f"{first} {last}".strip(),
-                    item["status"],
-                    item["creation_date"],
-                    json.dumps(item["data"], ensure_ascii=False),
-                ]
-            )
+            writer.writerow(_csv_row(item, "Principale"))
+            for follow_up in item.get("follow_ups", []):
+                writer.writerow(_csv_row(follow_up, "↳ Suivi"))
 
         response = HttpResponse(
             output.getvalue().encode("utf-8-sig"),
@@ -262,3 +263,22 @@ class ResponseCsvExportView(ResponseExportBaseView):
         )
         response["Content-Disposition"] = 'attachment; filename="reponses.csv"'
         return response
+
+
+def _csv_row(item, type_label):
+    survey = item.get("survey") or {}
+    respondant = item.get("respondant") or {}
+    first = respondant.get("first_name", "")
+    last = respondant.get("last_name", "")
+    return [
+        item["id"],
+        type_label,
+        survey.get("id", ""),
+        survey.get("title", ""),
+        respondant.get("external_id") or "",
+        respondant.get("email", ""),
+        f"{first} {last}".strip(),
+        item["status"],
+        item["creation_date"],
+        json.dumps(item["data"], ensure_ascii=False),
+    ]
