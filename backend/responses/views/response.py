@@ -1,6 +1,7 @@
 import csv
 import json
 
+from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, Q
 from django.http import HttpResponse
 
@@ -110,6 +111,9 @@ class ResponseQuerySetMixin:
         )
 
 
+_CLIENT_ID_CONSTRAINT = "responses_response_client_id_key"
+
+
 class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
     pagination_class = ResponsePagination
     filter_backends = [
@@ -134,15 +138,19 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
         return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
-        client_id = request.data.get("client_id")
-        if client_id:
-            try:
-                existing = Response.objects.get(client_id=client_id)
+        # Traitement de la clé d'idempotence : si le client_id est déjà connu, on retourne
+        # la réponse existante sans créer de doublon. La contrainte unique en base est la vraie
+        # garantie — on attrape l'IntegrityError pour gérer les soumissions simultanées.
+        try:
+            with transaction.atomic():
+                return super().create(request, *args, **kwargs)
+        except IntegrityError as e:
+            constraint = getattr(getattr(e.__cause__, "diag", None), "constraint_name", None)
+            if constraint == _CLIENT_ID_CONSTRAINT and request.data.get("client_id"):
+                existing = Response.objects.get(client_id=request.data.get("client_id"))
                 serializer = self.get_serializer(existing)
                 return DRFResponse(serializer.data, status=status.HTTP_200_OK)
-            except Response.DoesNotExist:
-                pass
-        return super().create(request, *args, **kwargs)
+            raise
 
     def perform_create(self, serializer):
         serializer.save(respondant=self.request.user)
