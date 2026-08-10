@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django_filters import rest_framework as django_filters
 from organisations.models import Membership, MembershipType
 from rest_framework.filters import OrderingFilter
+from rest_framework import status
 from rest_framework.generics import GenericAPIView, ListAPIView, ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
@@ -131,6 +132,17 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
                 return [IsAuthenticated(), CanCreateFollowUpResponse()]
             return [IsAuthenticated(), CanCreateResponse()]
         return [IsAuthenticated()]
+
+    def create(self, request, *args, **kwargs):
+        client_id = request.data.get("client_id")
+        if client_id:
+            try:
+                existing = Response.objects.get(client_id=client_id)
+                serializer = self.get_serializer(existing)
+                return DRFResponse(serializer.data, status=status.HTTP_200_OK)
+            except Response.DoesNotExist:
+                pass
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(respondant=self.request.user)

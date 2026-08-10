@@ -32,6 +32,7 @@ class ResponseSerializer(serializers.ModelSerializer):
         model = Response
         fields = (
             "id",
+            "client_id",
             "survey",
             "respondant",
             "data",
@@ -106,6 +107,7 @@ class FollowUpResponseSerializer(serializers.ModelSerializer):
         model = Response
         fields = (
             "id",
+            "client_id",
             "survey_follow_up",
             "parent_response",
             "respondant",

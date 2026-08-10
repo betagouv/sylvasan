@@ -25,6 +25,7 @@ export interface LocalResponse {
 
 // Correspond à ResponseSerializer
 export interface ResponseWrite {
+  clientId?: string
   survey: number
   respondant: number | null
   data: Record<string, unknown>
@@ -33,6 +34,7 @@ export interface ResponseWrite {
 
 // Correspond à FollowUpResponseSerializer
 export interface FollowUpResponseWrite {
+  clientId?: string
   surveyFollowUp: number
   parentResponse: number
   data: Record<string, unknown>
