@@ -1,4 +1,4 @@
-asgiref==3.11.1
+asgiref==3.12.1
 Authlib==1.7.2
 bcrypt==5.0.0
 boto3==1.43.62
