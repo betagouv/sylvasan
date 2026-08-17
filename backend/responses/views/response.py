@@ -7,8 +7,8 @@ from django.http import HttpResponse
 
 from django_filters import rest_framework as django_filters
 from organisations.models import Membership, MembershipType
-from rest_framework.filters import OrderingFilter
 from rest_framework import status
+from rest_framework.filters import OrderingFilter
 from rest_framework.generics import GenericAPIView, ListAPIView, ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
@@ -140,12 +140,15 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
     def create(self, request, *args, **kwargs):
         # Traitement de la clé d'idempotence : si le client_id est déjà connu, on retourne
         # la réponse existante sans créer de doublon. La contrainte unique en base est la vraie
-        # garantie — on attrape l'IntegrityError pour gérer les soumissions simultanées.
+        # garantie. On attrape l'IntegrityError pour gérer les soumissions simultanées.
         try:
             with transaction.atomic():
                 return super().create(request, *args, **kwargs)
         except IntegrityError as e:
-            constraint = getattr(getattr(e.__cause__, "diag", None), "constraint_name", None)
+            # On peut obtenir la contrainte qui a généré l'IntegrityError :
+            # https://docs.djangoproject.com/en/6.1/ref/exceptions/#django.db.IntegrityError
+            constraint_attribute = getattr(e.__cause__, "diag", None)
+            constraint = getattr(constraint_attribute, "constraint_name", None)
             if constraint == _CLIENT_ID_CONSTRAINT and request.data.get("client_id"):
                 existing = Response.objects.get(client_id=request.data.get("client_id"))
                 serializer = self.get_serializer(existing)
