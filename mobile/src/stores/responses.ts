@@ -120,6 +120,7 @@ export const useResponsesStore = defineStore("responses", {
         const { response } = await useApiFetch("/responses/")
           .post({
             ...extraFields,
+            clientId: localResponse.localId,
             data: submissionData,
             respondant: loggedUser.value?.id,
           })

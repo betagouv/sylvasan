@@ -369,6 +369,129 @@ class TestCreateResponseWithNestedImages(APITestCase):
             self.assertNotIn("file", item["photo"][0])
 
 
+class TestClientIdIdempotency(APITestCase):
+    def _make_responder(self, survey):
+        MembershipFactory(
+            user=authenticate.user, organisation=survey.organisation, membership_type=MembershipType.RESPONDER
+        )
+
+    @authenticate
+    def test_second_post_with_same_client_id_returns_200(self):
+        """
+        Le second envoi avec le même client_id retourne 200 — pas 201 — signalant
+        que la réponse existante a été retournée sans créer de doublon
+        """
+        survey = SurveyFactory()
+        self._make_responder(survey)
+        payload = {**response_payload(survey), "clientId": "550e8400-e29b-41d4-a716-446655440000"}
+
+        first = self.client.post(reverse("response_list_create"), payload, format="json")
+        second = self.client.post(reverse("response_list_create"), payload, format="json")
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second.status_code, status.HTTP_200_OK)
+
+    @authenticate
+    def test_second_post_with_same_client_id_does_not_create_duplicate(self):
+        """
+        Un second envoi avec le même client_id ne crée pas de nouvelle réponse en base
+        """
+        survey = SurveyFactory()
+        self._make_responder(survey)
+        payload = {**response_payload(survey), "clientId": "550e8400-e29b-41d4-a716-446655440000"}
+
+        self.client.post(reverse("response_list_create"), payload, format="json")
+        self.client.post(reverse("response_list_create"), payload, format="json")
+
+        self.assertEqual(Response.objects.count(), 1)
+
+    @authenticate
+    def test_second_post_with_same_client_id_returns_same_id(self):
+        """
+        Le second envoi avec le même client_id retourne le même ID de réponse que le premier
+        """
+        survey = SurveyFactory()
+        self._make_responder(survey)
+        payload = {**response_payload(survey), "clientId": "550e8400-e29b-41d4-a716-446655440000"}
+
+        first = self.client.post(reverse("response_list_create"), payload, format="json")
+        second = self.client.post(reverse("response_list_create"), payload, format="json")
+
+        self.assertEqual(first.data["id"], second.data["id"])
+
+    @authenticate
+    def test_duplicate_response_keys_are_camel_case(self):
+        """
+        La réponse renvoyée lors d'un doublon client_id passe bien par le renderer CamelCase :
+        client_id est retourné sous la forme clientId
+        """
+        survey = SurveyFactory()
+        self._make_responder(survey)
+        payload = {**response_payload(survey), "clientId": "550e8400-e29b-41d4-a716-446655440000"}
+
+        self.client.post(reverse("response_list_create"), payload, format="json")
+        second = self.client.post(reverse("response_list_create"), payload, format="json")
+
+        body = second.json()
+        self.assertIn("clientId", body)
+        self.assertNotIn("client_id", body)
+
+    @authenticate
+    def test_without_client_id_always_creates_new_response(self):
+        """
+        Sans client_id, chaque soumission crée une nouvelle réponse (comportement inchangé)
+        """
+        survey = SurveyFactory()
+        self._make_responder(survey)
+        payload = response_payload(survey)
+
+        self.client.post(reverse("response_list_create"), payload, format="json")
+        self.client.post(reverse("response_list_create"), payload, format="json")
+
+        self.assertEqual(Response.objects.count(), 2)
+
+    @authenticate
+    def test_different_client_ids_create_separate_responses(self):
+        """
+        Deux soumissions avec des client_id différents créent chacune une réponse distincte
+        """
+        survey = SurveyFactory()
+        self._make_responder(survey)
+
+        self.client.post(
+            reverse("response_list_create"),
+            {**response_payload(survey), "clientId": "550e8400-e29b-41d4-a716-446655440000"},
+            format="json",
+        )
+        self.client.post(
+            reverse("response_list_create"),
+            {**response_payload(survey), "clientId": "550e8400-e29b-41d4-a716-446655440001"},
+            format="json",
+        )
+
+        self.assertEqual(Response.objects.count(), 2)
+
+    @authenticate
+    def test_client_id_owned_by_another_user_returns_409(self):
+        """
+        Si un client_id est déjà utilisé par un autre utilisateur, le serveur retourne 409
+        sans exposer la réponse de cet utilisateur
+        """
+        client_id = "550e8400-e29b-41d4-a716-446655440000"
+        other_user = UserFactory()
+        survey = SurveyFactory()
+        ResponseFactory(survey=survey, respondant=other_user, client_id=client_id)
+        self._make_responder(survey)
+
+        response = self.client.post(
+            reverse("response_list_create"),
+            {**response_payload(survey), "clientId": client_id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
+
 def follow_up_response_payload(follow_up, parent_response):
     return {
         "survey_follow_up": follow_up.id,
@@ -612,6 +735,27 @@ class TestCreateFollowUpResponse(APITestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
+    def test_follow_up_idempotent_avec_meme_client_id_retourne_200(self):
+        """
+        Pour une réponse de suivi, soumettre deux fois le même client_id retourne 200
+        et ne crée pas de doublon
+        """
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        follow_up = SurveyFollowUpFactory(organisation=org, parent_survey=survey)
+        parent = ResponseFactory(survey=survey)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        payload = {**follow_up_response_payload(follow_up, parent), "clientId": "660e8400-e29b-41d4-a716-446655440000"}
+
+        first = self.client.post(reverse("response_list_create"), payload, format="json")
+        second = self.client.post(reverse("response_list_create"), payload, format="json")
+
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second.status_code, status.HTTP_200_OK)
+        self.assertEqual(Response.objects.count(), 2)  # parent + 1 suivi
+        self.assertEqual(first.data["id"], second.data["id"])
 
     @authenticate
     def test_parent_response_appartenant_a_une_autre_enquete_retourne_400(self):

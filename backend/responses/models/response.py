@@ -53,6 +53,7 @@ class Response(TimeStampable, Historisable, Deactivable):
         null=True,
         blank=True,
     )
+    client_id = models.UUIDField(null=True, blank=True, unique=True, verbose_name="identifiant client")
     status = models.CharField(choices=ResponseStatus, verbose_name="statut", default=ResponseStatus.SUBMITTED)
     data = models.JSONField(verbose_name="données")
     submission_date = models.DateTimeField(null=True, blank=True, verbose_name="date de soumission")

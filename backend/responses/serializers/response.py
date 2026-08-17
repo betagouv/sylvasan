@@ -28,10 +28,15 @@ def get_base_url() -> str:
 
 
 class ResponseSerializer(serializers.ModelSerializer):
+    # validators=[] désactive le UniqueValidator auto-généré par DRF : l'unicité est
+    # garantie par la contrainte DB, gérée explicitement dans la vue pour l'idempotence.
+    client_id = serializers.UUIDField(required=False, allow_null=True, validators=[])
+
     class Meta:
         model = Response
         fields = (
             "id",
+            "client_id",
             "survey",
             "respondant",
             "data",
@@ -102,10 +107,13 @@ class ResponseSerializer(serializers.ModelSerializer):
 
 
 class FollowUpResponseSerializer(serializers.ModelSerializer):
+    client_id = serializers.UUIDField(required=False, allow_null=True, validators=[])
+
     class Meta:
         model = Response
         fields = (
             "id",
+            "client_id",
             "survey_follow_up",
             "parent_response",
             "respondant",
