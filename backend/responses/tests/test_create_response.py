@@ -471,6 +471,26 @@ class TestClientIdIdempotency(APITestCase):
 
         self.assertEqual(Response.objects.count(), 2)
 
+    @authenticate
+    def test_client_id_owned_by_another_user_returns_409(self):
+        """
+        Si un client_id est déjà utilisé par un autre utilisateur, le serveur retourne 409
+        sans exposer la réponse de cet utilisateur
+        """
+        client_id = "550e8400-e29b-41d4-a716-446655440000"
+        other_user = UserFactory()
+        survey = SurveyFactory()
+        ResponseFactory(survey=survey, respondant=other_user, client_id=client_id)
+        self._make_responder(survey)
+
+        response = self.client.post(
+            reverse("response_list_create"),
+            {**response_payload(survey), "clientId": client_id},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+
 
 def follow_up_response_payload(follow_up, parent_response):
     return {

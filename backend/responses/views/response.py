@@ -150,9 +150,15 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
             constraint_attribute = getattr(e.__cause__, "diag", None)
             constraint = getattr(constraint_attribute, "constraint_name", None)
             if constraint == _CLIENT_ID_CONSTRAINT and request.data.get("client_id"):
-                existing = Response.objects.get(client_id=request.data.get("client_id"))
-                serializer = self.get_serializer(existing)
-                return DRFResponse(serializer.data, status=status.HTTP_200_OK)
+                try:
+                    existing = Response.objects.get(
+                        client_id=request.data.get("client_id"),
+                        respondant=request.user,
+                    )
+                    serializer = self.get_serializer(existing)
+                    return DRFResponse(serializer.data, status=status.HTTP_200_OK)
+                except Response.DoesNotExist:
+                    return DRFResponse(status=status.HTTP_409_CONFLICT)
             raise
 
     def perform_create(self, serializer):
