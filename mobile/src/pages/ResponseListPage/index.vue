@@ -38,6 +38,8 @@ const nondraftResponses = computed(() =>
 
 const selectedDraft = ref<LocalResponse | null>(null)
 const selectedFollowUpDraft = ref<LocalResponse | null>(null)
+const surveyPageRef = ref<InstanceType<typeof SurveyPage> | null>(null)
+const followUpPageRef = ref<InstanceType<typeof FollowUpSurveyPage> | null>(null)
 const ionRouter = useIonRouter()
 
 const onOpen = (response: LocalResponse | ResponseFull) => {
@@ -125,10 +127,12 @@ const responseKey = (res: LocalResponse | ResponseFull): string =>
 
     <ion-modal
       :is-open="selectedDraft !== null"
+      :can-dismiss="() => surveyPageRef?.canDismiss() ?? true"
       @did-dismiss="selectedDraft = null"
     >
       <SurveyPage
         v-if="selectedDraft !== null"
+        ref="surveyPageRef"
         :id="selectedDraft.surveyId"
         :local-id="selectedDraft.localId"
         :is-modal="true"
@@ -138,10 +142,12 @@ const responseKey = (res: LocalResponse | ResponseFull): string =>
 
     <ion-modal
       :is-open="selectedFollowUpDraft !== null"
+      :can-dismiss="() => followUpPageRef?.canDismiss() ?? true"
       @did-dismiss="selectedFollowUpDraft = null"
     >
       <FollowUpSurveyPage
         v-if="selectedFollowUpDraft !== null"
+        ref="followUpPageRef"
         :response-id="String(selectedFollowUpDraft.parentResponse)"
         :follow-up-id="selectedFollowUpDraft.surveyFollowUp?.id"
         :local-id="selectedFollowUpDraft.localId"
