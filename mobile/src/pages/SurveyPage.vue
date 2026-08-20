@@ -123,6 +123,29 @@ const onSurveyDone = (data: Record<string, unknown>) => {
   showSummary.value = true
 }
 
+const canDismiss = async (): Promise<boolean> => {
+  if (Object.keys(currentFormData.value).length === 0) return true
+  return new Promise(async (resolve) => {
+    const alert = await alertController.create({
+      header: "Quitter l'observation ?",
+      buttons: [
+        { text: "Continuer la saisie", role: "cancel", handler: () => resolve(false) },
+        {
+          text: "Enregistrer en brouillon",
+          handler: async () => {
+            await saveDraftIfNeeded()
+            resolve(true)
+          },
+        },
+        { text: "Abandonner", role: "destructive", handler: () => resolve(true) },
+      ],
+    })
+    await alert.present()
+  })
+}
+
+defineExpose({ canDismiss })
+
 const confirmDelete = async () => {
   const hasDraft = !!currentLocalId.value
   const alert = await alertController.create({

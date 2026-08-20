@@ -35,6 +35,7 @@ const props = defineProps<{
   responseId?: string
   followUpId?: number
   localId?: string
+  registerCanDismiss?: (fn: () => Promise<boolean>) => void
 }>()
 
 const route = useRoute()
@@ -126,6 +127,7 @@ const showSummary = ref(false)
 const summaryData = ref<Record<string, unknown>>({})
 const saving = ref(false)
 const forceValidate = ref(false)
+const closingIntentionally = ref(false)
 
 watch(showSummary, (val, prev) => {
   if (!val && prev) forceValidate.value = true
@@ -205,7 +207,36 @@ const saveResponse = async () => {
   }
 }
 
+const canDismiss = async (): Promise<boolean> => {
+  if (closingIntentionally.value) return true
+  if (Object.keys(currentFormData.value).length === 0) return true
+  return new Promise(async (resolve) => {
+    const alert = await alertController.create({
+      header: "Quitter le suivi ?",
+      buttons: [
+        { text: "Continuer la saisie", role: "cancel", handler: () => resolve(false) },
+        {
+          text: "Enregistrer en brouillon",
+          handler: async () => {
+            await saveDraftIfNeeded()
+            resolve(true)
+          },
+        },
+        { text: "Abandonner", role: "destructive", handler: () => resolve(true) },
+      ],
+    })
+    await alert.present()
+  })
+}
+
+defineExpose({ canDismiss })
+
+onMounted(() => {
+  props.registerCanDismiss?.(canDismiss)
+})
+
 const closeAndNavigateToObservations = () => {
+  closingIntentionally.value = true
   modalController.dismiss()
   router.navigate({ name: "ResponseListPage" }, "forward", "replace")
 }
@@ -236,6 +267,7 @@ const confirmDelete = async () => {
           if (hasDraft) {
             await responsesStore.deleteDraft(currentLocalId.value!)
           }
+          closingIntentionally.value = true
           await modalController.dismiss()
         },
       },

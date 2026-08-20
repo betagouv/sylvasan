@@ -34,13 +34,24 @@ const labelFor = (followUp: (typeof accessibleFollowUps.value)[number]) =>
 const navigateToFollowUp = async (
   followUp: (typeof accessibleFollowUps.value)[number]
 ) => {
+  // On ferme d'abord ce sélecteur avant d'ouvrir FollowUpSurveyPage, pour éviter
+  // d'avoir deux modales superposées. Comme FollowUpSurveyPage est donc créée
+  // impérativement (modalController.create) plutôt que déclarativement (:is-open),
+  // on ne peut pas y poser de ref Vue pour appeler canDismiss depuis le parent.
+  // Le callback registerCanDismiss permet au composant de transmettre sa fonction
+  // canDismiss dès son montage, qu'on branche ensuite sur l'option canDismiss de la modale.
   modalController.dismiss()
+  let canDismissFollowUp: (() => Promise<boolean>) | null = null
   const modal = await modalController.create({
     component: FollowUpSurveyPage,
     componentProps: {
       responseId,
       followUpId: followUp.id,
+      registerCanDismiss: (fn: () => Promise<boolean>) => {
+        canDismissFollowUp = fn
+      },
     },
+    canDismiss: () => canDismissFollowUp?.() ?? Promise.resolve(true),
   })
   await modal.present()
 }

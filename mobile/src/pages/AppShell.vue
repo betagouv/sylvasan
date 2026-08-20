@@ -22,6 +22,7 @@ import SurveyPage from "./SurveyPage.vue"
 
 const surveyListOpen = ref(false)
 const selectedSurveyId = ref<number | null>(null)
+const surveyPageRef = ref<InstanceType<typeof SurveyPage> | null>(null)
 
 const onSurveySelected = (id: number) => {
   surveyListOpen.value = false
@@ -85,10 +86,12 @@ const onSurveySelected = (id: number) => {
     <!-- Modal détail d'une enquête -->
     <ion-modal
       :is-open="selectedSurveyId !== null"
+      :can-dismiss="() => surveyPageRef?.canDismiss() ?? true"
       @did-dismiss="selectedSurveyId = null"
     >
       <SurveyPage
         v-if="selectedSurveyId !== null"
+        ref="surveyPageRef"
         :id="selectedSurveyId"
         :is-modal="true"
         @close="selectedSurveyId = null"
