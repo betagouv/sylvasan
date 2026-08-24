@@ -377,7 +377,7 @@ const confirmDelete = async () => {
 <style scoped>
 ion-content {
   --padding-top: 0;
-  --padding-bottom: 0;
+  --padding-bottom: var(--ion-safe-area-bottom, 0px);
   --padding-start: 0;
   --padding-end: 0;
 }
