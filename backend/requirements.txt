@@ -1,8 +1,8 @@
 asgiref==3.12.1
 Authlib==1.7.2
 bcrypt==5.0.0
-boto3==1.43.68
-botocore==1.43.68
+boto3==1.43.72
+botocore==1.43.72
 certifi==2026.6.17
 cffi==2.1.0
 charset-normalizer==3.5.1
