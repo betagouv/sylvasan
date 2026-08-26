@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   ref,
+  computed,
   shallowRef,
   watch,
   onMounted,
@@ -22,10 +23,27 @@ import { Capacitor } from "@capacitor/core"
 import type { PluginListenerHandle } from "@capacitor/core"
 import maplibregl, { type StyleSpecification } from "maplibre-gl"
 import ignStyle from "../assets/ign-style.json"
-import { useGeoPins } from "../composables/useGeoPins"
+import { useGeoPins, DEFAULT_GEO_FILTERS } from "../composables/useGeoPins"
+import type { GeoFilters } from "../composables/useGeoPins"
 import ResponsePinCard from "../components/ResponsePinCard.vue"
+import GeoFiltersPanel from "../components/GeoFiltersPanel.vue"
+import { useSurveysStore } from "../stores/surveys"
+import { storeToRefs } from "pinia"
+
+const { surveys } = storeToRefs(useSurveysStore())
 
 const centerOfFrance: [number, number] = [2.35, 46.8]
+
+const activeFilters = ref<GeoFilters>({ ...DEFAULT_GEO_FILTERS })
+const filterPanelOpen = ref(false)
+
+const activeFilterCount = computed(() => {
+  let n = 0
+  if (activeFilters.value.onlyMine) n++
+  if (activeFilters.value.period !== null) n++
+  if (activeFilters.value.surveyIds.length > 0) n++
+  return n
+})
 
 const ready = ref(false)
 const isOnline = ref(false)
@@ -36,7 +54,10 @@ const mapRef = shallowRef<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
 let gpsWatchId: string | null = null
 
-const { selectedPin, showSearchHere, loading, fetchPins } = useGeoPins(mapRef)
+const { selectedPin, showSearchHere, loading, fetchPins } = useGeoPins(
+  mapRef,
+  activeFilters
+)
 
 const startAccuracyWatch = async () => {
   try {
@@ -216,11 +237,38 @@ onBeforeUnmount(() => {
           </div>
         </Transition>
 
+        <!-- Bouton filtre -->
+        <button
+          v-if="tilesLoaded"
+          class="filter-button absolute z-10 flex items-center justify-center rounded-full shadow-lg bg-white!"
+          @click="filterPanelOpen = true"
+        >
+          <v-icon name="ri-filter-line" scale="1.2" />
+          <span
+            v-if="activeFilterCount > 0"
+            class="filter-badge absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#000091]! text-white text-xs font-bold flex items-center justify-center"
+          >
+            {{ activeFilterCount }}
+          </span>
+        </button>
+
         <Transition name="slide-up">
           <ResponsePinCard
             v-if="selectedPin"
             :pin="selectedPin"
             @close="selectedPin = null"
+          />
+        </Transition>
+
+        <!-- Panneau de filtres -->
+        <Transition name="fade-panel">
+          <GeoFiltersPanel
+            v-if="filterPanelOpen"
+            v-model="activeFilters"
+            :surveys="surveys"
+            @apply="fetchPins"
+            @close="filterPanelOpen = false"
+            class="z-index-top"
           />
         </Transition>
       </div>
@@ -266,9 +314,31 @@ div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
   z-index: 0;
 }
 
+.filter-button {
+  top: calc(env(safe-area-inset-top) + 3rem);
+  right: 0.75rem;
+  width: 50px;
+  height: 50px;
+  border: 1.5px solid #e2e8f0;
+}
+
+.fade-panel-enter-active,
+.fade-panel-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-panel-enter-from,
+.fade-panel-leave-to {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+
 div.sylvasan-search-container {
   padding-top: env(safe-area-inset-top);
   z-index: 999999;
+}
+
+.z-index-top {
+  z-index: 1000000;
 }
 
 .accuracy-badge {

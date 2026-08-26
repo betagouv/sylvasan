@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.gis.geos import Point
 from django.urls import reverse
 
@@ -275,3 +277,170 @@ class TestResponseGeoLimite(APITestCase):
         response = self.client.get(GEO_URL, BBOX_PARIS)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), GEO_RESPONSE_LIMIT)
+
+
+class TestResponseGeoFiltres(APITestCase):
+    """Tests des paramètres de filtrage optionnels : surveys, after, before, only_mine."""
+
+    def setUp(self):
+        self.org = OrganisationFactory()
+        self.survey_a = SurveyFactory(organisation=self.org)
+        self.survey_b = SurveyFactory(organisation=self.org)
+
+    def _membre(self):
+        MembershipFactory(user=authenticate.user, organisation=self.org, membership_type=MembershipType.ADMIN)
+
+    # --- surveys ---
+
+    @authenticate
+    def test_filtre_surveys_retourne_seulement_enquete_demandee(self):
+        """
+        Le paramètre surveys=<id> restreint les résultats à cette enquête
+        """
+        self._membre()
+        reponse_a = _geo_response(self.survey_a)
+        _geo_response(self.survey_b)
+
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "surveys": str(self.survey_a.id)})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], reponse_a.id)
+
+    @authenticate
+    def test_filtre_surveys_accepte_plusieurs_ids(self):
+        """
+        surveys=id1,id2 retourne les réponses des deux enquêtes
+        """
+        self._membre()
+        survey_c = SurveyFactory(organisation=self.org)
+        _geo_response(self.survey_a)
+        _geo_response(self.survey_b)
+        _geo_response(survey_c)
+
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "surveys": f"{self.survey_a.id},{self.survey_b.id}"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    @authenticate
+    def test_filtre_surveys_non_numerique_retourne_400(self):
+        """
+        surveys=abc retourne une erreur 400
+        """
+        self._membre()
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "surveys": "abc"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # --- after ---
+
+    @authenticate
+    def test_filtre_after_exclut_reponses_anterieures(self):
+        """
+        after=YYYY-MM-DD ne retourne que les réponses créées ce jour ou après
+        """
+        self._membre()
+        ancienne = _geo_response(self.survey_a)
+        ancienne.creation_date = datetime.datetime(2024, 1, 1, tzinfo=datetime.UTC)
+        ancienne.save(update_fields=["creation_date"])
+
+        recente = _geo_response(self.survey_a)
+        recente.creation_date = datetime.datetime(2025, 6, 1, tzinfo=datetime.UTC)
+        recente.save(update_fields=["creation_date"])
+
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "after": "2025-01-01"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [r["id"] for r in response.data]
+        self.assertIn(recente.id, ids)
+        self.assertNotIn(ancienne.id, ids)
+
+    @authenticate
+    def test_filtre_after_format_invalide_retourne_400(self):
+        """
+        after=31/12/2024 (format non ISO) retourne une erreur 400
+        """
+        self._membre()
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "after": "31/12/2024"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # --- before ---
+
+    @authenticate
+    def test_filtre_before_exclut_reponses_posterieures(self):
+        """
+        before=YYYY-MM-DD ne retourne que les réponses créées ce jour ou avant
+        """
+        self._membre()
+        ancienne = _geo_response(self.survey_a)
+        ancienne.creation_date = datetime.datetime(2024, 1, 1, tzinfo=datetime.UTC)
+        ancienne.save(update_fields=["creation_date"])
+
+        recente = _geo_response(self.survey_a)
+        recente.creation_date = datetime.datetime(2025, 6, 1, tzinfo=datetime.UTC)
+        recente.save(update_fields=["creation_date"])
+
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "before": "2024-12-31"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [r["id"] for r in response.data]
+        self.assertIn(ancienne.id, ids)
+        self.assertNotIn(recente.id, ids)
+
+    @authenticate
+    def test_filtre_before_format_invalide_retourne_400(self):
+        """
+        before=not-a-date retourne une erreur 400
+        """
+        self._membre()
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "before": "not-a-date"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # --- only_mine ---
+
+    @authenticate
+    def test_filtre_only_mine_exclut_reponses_des_collegues(self):
+        """
+        only_mine=true ne retourne que les réponses dont l'auteur est l'utilisateur connecté
+        """
+        self._membre()
+        ma_reponse = _geo_response(self.survey_a)
+        ma_reponse.respondant = authenticate.user
+        ma_reponse.save(update_fields=["respondant"])
+
+        _geo_response(self.survey_a)  # réponse d'un autre utilisateur
+
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "only_mine": "true"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], ma_reponse.id)
+
+    @authenticate
+    def test_filtre_only_mine_false_retourne_toutes_les_reponses(self):
+        """
+        only_mine=false (ou absent) retourne toutes les réponses accessibles
+        """
+        self._membre()
+        _geo_response(self.survey_a)
+        _geo_response(self.survey_a)
+
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "only_mine": "false"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    # --- combinaison de filtres ---
+
+    @authenticate
+    def test_filtres_surveys_et_only_mine_combines(self):
+        """
+        surveys + only_mine=true ne retourne que les réponses de l'enquête ciblée
+        dont l'auteur est l'utilisateur connecté
+        """
+        self._membre()
+        ma_reponse = _geo_response(self.survey_a)
+        ma_reponse.respondant = authenticate.user
+        ma_reponse.save(update_fields=["respondant"])
+
+        _geo_response(self.survey_a)  # collègue, même enquête
+        _geo_response(self.survey_b)  # moi, autre enquête — exclu par surveys
+
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "surveys": str(self.survey_a.id), "only_mine": "true"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], ma_reponse.id)
