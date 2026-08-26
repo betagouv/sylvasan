@@ -43,7 +43,7 @@
   "devDependencies": {
     "@iconify-json/ri": "^1.2.10",
     "@types/node": "^26.1.1",
-    "@vitejs/plugin-vue": "^6.0.7",
+    "@vitejs/plugin-vue": "^6.0.8",
     "@vue/test-utils": "^2.4.11",
     "@vue/tsconfig": "^0.9.1",
     "chalk": "^6.0.0",
