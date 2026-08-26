@@ -1,10 +1,43 @@
 import { ref, watch } from "vue"
-import type { ShallowRef } from "vue"
+import type { Ref, ShallowRef } from "vue"
 import maplibregl from "maplibre-gl"
 import { useApiFetch } from "../utils/data-fetching"
 import { useAuthStore } from "../stores/auth"
 import type { GeoFollowUp, ResponseGeo } from "@shared-types/response"
 import type { PinData } from "./useMapPins"
+
+export interface GeoFilters {
+  surveyIds: number[]
+  period: "12months" | number | null
+  onlyMine: boolean
+}
+
+export const DEFAULT_GEO_FILTERS: GeoFilters = {
+  surveyIds: [],
+  period: null,
+  onlyMine: false,
+}
+
+function filtersToParams(filters: GeoFilters): Record<string, string> {
+  const params: Record<string, string> = {}
+  if (filters.surveyIds.length > 0) {
+    params.surveys = filters.surveyIds.join(",")
+  }
+  if (filters.onlyMine) {
+    params.only_mine = "true"
+  }
+  if (filters.period !== null) {
+    if (filters.period === "12months") {
+      const d = new Date()
+      d.setFullYear(d.getFullYear() - 1)
+      params.after = d.toISOString().slice(0, 10)
+    } else {
+      params.after = `${filters.period}-01-01`
+      params.before = `${filters.period}-12-31`
+    }
+  }
+  return params
+}
 
 // Paramètres à ajuster pour le comportement du clustering
 const CLUSTER_MAX_ZOOM = 14
@@ -105,7 +138,10 @@ function pinFromProperties(props: Record<string, unknown>): PinData {
   }
 }
 
-export function useGeoPins(mapRef: ShallowRef<maplibregl.Map | null>) {
+export function useGeoPins(
+  mapRef: ShallowRef<maplibregl.Map | null>,
+  filters: Ref<GeoFilters>
+) {
   const authStore = useAuthStore()
   const selectedPin = ref<PinData | null>(null)
   const showSearchHere = ref(false)
@@ -228,16 +264,33 @@ export function useGeoPins(mapRef: ShallowRef<maplibregl.Map | null>) {
     })
   }
 
+  let pendingFetch = false
+
   const fetchPins = async () => {
     const map = mapRef.value
-    if (!map || loading.value) return
+    if (!map) return
+
+    if (loading.value) {
+      // Une requête est déjà en cours : on mémorise la demande et on laisse
+      // la requête active se terminer — elle re-déclenchera fetchPins à la fin.
+      pendingFetch = true
+      return
+    }
 
     loading.value = true
+    pendingFetch = false
     selectedPin.value = null
 
     const b = map.getBounds()
+    const params = new URLSearchParams({
+      south: String(b.getSouth()),
+      west: String(b.getWest()),
+      north: String(b.getNorth()),
+      east: String(b.getEast()),
+      ...filtersToParams(filters.value),
+    })
     const { data, error } = await useApiFetch(
-      `/mobile/responses/geo/?south=${b.getSouth()}&west=${b.getWest()}&north=${b.getNorth()}&east=${b.getEast()}`
+      `/mobile/responses/geo/?${params}`
     ).json<ResponseGeo[]>()
 
     loading.value = false
@@ -246,6 +299,8 @@ export function useGeoPins(mapRef: ShallowRef<maplibregl.Map | null>) {
     if (error.value || !data.value || !mapRef.value) return
 
     updateSource(mapRef.value, data.value.map(toPin))
+
+    if (pendingFetch) fetchPins()
   }
 
   watch(mapRef, (mapInstance) => {

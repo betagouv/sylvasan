@@ -28,6 +28,7 @@ export const collectionsToFilter = [
       "error-warning-line",
       "eye-line",
       "flask-line",
+      "filter-line",
       "global-fill",
       "image-line",
       "information-line",
