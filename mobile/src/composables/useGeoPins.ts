@@ -264,11 +264,21 @@ export function useGeoPins(
     })
   }
 
+  let pendingFetch = false
+
   const fetchPins = async () => {
     const map = mapRef.value
-    if (!map || loading.value) return
+    if (!map) return
+
+    if (loading.value) {
+      // Une requête est déjà en cours : on mémorise la demande et on laisse
+      // la requête active se terminer — elle re-déclenchera fetchPins à la fin.
+      pendingFetch = true
+      return
+    }
 
     loading.value = true
+    pendingFetch = false
     selectedPin.value = null
 
     const b = map.getBounds()
@@ -289,6 +299,8 @@ export function useGeoPins(
     if (error.value || !data.value || !mapRef.value) return
 
     updateSource(mapRef.value, data.value.map(toPin))
+
+    if (pendingFetch) fetchPins()
   }
 
   watch(mapRef, (mapInstance) => {

@@ -243,11 +243,7 @@ onBeforeUnmount(() => {
           class="filter-button absolute z-10 flex items-center justify-center rounded-full shadow-lg bg-white!"
           @click="filterPanelOpen = true"
         >
-          <v-icon
-            name="ri-filter-line"
-            scale="1.2"
-            :class="activeFilterCount > 0 ? 'text-white' : 'text-[#000091]'"
-          />
+          <v-icon name="ri-filter-line" scale="1.2" />
           <span
             v-if="activeFilterCount > 0"
             class="filter-badge absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#000091]! text-white text-xs font-bold flex items-center justify-center"
