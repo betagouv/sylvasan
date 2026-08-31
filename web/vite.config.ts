@@ -19,9 +19,9 @@ export default defineConfig(({ mode }) => ({
   base: "/",
   resolve: {
     alias: {
-      "@shared-types": path.resolve(__dirname, "../shared/types"),
-      "@shared-utils": path.resolve(__dirname, "../shared/utils"),
-      "@shared-components": path.resolve(__dirname, "../shared/components"),
+      "@shared-types": path.resolve(import.meta.dirname, "../shared/types"),
+      "@shared-utils": path.resolve(import.meta.dirname, "../shared/utils"),
+      "@shared-components": path.resolve(import.meta.dirname, "../shared/components"),
     },
   },
 }))
