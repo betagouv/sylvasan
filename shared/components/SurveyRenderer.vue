@@ -91,9 +91,11 @@ watch(
 
 watch(formData, (newData) => emit("change", { ...newData }), { deep: true })
 
-const isCompressing = ref(false)
+const busyCount = ref(0)
+const isCompressing = computed(() => busyCount.value > 0)
 const onFieldBusyChange = (val: boolean) => {
-  isCompressing.value = val
+  if (val) busyCount.value++
+  else busyCount.value--
 }
 </script>
 

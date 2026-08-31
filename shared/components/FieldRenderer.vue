@@ -245,6 +245,8 @@ if (
       :force-validate="forceValidate"
       :vocabularies="props.vocabularies"
       :map-component="mapComponent"
+      :resolve-image-path="resolveImagePath"
+      @busy-change="(val) => emit('busyChange', val)"
     />
 
     <AutocompleteField
