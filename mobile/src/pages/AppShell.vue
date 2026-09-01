@@ -79,6 +79,7 @@ const onSurveySelected = (id: number) => {
       :breakpoints="[0, 1]"
       :initial-breakpoint="1"
       handle
+      handle-behavior="none"
     >
       <SurveyListPage @select="onSurveySelected" />
     </ion-modal>
