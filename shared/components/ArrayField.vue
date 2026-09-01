@@ -20,7 +20,10 @@ const props = defineProps<{
   forceValidate?: boolean
   vocabularies?: VocabularySet[]
   mapComponent?: Component
+  resolveImagePath?: (path: string) => Promise<string | null>
 }>()
+
+const emit = defineEmits<{ busyChange: [value: boolean] }>()
 
 const modelValue = defineModel<Record<string, unknown>[]>({ default: () => [] })
 
@@ -155,7 +158,9 @@ watch(
             :force-validate="forceValidate"
             :vocabularies="props.vocabularies"
             :map-component="props.mapComponent"
+            :resolve-image-path="props.resolveImagePath"
             @update:model-value="updateItem(index, subField.id, $event)"
+            @busy-change="emit('busyChange', $event)"
           />
         </template>
       </div>

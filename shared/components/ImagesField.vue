@@ -107,7 +107,6 @@ const compressImage = (file: File): Promise<LocalImageItem> =>
   })
 
 const compressing = ref(false)
-watch(compressing, (val) => emit("busyChange", val))
 onUnmounted(() => {
   if (compressing.value) emit("busyChange", false)
 })
@@ -118,11 +117,13 @@ const handleChange = async (event: Event) => {
   const remaining = maxImages.value - modelValue.value.length
   const toProcess = Array.from(files).slice(0, remaining)
   compressing.value = true
+  emit("busyChange", true)
   try {
     const newItems = await Promise.all(toProcess.map(compressImage))
     modelValue.value = [...modelValue.value, ...newItems]
   } finally {
     compressing.value = false
+    emit("busyChange", false)
     if (fileInput.value) fileInput.value.value = ""
   }
 }
