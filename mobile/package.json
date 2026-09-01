@@ -28,8 +28,8 @@
     "@capacitor/status-bar": "^8.0.3",
     "@gouvfr/dsfr": "^1.15.2",
     "@gouvminint/vue-dsfr": "^8.19.0",
-    "@ionic/vue": "^8.8.18",
-    "@ionic/vue-router": "^8.8.18",
+    "@ionic/vue": "^9.0.0",
+    "@ionic/vue-router": "^9.0.0",
     "@tailwindcss/vite": "^4.3.3",
     "@vueuse/core": "^14.4.0",
     "idb": "^8.0.3",
@@ -37,7 +37,7 @@
     "pinia": "^4.0.3",
     "tailwindcss": "^4.2.1",
     "vue": "^3.5.41",
-    "vue-router": "^4.6.4",
+    "vue-router": "^5.0.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
