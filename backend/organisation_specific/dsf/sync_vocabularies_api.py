@@ -148,6 +148,9 @@ def sync_dsf_vocabularies_from_api(
         unites_bytes / 1024,
     )
 
+    all_types = [u.get("type") for u in unites_data]
+    nominal_count_raw = sum(1 for t in all_types if t == "NOMINAL")
+
     nominal_unites: dict[str, dict] = {}
     for u in unites_data:
         code = u.get("unite", "")
@@ -158,6 +161,14 @@ def sync_dsf_vocabularies_from_api(
             continue
         nominal_unites[code] = u
 
+    logger.info(
+        "Unités API : %d au total, %d NOMINAL, %d après blacklist, %d en base de données (DSF)",
+        len(unites_data),
+        nominal_count_raw,
+        len(nominal_unites),
+        VocabularySet.objects.filter(organisation=dsf_org).count(),
+    )
+
     if only_unite:
         if only_unite not in nominal_unites:
             logger.warning(
@@ -167,6 +178,7 @@ def sync_dsf_vocabularies_from_api(
             return {
                 "sets_created": 0,
                 "sets_updated": 0,
+                "sets_deactivated": 0,
                 "entries_created": 0,
                 "entries_updated": 0,
                 "entries_deactivated": 0,
@@ -266,12 +278,13 @@ def sync_dsf_vocabularies_from_api(
                 is_active=True,
             ).update(is_active=False)
             totals["entries_deactivated"] += deactivated
-            logger.warning(
-                "Unité '%s' : %d entrée(s) désactivée(s) : %s",
-                unite_code,
-                deactivated,
-                ", ".join(sorted(removed_codes)),
-            )
+            if deactivated:
+                logger.warning(
+                    "Unité '%s' : %d entrée(s) désactivée(s) : %s",
+                    unite_code,
+                    deactivated,
+                    ", ".join(sorted(removed_codes)),
+                )
 
     # Désactivation des VocabularySets DSF absents de l'API (synchronisation complète uniquement)
     if not only_unite and not dry_run:
