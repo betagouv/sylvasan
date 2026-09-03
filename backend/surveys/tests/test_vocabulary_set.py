@@ -82,6 +82,21 @@ class TestVocabularySetList(APITestCase):
         self.assertIn("name", vocab_data)
         self.assertNotIn("entries", vocab_data)
 
+    @authenticate
+    def test_inactive_vocabulary_set_excluded_from_list(self):
+        """
+        Un VocabularySet inactif n'apparaît pas dans la liste, même s'il est accessible par organisation
+        """
+        active = VocabularySetFactory(organisation=None, is_active=True)
+        VocabularySetFactory(organisation=None, is_active=False)
+
+        response = self.client.get(reverse("vocabulary_set_list"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [v["id"] for v in response.json()]
+        self.assertIn(active.id, ids)
+        self.assertEqual(len(ids), 1)
+
 
 class TestVocabularySetDetail(APITestCase):
     def test_unauthenticated_cannot_access_detail(self):
@@ -157,6 +172,17 @@ class TestVocabularySetDetail(APITestCase):
         self.assertEqual(entry_data["code"], entry.code)
         self.assertEqual(entry_data["label"], entry.label)
         self.assertEqual(entry_data["position"], entry.position)
+
+    @authenticate
+    def test_inactive_vocabulary_set_returns_404(self):
+        """
+        Un VocabularySet inactif renvoie une 404, même s'il est accessible par organisation
+        """
+        inactive = VocabularySetFactory(organisation=None, is_active=False)
+
+        response = self.client.get(reverse("vocabulary_set_detail", kwargs={"code": inactive.code}), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
 class TestMobileVocabularySetList(APITestCase):
@@ -234,6 +260,21 @@ class TestMobileVocabularySetList(APITestCase):
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
         vocab = VocabularySetFactory(organisation=None)
         SurveyFactory(organisation=other_org, json_schema=self._schema_with_vocabulary(vocab.code))
+
+        response = self.client.get(reverse("mobile_vocabulary_set_list"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), [])
+
+    @authenticate
+    def test_inactive_vocabulary_set_excluded_from_mobile_list(self):
+        """
+        Un VocabularySet inactif référencé dans une enquête n'est pas retourné dans la liste mobile
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        inactive_vocab = VocabularySetFactory(organisation=None, is_active=False)
+        SurveyFactory(organisation=org, json_schema=self._schema_with_vocabulary(inactive_vocab.code))
 
         response = self.client.get(reverse("mobile_vocabulary_set_list"), format="json")
 

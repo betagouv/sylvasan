@@ -1,9 +1,19 @@
+import logging
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import connections
 
 from organisations.models import Organisation
 from surveys.models import VocabularyEntry, VocabularySet
+
+from organisation_specific.dsf.sync_vocabularies_api import (
+    BLACKLISTED_UNITES,
+    DSFApiError,
+    sync_dsf_vocabularies_from_api,
+)
+
+logger = logging.getLogger(__name__)
 
 VOCABULARIES = [
     {
@@ -43,35 +53,6 @@ VOCABULARIES = [
     },
 ]
 
-BLACKLISTED_VOCABULARIES = [
-    "CMM",
-    "CM2013",
-    "CM",
-    "CM2016",
-    "CM2019",
-    "QD8",
-    "CODESP",
-    "CT",
-    "QD",
-    "PB",
-    "PBV2025",
-    "PBPA2024",
-    "PBV2024",
-    "PBV2023",
-    "PBPA2023",
-    "PBPA2022",
-    "PBV2022",
-    "PBPA2021",
-    "PBV2021",
-    "PBPA2020",
-    "PBV2020",
-    "PB123",
-    "PBPA2019",
-    "PBV2019",
-    "PBPA2018",
-    "PBV2018",
-]
-
 
 class Command(BaseCommand):
     help = "Synchronise les référentiels DSF depuis la base de référence metadsf"
@@ -92,11 +73,20 @@ class Command(BaseCommand):
             action="store_true",
             help="Synchronise tous les référentiels disponibles dans metadsf",
         )
+        parser.add_argument(
+            "--api",
+            action="store_true",
+            help="Synchronise depuis l'API IGN/DSF (plutôt que la base de référence metadsf)",
+        )
 
     def handle(self, *args, **options):
         dry_run = options["dry_run"]
         only_vocab = options.get("vocabulary")
         sync_all = options["all"]
+
+        if options["api"]:
+            self._handle_api(dry_run=dry_run, only_vocab=only_vocab)
+            return
 
         if "dsf_ref" not in settings.DATABASES:
             self.stderr.write(
@@ -126,6 +116,30 @@ class Command(BaseCommand):
 
         for vocab_def in vocabs_to_sync:
             self._sync_vocabulary(dsf, vocab_def, dry_run)
+
+    def _handle_api(self, dry_run: bool, only_vocab: str | None) -> None:
+        try:
+            totals = sync_dsf_vocabularies_from_api(dry_run=dry_run, only_unite=only_vocab)
+        except Organisation.DoesNotExist:
+            self.stderr.write(self.style.ERROR("Organisation DSF introuvable. Créez-la d'abord via l'admin."))
+            return
+        except DSFApiError as exc:
+            self.stderr.write(self.style.ERROR(f"Échec de la synchronisation via API : {exc}"))
+            return
+
+        if dry_run:
+            self.stdout.write(self.style.WARNING("[dry-run] Aucune modification appliquée"))
+            return
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Synchronisation terminée : "
+                f"{totals['sets_created']} sets créés, {totals['sets_updated']} mis à jour, "
+                f"{totals['sets_deactivated']} sets désactivés, "
+                f"{totals['entries_created']} entrées créées, {totals['entries_updated']} mises à jour, "
+                f"{totals['entries_deactivated']} désactivées"
+            )
+        )
 
     def _fetch_all_unites(self, unite: str | None = None) -> list[dict]:
         with connections["dsf_ref"].cursor() as cursor:
@@ -157,7 +171,7 @@ class Command(BaseCommand):
                 "unite": row[0],
             }
             for row in rows
-            if row[0] not in BLACKLISTED_VOCABULARIES
+            if row[0] not in BLACKLISTED_UNITES
         ]
 
     def _sync_vocabulary(self, organisation, vocab_def, dry_run):
