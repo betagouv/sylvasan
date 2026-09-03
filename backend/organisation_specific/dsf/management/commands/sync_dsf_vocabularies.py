@@ -135,6 +135,7 @@ class Command(BaseCommand):
             self.style.SUCCESS(
                 f"Synchronisation terminée : "
                 f"{totals['sets_created']} sets créés, {totals['sets_updated']} mis à jour, "
+                f"{totals['sets_deactivated']} sets désactivés, "
                 f"{totals['entries_created']} entrées créées, {totals['entries_updated']} mises à jour, "
                 f"{totals['entries_deactivated']} désactivées"
             )

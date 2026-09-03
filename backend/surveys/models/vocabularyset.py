@@ -14,6 +14,7 @@ class VocabularySet(Historisable):
     )
     code = models.CharField()
     name = models.CharField("nom")
+    is_active = models.BooleanField("actif", default=True)
 
     def __str__(self):
         return f"{self.name} ({self.code})"

@@ -208,6 +208,7 @@ def sync_dsf_vocabularies_from_api(
     totals = {
         "sets_created": 0,
         "sets_updated": 0,
+        "sets_deactivated": 0,
         "entries_created": 0,
         "entries_updated": 0,
         "entries_deactivated": 0,
@@ -228,10 +229,10 @@ def sync_dsf_vocabularies_from_api(
                 logger.debug("  [dry-run] %s — %s (position: %s)", m.get("mode"), m.get("libelle"), m.get("position"))
             continue
 
-        vocab, created = VocabularySet.objects.get_or_create(
+        vocab, created = VocabularySet.objects.update_or_create(
             organisation=dsf_org,
             code=unite_code,
-            defaults={"name": name},
+            defaults={"name": name, "is_active": True},
         )
         if created:
             totals["sets_created"] += 1
@@ -272,11 +273,26 @@ def sync_dsf_vocabularies_from_api(
                 ", ".join(sorted(removed_codes)),
             )
 
+    # Désactivation des VocabularySets DSF absents de l'API (synchronisation complète uniquement)
+    if not only_unite and not dry_run:
+        sets_deactivated = (
+            VocabularySet.objects.filter(
+                organisation=dsf_org,
+                is_active=True,
+            )
+            .exclude(code__in=nominal_unites)
+            .update(is_active=False)
+        )
+        totals["sets_deactivated"] = sets_deactivated
+        if sets_deactivated:
+            logger.warning("%d VocabularySet(s) désactivé(s) (absents de l'API)", sets_deactivated)
+
     logger.info(
-        "=== Synchronisation terminée : %d sets créés, %d mis à jour, "
+        "=== Synchronisation terminée : %d sets créés, %d mis à jour, %d désactivés, "
         "%d entrées créées, %d mises à jour, %d désactivées ===",
         totals["sets_created"],
         totals["sets_updated"],
+        totals["sets_deactivated"],
         totals["entries_created"],
         totals["entries_updated"],
         totals["entries_deactivated"],

@@ -18,14 +18,17 @@ def _active_entries_prefetch():
 def _accessible_vocab_queryset(user):
     """VocabularySets visibles par l'utilisateur (son organisation ou partagés)."""
     org_ids = user.memberships.values_list("organisation_id", flat=True)
-    return VocabularySet.objects.filter(Q(organisation__in=org_ids) | Q(organisation__isnull=True)).order_by("code")
+    return VocabularySet.objects.filter(
+        Q(organisation__in=org_ids) | Q(organisation__isnull=True),
+        is_active=True,
+    ).order_by("code")
 
 
 class VocabularySetListView(ListAPIView):
     """Liste des référentiels accessibles — code et nom uniquement, sans les entrées."""
 
     serializer_class = VocabularySetDisplaySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         return _accessible_vocab_queryset(self.request.user)
@@ -35,7 +38,7 @@ class VocabularySetDetailView(RetrieveAPIView):
     """Détail d'un référentiel avec toutes ses entrées actives."""
 
     serializer_class = VocabularySetSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated,)
     lookup_field = "code"
 
     def get_queryset(self):
@@ -49,7 +52,7 @@ class MobileVocabularySetListView(ListAPIView):
     """
 
     serializer_class = VocabularySetSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
         user = self.request.user

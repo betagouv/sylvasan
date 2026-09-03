@@ -203,6 +203,52 @@ class SyncDsfVocabulariesApiTest(TestCase):
         obsolete = VocabularyEntry.objects.get(vocabulary_set=vocab, code="OBSOLETE")
         self.assertFalse(obsolete.is_active)
 
+    @patch("organisation_specific.dsf.sync_vocabularies_api.requests.get")
+    def test_deactivates_vocabulary_set_absent_from_api(self, mock_get):
+        """
+        Un VocabularySet DSF présent en base mais absent de l'API est désactivé (is_active=False).
+        """
+        VocabularySet.objects.create(
+            organisation=self.dsf_org, code="OBSOLETE", name="Référentiel obsolète", is_active=True
+        )
+        mock_get.side_effect = _standard_side_effect()
+
+        result = sync_dsf_vocabularies_from_api()
+
+        self.assertEqual(result["sets_deactivated"], 1)
+        obsolete = VocabularySet.objects.get(organisation=self.dsf_org, code="OBSOLETE")
+        self.assertFalse(obsolete.is_active)
+
+    @patch("organisation_specific.dsf.sync_vocabularies_api.requests.get")
+    def test_reactivates_previously_inactive_vocabulary_set(self, mock_get):
+        """
+        Un VocabularySet précédemment désactivé est réactivé si l'API le renvoie à nouveau.
+        """
+        VocabularySet.objects.create(organisation=self.dsf_org, code="0/1", name="Ancien nom", is_active=False)
+        mock_get.side_effect = _standard_side_effect()
+
+        result = sync_dsf_vocabularies_from_api()
+
+        self.assertEqual(result["sets_deactivated"], 0)
+        reactivated = VocabularySet.objects.get(organisation=self.dsf_org, code="0/1")
+        self.assertTrue(reactivated.is_active)
+
+    @patch("organisation_specific.dsf.sync_vocabularies_api.requests.get")
+    def test_deactivation_skipped_for_only_unite(self, mock_get):
+        """
+        Avec only_unite, les autres VocabularySets ne sont pas désactivés même s'ils sont absents.
+        """
+        other = VocabularySet.objects.create(
+            organisation=self.dsf_org, code="AUTRE", name="Autre référentiel", is_active=True
+        )
+        mock_get.side_effect = _standard_side_effect()
+
+        result = sync_dsf_vocabularies_from_api(only_unite="0/1")
+
+        self.assertEqual(result["sets_deactivated"], 0)
+        other.refresh_from_db()
+        self.assertTrue(other.is_active)
+
     # ------------------------------------------------------------------
     # Dry-run
     # ------------------------------------------------------------------
