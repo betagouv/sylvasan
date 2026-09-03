@@ -212,10 +212,10 @@ class Command(BaseCommand):
                 self.stdout.write(f"{mode} — {libelle} (position: {position})")
             return
 
-        vocab, created = VocabularySet.objects.get_or_create(
+        vocab, created = VocabularySet.objects.update_or_create(
             organisation=organisation,
             code=code,
-            defaults={"name": name},
+            defaults={"name": name, "is_active": True},
         )
 
         if created:
