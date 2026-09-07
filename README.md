@@ -103,6 +103,7 @@ DSF_OAUTH2_PORTAIL_URL= Utilisé pour le flow Oauth avec le DSF. Le portail Oaut
 DSF_OAUTH2_REDIRECT_APP_URI= Utilisé pour le flow Oauth avec le DSF. L'URL de redirection pour l'app mobile.
 DSF_OAUTH2_REDIRECT_WEB_URI= Utilisé pour le flow Oauth avec le DSF. L'URL de redirection pour l'app web.
 DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT= Utilisé pour le flow Oauth avec le DSF. URL à utiliser pour la redirection après succès ou échec de l'OAuth dans le web.
+DATA_UPLOAD_MAX_MEMORY_SIZE_MB= Optionnel - taille maximale du corps d'une requête en mégaoctets (par défaut : 3). À augmenter temporairement si des requêtes volumineuses (ex. images non compressées) sont rejetées par le serveur.
 ```
 
 #### Variables d'environnement web

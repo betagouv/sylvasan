@@ -180,6 +180,10 @@ if default_file_storage == "storages.backends.s3.S3Storage":
 MEDIA_ROOT = env("MEDIA_ROOT", default=os.path.join(BACKEND_DIR, "media"))
 MEDIA_URL = "/media/"
 
+# Default is 2.5 MB. Raise via DATA_UPLOAD_MAX_MEMORY_SIZE_MB env var when large
+# image payloads (pre-compression fix) need to go through. Reset after.
+DATA_UPLOAD_MAX_MEMORY_SIZE = env("DATA_UPLOAD_MAX_MEMORY_SIZE_MB", cast=int, default=3) * 1024 * 1024
+
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 LOGIN_URL = "/s-identifier"
