@@ -9,10 +9,12 @@
 </route>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import { useApiFetch } from "../utils/data-fetching.ts"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
 
 const { data, isFetching } = useApiFetch("/stats").get().json()
+const activeAccordion = ref("")
 
 const flatX = (stat: any) => JSON.stringify(stat.data.labels)
 const yLine = (stat: any) => JSON.stringify(stat.data.datasets[0].data)
@@ -38,9 +40,13 @@ const yMax = (stat: any) => {
       <ProgressSpinner />
     </div>
 
-    <div v-else class="flex flex-col gap-10">
-      <div v-for="stat in data" :key="stat.id">
-        <h2>{{ stat.title }}</h2>
+    <DsfrAccordionsGroup v-else v-model="activeAccordion">
+      <DsfrAccordion
+        v-for="stat in data"
+        :key="stat.id"
+        :id="stat.id"
+        :title="stat.title"
+      >
         <p class="fr-text--lead">{{ stat.description }}</p>
         <bar-line-chart
           :x="flatX(stat)"
@@ -52,7 +58,7 @@ const yMax = (stat: any) => {
           :y-line-max="yMax(stat)"
           selected-palette="categorical"
         />
-      </div>
-    </div>
+      </DsfrAccordion>
+    </DsfrAccordionsGroup>
   </div>
 </template>
