@@ -164,6 +164,13 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/StatsPage': RouteRecordInfo<
+      '/StatsPage',
+      '/stats',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
     '/DataDeletion': RouteRecordInfo<
       '/DataDeletion',
       '/suppression-donnees',
@@ -331,6 +338,14 @@ declare module 'vue-router/auto-routes' {
     'src/pages/LoginPage.vue': {
       routes:
         | '/LoginPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/StatsPage.vue': {
+      routes:
+        | '/StatsPage'
       views:
         | never
       pathParamNames:

@@ -9,7 +9,19 @@ export default defineConfig(({ mode }) => ({
   ssr: {
     noExternal: mode === "development" ? ["vue-router"] : [],
   },
-  plugins: [VueRouter(), vue(), tailwindcss()],
+  plugins: [
+    VueRouter(),
+    vue({
+      template: {
+        compilerOptions: {
+          // Les composants dsfr-chart sont natifs
+          isCustomElement: (tag) =>
+            tag.endsWith("-chart") || tag === "data-box",
+        },
+      },
+    }),
+    tailwindcss(),
+  ],
   css: {
     lightningcss: {
       // Fix d'un bug de lightningCSS décrit ici : https://github.com/parcel-bundler/lightningcss/issues/214
@@ -21,7 +33,10 @@ export default defineConfig(({ mode }) => ({
     alias: {
       "@shared-types": path.resolve(import.meta.dirname, "../shared/types"),
       "@shared-utils": path.resolve(import.meta.dirname, "../shared/utils"),
-      "@shared-components": path.resolve(import.meta.dirname, "../shared/components"),
+      "@shared-components": path.resolve(
+        import.meta.dirname,
+        "../shared/components"
+      ),
     },
   },
 }))
