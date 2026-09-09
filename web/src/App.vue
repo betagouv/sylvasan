@@ -20,6 +20,16 @@ const logoText = [
 
 const currentRoute = useRoute()
 useTitle(computed(() => `${currentRoute.meta.title || ""} - SylvaSan`))
+
+const afterMandatoryLinks = [
+  {
+    label: "Mesures d'impact",
+    // button: true,
+    // class: 'fr-icon-theme-fill fr-link--icon-left fr-px-2v',
+    to: "/stats",
+    // onclick: () => console.log('Settings'),
+  },
+]
 </script>
 
 <template>
@@ -44,7 +54,11 @@ useTitle(computed(() => `${currentRoute.meta.title || ""} - SylvaSan`))
   <main id="main-content">
     <router-view></router-view>
   </main>
-  <DsfrFooter :logo-text="logoText" id="footer">
+  <DsfrFooter
+    :logo-text="logoText"
+    :after-mandatory-links="afterMandatoryLinks"
+    id="footer"
+  >
     <template v-slot:description>
       <p>SylvaSan</p>
     </template>
