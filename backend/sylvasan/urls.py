@@ -10,6 +10,7 @@ urlpatterns = [
     path("platform/", include("surveys.urls")),
     path("platform/", include("responses.urls")),
     path("platform/", include("organisation_specific.dsf.urls")),
+    path("platform/", include("stats.urls")),
 ]
 
 if settings.DEBUG:

@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "responses",
     "surveys",
     "organisation_specific.dsf",
+    "stats",
 ]
 
 MIDDLEWARE = [
