@@ -46,7 +46,7 @@ class StatsAPIView(APIView):
         stats.append(
             {
                 "id": "active-users",
-                "type": "line",
+                "type": "bar-line",
                 "title": "Comptes actifs",
                 "description": "Nombre cumulatif de comptes actifs, par mois de création.",
                 "data": {
@@ -60,8 +60,8 @@ class StatsAPIView(APIView):
         stats.append(
             {
                 "id": "active-surveys",
-                "type": "line",
-                "title": "Enquétes actives",
+                "type": "bar-line",
+                "title": "Enquêtes actives",
                 "description": "Nombre cumulatif d'enquêtes actives, par mois de création.",
                 "data": {
                     "labels": labels,
@@ -74,7 +74,7 @@ class StatsAPIView(APIView):
         stats.append(
             {
                 "id": "active-responses",
-                "type": "line",
+                "type": "bar-line",
                 "title": "Observations",
                 "description": "Nombre cumulatif d'observations, par mois de création.",
                 "data": {

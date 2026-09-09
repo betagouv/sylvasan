@@ -14,10 +14,17 @@ import ProgressSpinner from "../components/ProgressSpinner.vue"
 
 const { data, isFetching } = useApiFetch("/stats").get().json()
 
-const chartTag = (type: string) => `${type}-chart`
-const chartX = (stat: any) => JSON.stringify([stat.data.labels])
-const chartY = (stat: any) => JSON.stringify(stat.data.datasets.map((d: any) => d.data))
-const chartName = (stat: any) => JSON.stringify(stat.data.datasets.map((d: any) => d.label))
+const flatX = (stat: any) => JSON.stringify(stat.data.labels)
+const yLine = (stat: any) => JSON.stringify(stat.data.datasets[0].data)
+const yBar = (stat: any) => {
+  const cumulative: number[] = stat.data.datasets[0].data
+  return JSON.stringify(cumulative.map((v: number, i: number) => (i === 0 ? v : v - cumulative[i - 1])))
+}
+const nameLine = (stat: any) => stat.data.datasets[0].label
+const yMax = (stat: any) => {
+  const cumulative: number[] = stat.data.datasets[0].data
+  return cumulative.length ? cumulative[cumulative.length - 1] : undefined
+}
 </script>
 
 <template>
@@ -35,11 +42,14 @@ const chartName = (stat: any) => JSON.stringify(stat.data.datasets.map((d: any) 
       <div v-for="stat in data" :key="stat.id">
         <h2>{{ stat.title }}</h2>
         <p class="fr-text--lead">{{ stat.description }}</p>
-        <component
-          :is="chartTag(stat.type)"
-          :x="chartX(stat)"
-          :y="chartY(stat)"
-          :name="chartName(stat)"
+        <bar-line-chart
+          :x="flatX(stat)"
+          :y-bar="yBar(stat)"
+          :y-line="yLine(stat)"
+          name-bar="Par mois"
+          :name-line="nameLine(stat)"
+          :y-bar-max="yMax(stat)"
+          :y-line-max="yMax(stat)"
           selected-palette="categorical"
         />
       </div>
