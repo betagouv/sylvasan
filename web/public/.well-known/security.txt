@@ -1,0 +1,28 @@
+Contact: mailto:securite@sylvasan.beta.gouv.fr
+Expires: 2027-09-10T12:28:00.000Z
+Encryption: https://sylvasan.beta.gouv.fr/.well-known/pgp-publickey.txt
+Preferred-Languages: FR, EN
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Contact: mailto:securite@sylvasan.beta.gouv.fr
+Expires: 2027-09-10T12:28:00.000Z
+Encryption: https://sylvasan.beta.gouv.fr/.well-known/pgp-publickey.txt
+Preferred-Languages: FR, EN
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEE4fXAUSAqBHwwe2RrAgx8vUPwfqQFAmqj+FoACgkQAgx8vUPw
+fqRqyA/9HxhlSAcW1mDFZt5OL8VEfQMWEXxJZ4xKr4hCfQrqexgzR6LCWNljDXlj
+OjgWWtb/rtwPbunqexcBsUVkx4q3SM7HJE33uswdZSYUmuMnlFqrLvXs9rqoqAy8
+tVi/h391fhwOu9xAvnupO+A6gAOE3cnbWlhBm4JmH5fyzbJhSFyALqkBg/vy32HN
+toHFJxWOt2R6kf+08lQsShFRWKErk3umIV4Hm3B9NlkIodWVNh4PS5qQ2KpuiP95
+HOa9NFnkyAzSkGdK2GXIiC9rlRXNatk/CAOZ6GsLBWX0cTABB1wfz8JwL2FO1mP5
+BrF7+P58wGTTy5aC1hDYB6i39HMwNwmsgm2tWgMkt1mIdYn4iCw7ALONhhIGNvTu
+1eIfrLKLdFgmE/sYEh96xD3XNmTW5boSf88LqB1XUfNojuNgvEEPTTcrXBu8NwkG
+6ET9pKiZtt4ZQ0EZuctRss8Eny3Tx7+aEubJ05yVERrzUgxKQ1v5rt1b1BMO/gxV
+i+A3f3FKxan/7ZTaFEJSEHHf4QNnsSRADkS8GXSbGHikZAhOmGx01Er3mc+93ej4
+2jt8siHa51ypOT/n8NGZK15Qo4YjRAfvBL9NCZmBHl8gcLLafA5ydO+3jBODLdAJ
+vKkENJxBPH22HY31Emb32Mr4DY7RphKBq4odZ1HUiFWmLyPSP10=
+=5N/y
+-----END PGP SIGNATURE-----
