@@ -86,7 +86,7 @@ const confirmFieldDeletion = () => {
 <template>
   <div>
     <div
-      class="rounded bg-white border border-slate-50 p-4 flex gap-6 max-w-[100%]"
+      class="rounded bg-white border border-slate-50 px-2 py-4 flex gap-2 max-w-[100%]"
     >
       <div class="flex flex-col gap-2 items-center justify-center">
         <DsfrButton
@@ -303,11 +303,22 @@ const confirmFieldDeletion = () => {
                 @move-up="emit('moveSubFieldUp', subField.id)"
                 @move-down="emit('moveSubFieldDown', subField.id)"
                 @edit="(updatedSf) => emit('editSubField', updatedSf, subField)"
-                @add-sub-field="(ssf) => emit('addSubSubField', subField.id, ssf)"
-                @remove-sub-field="(ssfId) => emit('removeSubSubField', subField.id, ssfId)"
-                @move-sub-field-up="(ssfId) => emit('moveSubSubFieldUp', subField.id, ssfId)"
-                @move-sub-field-down="(ssfId) => emit('moveSubSubFieldDown', subField.id, ssfId)"
-                @edit-sub-field="(updated, old) => emit('editSubSubField', subField.id, updated, old)"
+                @add-sub-field="
+                  (ssf) => emit('addSubSubField', subField.id, ssf)
+                "
+                @remove-sub-field="
+                  (ssfId) => emit('removeSubSubField', subField.id, ssfId)
+                "
+                @move-sub-field-up="
+                  (ssfId) => emit('moveSubSubFieldUp', subField.id, ssfId)
+                "
+                @move-sub-field-down="
+                  (ssfId) => emit('moveSubSubFieldDown', subField.id, ssfId)
+                "
+                @edit-sub-field="
+                  (updated, old) =>
+                    emit('editSubSubField', subField.id, updated, old)
+                "
               />
             </div>
 
