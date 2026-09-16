@@ -53,6 +53,11 @@ const emit = defineEmits([
   "removeSubField",
   "moveSubFieldUp",
   "moveSubFieldDown",
+  "addSubSubField",
+  "removeSubSubField",
+  "moveSubSubFieldUp",
+  "moveSubSubFieldDown",
+  "editSubSubField",
 ])
 
 const confirmDeleteOpened = ref(false)
@@ -266,7 +271,7 @@ const confirmFieldDeletion = () => {
         </div>
 
         <!-- Champ Liste d'objets -->
-        <div v-if="field.ui?.widget === 'array'">
+        <div v-if="field.ui?.widget === 'array' && (depth ?? 0) < 2">
           <div class="flex gap-2 mb-1" v-if="field.ui?.addLabel">
             <div class="text-gray-500 text-medium">Titre du bouton d'ajout</div>
             <div>{{ field.ui.addLabel }}</div>
@@ -292,10 +297,16 @@ const confirmFieldDeletion = () => {
                 :key="`subfield-${field.id}-${subField.id}`"
                 :field="subField"
                 :depth="(depth ?? 0) + 1"
+                :all-field-ids="allFieldIds"
                 @delete="emit('removeSubField', subField.id)"
                 @move-up="emit('moveSubFieldUp', subField.id)"
                 @move-down="emit('moveSubFieldDown', subField.id)"
                 @edit="(updatedSf) => emit('editSubField', updatedSf, subField)"
+                @add-sub-field="(ssf) => emit('addSubSubField', subField.id, ssf)"
+                @remove-sub-field="(ssfId) => emit('removeSubSubField', subField.id, ssfId)"
+                @move-sub-field-up="(ssfId) => emit('moveSubSubFieldUp', subField.id, ssfId)"
+                @move-sub-field-down="(ssfId) => emit('moveSubSubFieldDown', subField.id, ssfId)"
+                @edit-sub-field="(updated, old) => emit('editSubSubField', subField.id, updated, old)"
               />
             </div>
 
@@ -308,10 +319,9 @@ const confirmFieldDeletion = () => {
             />
           </div>
 
-          <!-- NewFieldModal restricted to non-array types -->
           <NewFieldModal
             :opened="subFieldModalOpened"
-            :exclude-widgets="['array']"
+            :exclude-widgets="(depth ?? 0) >= 1 ? ['array'] : []"
             :field-ids="field.fields?.map((f) => f.id) ?? []"
             :all-field-ids="allFieldIds"
             @add="handleAddSubField"
