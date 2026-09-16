@@ -134,10 +134,19 @@ const getSubFieldError = (
                   >
                     <div v-for="subSubField in (subField.fields ?? [])" :key="subSubField.id">
                       <p class="fr-text--sm text-stone-400 mb-0!">{{ subSubField.label }}</p>
-                      <p class="font-medium mb-0!" v-if="resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets)">
-                        {{ resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets) }}
-                      </p>
-                      <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+                      <template v-if="subSubField.ui?.widget === 'image'">
+                        <SummaryImage
+                          v-if="Array.isArray(subItem[subSubField.id]) && (subItem[subSubField.id] as unknown[]).length"
+                          :images="(subItem[subSubField.id] as ImageItem[])"
+                        />
+                        <p v-else class="italic mb-0! text-stone-500">Non renseigné</p>
+                      </template>
+                      <template v-else>
+                        <p class="font-medium mb-0!" v-if="resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets)">
+                          {{ resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets) }}
+                        </p>
+                        <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+                      </template>
                     </div>
                   </div>
                 </template>
