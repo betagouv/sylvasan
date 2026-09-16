@@ -297,6 +297,7 @@ const confirmFieldDeletion = () => {
                 :key="`subfield-${field.id}-${subField.id}`"
                 :field="subField"
                 :depth="(depth ?? 0) + 1"
+                :field-ids="field.fields?.map((f) => f.id) ?? []"
                 :all-field-ids="allFieldIds"
                 @delete="emit('removeSubField', subField.id)"
                 @move-up="emit('moveSubFieldUp', subField.id)"
