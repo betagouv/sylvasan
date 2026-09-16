@@ -56,7 +56,10 @@ watch([response, isFetching], async ([val, fetching]) => {
   const schema = val.survey?.jsonSchema
   const allFields: SurveyField[] = [
     ...(schema?.fields ?? []),
-    ...(schema?.fields ?? []).flatMap((f: SurveyField) => f.fields ?? []),
+    ...(schema?.fields ?? []).flatMap((f: SurveyField) => [
+      ...(f.fields ?? []),
+      ...(f.fields ?? []).flatMap((sf: SurveyField) => sf.fields ?? []),
+    ]),
   ]
   surveyCodes.value = [
     ...new Set(
