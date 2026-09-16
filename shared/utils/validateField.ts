@@ -90,12 +90,26 @@ export function validateResponse(
     if (field.fields && Array.isArray(data[field.id])) {
       const items = data[field.id] as Record<string, unknown>[]
       for (const item of items) {
-        const subFields: SurveyField[] = field.fields!
+        const subFields: SurveyField[] = field.fields
         for (const subField of subFields) {
           const subError = validateField(subField, item[subField.id] ?? null)
           if (subError) {
             const key = `${field.id}.${subField.id}`
             if (!errors[key]) errors[key] = subError
+          }
+
+          if (subField.fields && Array.isArray(item[subField.id])) {
+            const subItems = item[subField.id] as Record<string, unknown>[]
+            const subSubFields: SurveyField[] = subField.fields
+            for (const subItem of subItems) {
+              for (const subSubField of subSubFields) {
+                const subSubError = validateField(subSubField, subItem[subSubField.id] ?? null)
+                if (subSubError) {
+                  const key = `${field.id}.${subField.id}.${subSubField.id}`
+                  if (!errors[key]) errors[key] = subSubError
+                }
+              }
+            }
           }
         }
       }

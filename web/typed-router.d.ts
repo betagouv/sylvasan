@@ -104,8 +104,8 @@ declare module 'vue-router/auto-routes' {
     '/SurveyPage': RouteRecordInfo<
       '/SurveyPage',
       '/enquete/:id',
-      Record<never, never>,
-      Record<never, never>,
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
       | never
     >,
     '/SurveyListPage': RouteRecordInfo<
@@ -118,8 +118,8 @@ declare module 'vue-router/auto-routes' {
     '/FollowUpCreationModificationPage': RouteRecordInfo<
       '/FollowUpCreationModificationPage',
       '/enquetes/:surveyId/creation-suivi',
-      Record<never, never>,
-      Record<never, never>,
+      { surveyId: ParamValue<true> },
+      { surveyId: ParamValue<false> },
       | never
     >,
     '/LegalNoticesPage': RouteRecordInfo<
@@ -153,8 +153,8 @@ declare module 'vue-router/auto-routes' {
     '/ResponsePage': RouteRecordInfo<
       '/ResponsePage',
       '/response/:id',
-      Record<never, never>,
-      Record<never, never>,
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
       | never
     >,
     '/LoginPage': RouteRecordInfo<

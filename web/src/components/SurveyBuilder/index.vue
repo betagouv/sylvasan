@@ -75,7 +75,10 @@ const activePageFields = computed(() => {
 const allFieldIds = computed(() =>
   (schema.value.fields ?? []).flatMap((f) => [
     f.id,
-    ...(f.fields?.map((sf) => sf.id) ?? []),
+    ...(f.fields?.flatMap((sf) => [
+      sf.id,
+      ...(sf.fields?.map((ssf) => ssf.id) ?? []),
+    ]) ?? []),
   ])
 )
 
@@ -269,6 +272,133 @@ const moveSubFieldUp = async (parentFieldId: string, subFieldId: string) => {
   await forceTabsHeightRecalc()
 }
 
+const addSubSubField = async (
+  parentFieldId: string,
+  childFieldId: string,
+  subSubField: SurveyField
+) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((field) =>
+      field.id === parentFieldId
+        ? {
+            ...field,
+            fields: (field.fields ?? []).map((subField) =>
+              subField.id === childFieldId
+                ? { ...subField, fields: [...(subField.fields ?? []), subSubField] }
+                : subField
+            ),
+          }
+        : field
+    ),
+  }
+  await forceTabsHeightRecalc()
+}
+
+const editSubSubField = (
+  parentFieldId: string,
+  childFieldId: string,
+  updatedSubSubField: SurveyField,
+  oldSubSubField: SurveyField
+) => {
+  const idChanged = updatedSubSubField.id !== oldSubSubField.id
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((field) => {
+      if (field.id !== parentFieldId) return field
+      return {
+        ...field,
+        fields: (field.fields ?? []).map((subField) => {
+          if (subField.id !== childFieldId) return subField
+          return {
+            ...subField,
+            fields: (subField.fields ?? []).map((subSubField) => {
+              if (subSubField.id === oldSubSubField.id) return updatedSubSubField
+              if (!idChanged) return subSubField
+              return {
+                ...subSubField,
+                condition: renameConditionField(subSubField.condition, oldSubSubField.id, updatedSubSubField.id),
+              }
+            }),
+          }
+        }),
+      }
+    }),
+  }
+}
+
+const removeSubSubField = async (
+  parentFieldId: string,
+  childFieldId: string,
+  subSubFieldId: string
+) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((field) =>
+      field.id === parentFieldId
+        ? {
+            ...field,
+            fields: (field.fields ?? []).map((subField) =>
+              subField.id === childFieldId
+                ? { ...subField, fields: (subField.fields ?? []).filter((subSubField) => subSubField.id !== subSubFieldId) }
+                : subField
+            ),
+          }
+        : field
+    ),
+  }
+  await forceTabsHeightRecalc()
+}
+
+const moveSubSubFieldUp = async (
+  parentFieldId: string,
+  childFieldId: string,
+  subSubFieldId: string
+) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((field) => {
+      if (field.id !== parentFieldId) return field
+      return {
+        ...field,
+        fields: (field.fields ?? []).map((subField) => {
+          if (subField.id !== childFieldId) return subField
+          const subSubFields = [...(subField.fields ?? [])]
+          const index = subSubFields.findIndex((subSubField) => subSubField.id === subSubFieldId)
+          if (index <= 0) return subField
+          ;[subSubFields[index - 1], subSubFields[index]] = [subSubFields[index], subSubFields[index - 1]]
+          return { ...subField, fields: subSubFields }
+        }),
+      }
+    }),
+  }
+  await forceTabsHeightRecalc()
+}
+
+const moveSubSubFieldDown = async (
+  parentFieldId: string,
+  childFieldId: string,
+  subSubFieldId: string
+) => {
+  schema.value = {
+    ...schema.value,
+    fields: schema.value.fields.map((field) => {
+      if (field.id !== parentFieldId) return field
+      return {
+        ...field,
+        fields: (field.fields ?? []).map((subField) => {
+          if (subField.id !== childFieldId) return subField
+          const subSubFields = [...(subField.fields ?? [])]
+          const index = subSubFields.findIndex((subSubField) => subSubField.id === subSubFieldId)
+          if (index === -1 || index >= subSubFields.length - 1) return subField
+          ;[subSubFields[index], subSubFields[index + 1]] = [subSubFields[index + 1], subSubFields[index]]
+          return { ...subField, fields: subSubFields }
+        }),
+      }
+    }),
+  }
+}
+
 const moveSubFieldDown = async (parentFieldId: string, subFieldId: string) => {
   schema.value = {
     ...schema.value,
@@ -430,6 +560,21 @@ const confirmPageDeletion = async () => {
                 "
                 @move-sub-field-down="
                   (subFieldId) => moveSubFieldDown(field.id, subFieldId)
+                "
+                @add-sub-sub-field="
+                  (childId, ssf) => addSubSubField(field.id, childId, ssf)
+                "
+                @remove-sub-sub-field="
+                  (childId, ssfId) => removeSubSubField(field.id, childId, ssfId)
+                "
+                @move-sub-sub-field-up="
+                  (childId, ssfId) => moveSubSubFieldUp(field.id, childId, ssfId)
+                "
+                @move-sub-sub-field-down="
+                  (childId, ssfId) => moveSubSubFieldDown(field.id, childId, ssfId)
+                "
+                @edit-sub-sub-field="
+                  (childId, updated, old) => editSubSubField(field.id, childId, updated, old)
                 "
                 class="mb-1"
               />

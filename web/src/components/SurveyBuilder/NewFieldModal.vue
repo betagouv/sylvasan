@@ -28,6 +28,7 @@ const props = defineProps<{
   payload?: SurveyField
   fieldIds?: string[] // Utilisé pour les conditions d'affichge
   allFieldIds?: string[] // Utilisé pour s'assurer que l'ID est unique
+  excludeWidgets?: FieldWidget[]
 }>()
 
 const rootStore = useRootStore()
@@ -155,10 +156,12 @@ const validator = computed(() =>
 const formErrors = ref<any>()
 
 const typeOptions = computed(() =>
-  Object.entries(typeWidgetMapping).map((x) => ({
-    text: x[1].label,
-    value: x[0],
-  }))
+  Object.entries(typeWidgetMapping)
+    .filter(([widget]) => !(props.excludeWidgets ?? []).includes(widget as FieldWidget))
+    .map((x) => ({
+      text: x[1].label,
+      value: x[0],
+    }))
 )
 
 const assignWidgetAndType = (option: FieldWidget) => {

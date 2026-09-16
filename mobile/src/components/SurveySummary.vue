@@ -118,6 +118,39 @@ const getSubFieldError = (
                 />
                 <p v-else class="italic mb-0! text-stone-500">Non renseigné</p>
               </template>
+              <!-- Nested array sub-field -->
+              <template v-else-if="subField.ui?.widget === 'array'">
+                <p v-if="!Array.isArray(item[subField.id]) || !(item[subField.id] as unknown[]).length" class="italic mb-0! text-stone-500">
+                  Non renseigné
+                </p>
+                <template v-else>
+                  <p class="font-medium mb-1! text-stone-500">
+                    {{ (item[subField.id] as unknown[]).length }} entrée(s) :
+                  </p>
+                  <div
+                    v-for="(subItem, subIdx) in (item[subField.id] as Record<string, unknown>[])"
+                    :key="subIdx"
+                    class="border border-slate-200 rounded p-2 mb-1 bg-white"
+                  >
+                    <div v-for="subSubField in (subField.fields ?? [])" :key="subSubField.id">
+                      <p class="fr-text--sm text-stone-400 mb-0!">{{ subSubField.label }}</p>
+                      <template v-if="subSubField.ui?.widget === 'image'">
+                        <SummaryImage
+                          v-if="Array.isArray(subItem[subSubField.id]) && (subItem[subSubField.id] as unknown[]).length"
+                          :images="(subItem[subSubField.id] as ImageItem[])"
+                        />
+                        <p v-else class="italic mb-0! text-stone-500">Non renseigné</p>
+                      </template>
+                      <template v-else>
+                        <p class="font-medium mb-0!" v-if="resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets)">
+                          {{ resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets) }}
+                        </p>
+                        <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+              </template>
               <!-- Other sub-fields -->
               <template v-else>
                 <div class="flex gap-4">
