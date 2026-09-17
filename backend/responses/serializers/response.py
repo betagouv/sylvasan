@@ -261,7 +261,7 @@ class ResponseImageSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Image trop volumineuse (max 2 Mo).")
         try:
             base64.b64decode(value, validate=True)
-        except Exception:
+        except ValueError:
             raise serializers.ValidationError("Données d'image invalides.")
         return value
 
@@ -293,6 +293,22 @@ class ResponseImageExportSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResponseImage
         fields = ("id", "file_url")
+
+    def get_file_url(self, obj):
+        url = obj.file.url
+        if url.startswith("http"):
+            return url
+        return get_base_url().rstrip("/") + url
+
+
+class ResponseImageListSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    response_id = serializers.IntegerField(source="response.id")
+    response_creation_date = serializers.DateTimeField(source="response.creation_date")
+
+    class Meta:
+        model = ResponseImage
+        fields = ("id", "file_url", "response_id", "response_creation_date")
 
     def get_file_url(self, obj):
         url = obj.file.url

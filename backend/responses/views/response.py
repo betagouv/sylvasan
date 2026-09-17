@@ -1,13 +1,17 @@
 import csv
+import datetime
 import json
+from typing import ClassVar
 
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, Q
 from django.http import HttpResponse
+from django.utils import timezone
 
 from django_filters import rest_framework as django_filters
 from organisations.models import Membership, MembershipType
 from rest_framework import status
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import GenericAPIView, ListAPIView, ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework.pagination import LimitOffsetPagination
@@ -16,14 +20,15 @@ from rest_framework.response import Response as DRFResponse
 from surveys.models import Survey
 from surveys.serializers import SurveyDisplaySerializer
 
-from responses.models import Response
-from responses.permissions import CanCreateFollowUpResponse, CanCreateResponse, CanDeleteResponse
+from responses.models import Response, ResponseImage
+from responses.permissions import CanCreateFollowUpResponse, CanCreateResponse, CanDeleteResponse, IsOrganisationAdmin
 from responses.serializers import (
     FollowUpResponseSerializer,
     FullResponseSerializer,
     FullResponseSerializerWithFollowUps,
     ResponseDisplaySerializer,
     ResponseExportSerializer,
+    ResponseImageListSerializer,
     ResponseSerializer,
 )
 
@@ -36,7 +41,7 @@ class ResponsePagination(LimitOffsetPagination):
     default_limit = 20
     max_limit = 100
 
-    surveys = []
+    surveys: ClassVar[list] = []
 
     def paginate_queryset(self, queryset, request, view=None):
         survey_ids = queryset.values_list("survey_id", flat=True).distinct().order_by()
@@ -63,7 +68,7 @@ class ResponseFilterSet(django_filters.FilterSet):
 
     class Meta:
         model = Response
-        fields = []
+        fields: ClassVar[list] = []
 
     def filter_include_follow_ups(self, queryset, name, value):
         if not value:
@@ -116,11 +121,11 @@ _CLIENT_ID_CONSTRAINT = "responses_response_client_id_key"
 
 class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
     pagination_class = ResponsePagination
-    filter_backends = [
+    filter_backends: ClassVar[list] = [
         django_filters.DjangoFilterBackend,
         OrderingFilter,
     ]
-    ordering_fields = ["creation_date", "id"]
+    ordering_fields: ClassVar[list[str]] = ["creation_date", "id"]
     filterset_class = ResponseFilterSet
 
     def get_serializer_class(self):
@@ -197,7 +202,7 @@ class ResponseFullListAPIView(ListAPIView):
     """
 
     serializer_class = FullResponseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar[list] = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -215,8 +220,8 @@ class ResponseFullListAPIView(ListAPIView):
 
 
 class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
-    permission_classes = [IsAuthenticated]
-    filter_backends = [
+    permission_classes: ClassVar[list] = [IsAuthenticated]
+    filter_backends: ClassVar[list] = [
         django_filters.DjangoFilterBackend,
         OrderingFilter,
     ]
@@ -224,7 +229,7 @@ class ResponseExportBaseView(ResponseQuerySetMixin, GenericAPIView):
     serializer_class = ResponseExportSerializer
     pagination_class = None
 
-    ordering_fields = ["creation_date", "id"]
+    ordering_fields: ClassVar[list[str]] = ["creation_date", "id"]
 
     def get_queryset(self):
         follow_up_qs = (
@@ -311,3 +316,53 @@ def _csv_row(item, type_label):
         item["creation_date"],
         json.dumps(item["data"], ensure_ascii=False),
     ]
+
+
+class ResponseImagesPagination(LimitOffsetPagination):
+    default_limit = 100
+    max_limit = 1000
+
+
+class ResponseImagesListView(ListAPIView):
+    """
+    Retourne la liste paginée des images des réponses d'une organisation,
+    filtrées par plage de dates (date de création de la réponse).
+
+    Paramètres obligatoires :
+    - start : date de début inclusive, format YYYY-MM-DD
+    - end : date de fin exclusive, format YYYY-MM-DD
+
+    Accessible uniquement aux utilisateurs ayant le rôle ADMIN
+    dans l'organisation demandée.
+    """
+
+    serializer_class = ResponseImageListSerializer
+    permission_classes: ClassVar[list] = [IsAuthenticated, IsOrganisationAdmin]
+    pagination_class = ResponseImagesPagination
+
+    def get_queryset(self):
+        org_id = self.kwargs["org_id"]
+        start_str = self.request.query_params.get("start")
+        end_str = self.request.query_params.get("end")
+
+        if not start_str or not end_str:
+            raise DRFValidationError({"detail": "Les paramètres 'start' et 'end' sont obligatoires."})
+
+        try:
+            start_date = datetime.date.fromisoformat(start_str)
+            end_date = datetime.date.fromisoformat(end_str)
+        except ValueError:
+            raise DRFValidationError({"detail": "Les dates doivent être au format YYYY-MM-DD."})
+
+        start_dt = timezone.make_aware(datetime.datetime.combine(start_date, datetime.time.min))
+        end_dt = timezone.make_aware(datetime.datetime.combine(end_date, datetime.time.min))
+
+        return (
+            ResponseImage.objects.filter(
+                Q(response__survey__organisation_id=org_id) | Q(response__survey_follow_up__organisation_id=org_id),
+                response__creation_date__gte=start_dt,
+                response__creation_date__lt=end_dt,
+            )
+            .select_related("response")
+            .order_by("response__creation_date", "id")
+        )

@@ -4,6 +4,24 @@ from surveys.models import Survey, SurveyFollowUp
 from surveys.permissions import CanDeleteSurvey
 
 
+class IsOrganisationAdmin(permissions.BasePermission):
+    """
+    Vérifie que l'utilisateur est ADMIN de l'organisation demandée (org_id dans l'URL).
+    Aucune restriction de pôle : l'accès est accordé si l'utilisateur est admin
+    au niveau de l'organisation, quel que soit le pôle.
+    """
+
+    message = "Vous n'avez pas l'autorisation pour accéder aux données de cette organisation"
+
+    def has_permission(self, request, view):
+        org_id = view.kwargs.get("org_id")
+        return Membership.objects.filter(
+            user=request.user,
+            organisation_id=org_id,
+            membership_type=MembershipType.ADMIN,
+        ).exists()
+
+
 def _has_responder_permission(request, organisation, pole):
     """Vérifie qu'un·e utilisateur·ice a le rôle RESPONDER pour une ressource donnée."""
     qs = Membership.objects.filter(

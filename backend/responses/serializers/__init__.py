@@ -5,6 +5,7 @@ from .response import (
     FullSurveySerializer,
     ResponseDisplaySerializer,
     ResponseExportSerializer,
+    ResponseImageListSerializer,
     ResponseImageSerializer,
     ResponseSerializer,
 )
