@@ -9,19 +9,27 @@ from django.http import HttpResponse
 from django.utils import timezone
 
 from django_filters import rest_framework as django_filters
+from organisations.authentication import ApiKeyAuthentication
 from organisations.models import Membership, MembershipType
 from rest_framework import status
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import GenericAPIView, ListAPIView, ListCreateAPIView, RetrieveDestroyAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from surveys.models import Survey
 from surveys.serializers import SurveyDisplaySerializer
 
 from responses.models import Response, ResponseImage
-from responses.permissions import CanCreateFollowUpResponse, CanCreateResponse, CanDeleteResponse, IsOrganisationAdmin
+from responses.permissions import (
+    CanCreateFollowUpResponse,
+    CanCreateResponse,
+    CanDeleteResponse,
+    IsOrganisationAdminOrHasApiKey,
+)
 from responses.serializers import (
     FollowUpResponseSerializer,
     FullResponseSerializer,
@@ -336,8 +344,13 @@ class ResponseImagesListView(ListAPIView):
     dans l'organisation demandée.
     """
 
+    authentication_classes: ClassVar[list] = [
+        JWTAuthentication,
+        SessionAuthentication,
+        ApiKeyAuthentication,
+    ]
     serializer_class = ResponseImageListSerializer
-    permission_classes: ClassVar[list] = [IsAuthenticated, IsOrganisationAdmin]
+    permission_classes: ClassVar[list] = [IsOrganisationAdminOrHasApiKey]
     pagination_class = ResponseImagesPagination
 
     def get_queryset(self):

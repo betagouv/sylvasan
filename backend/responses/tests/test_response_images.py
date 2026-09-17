@@ -7,13 +7,25 @@ from django.utils import timezone
 
 from common.utils import authenticate
 from organisations.factories import MembershipFactory, OrganisationFactory
-from organisations.models import MembershipType
+from organisations.models import ApiKey, MembershipType
 from rest_framework import status
 from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
 
 from responses.factories import ResponseFactory
 from responses.models import ResponseImage
+
+
+def _create_api_key(organisation) -> tuple[ApiKey, str]:
+    """Crée une ApiKey pour une organisation et retourne (instance, raw_key)."""
+    raw_key, prefix, hashed_key = ApiKey.generate()
+    api_key = ApiKey.objects.create(
+        name="Test key",
+        organisation=organisation,
+        prefix=prefix,
+        hashed_key=hashed_key,
+    )
+    return api_key, raw_key
 
 
 def _make_image(response):
@@ -217,3 +229,78 @@ class TestResponseImagesListView(APITestCase):
         self.assertEqual(data["count"], 2)
         ids = {r["id"] for r in data["results"]}
         self.assertEqual(ids, {img1.id, img2.id})
+
+
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.InMemoryStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }
+)
+class TestResponseImagesApiKeyAuth(APITestCase):
+    def _get(self, org_id, raw_key, params=None):
+        params = params or {"start": "2020-01-01", "end": "2030-01-01"}
+        return self.client.get(
+            _response_images_url(org_id),
+            params,
+            HTTP_AUTHORIZATION=f"Api-Key {raw_key}",
+        )
+
+    def test_valid_api_key_returns_200(self):
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        resp = ResponseFactory(survey=survey)
+        img = _make_image(resp)
+        _, raw_key = _create_api_key(org)
+
+        response = self._get(org.id, raw_key)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["count"], 1)
+        self.assertEqual(response.json()["results"][0]["id"], img.id)
+
+    def test_invalid_api_key_returns_401(self):
+        org = OrganisationFactory()
+        response = self._get(org.id, "invalid.key")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_api_key_wrong_org_returns_403(self):
+        org = OrganisationFactory()
+        other_org = OrganisationFactory()
+        _, raw_key = _create_api_key(other_org)
+
+        response = self._get(org.id, raw_key)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_revoked_api_key_returns_401(self):
+        org = OrganisationFactory()
+        api_key, raw_key = _create_api_key(org)
+        api_key.is_active = False
+        api_key.save()
+
+        response = self._get(org.id, raw_key)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_expired_api_key_returns_401(self):
+        org = OrganisationFactory()
+        api_key, raw_key = _create_api_key(org)
+        api_key.expires_at = timezone.now() - datetime.timedelta(days=1)
+        api_key.save()
+
+        response = self._get(org.id, raw_key)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_api_key_missing_dot_returns_401(self):
+        org = OrganisationFactory()
+        response = self._get(org.id, "nodotinkey")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_api_key_date_filtering_still_works(self):
+        org = OrganisationFactory()
+        survey = SurveyFactory(organisation=org)
+        resp = ResponseFactory(survey=survey)
+        _make_image(resp)
+        _, raw_key = _create_api_key(org)
+
+        response = self._get(org.id, raw_key, {"start": "2020-01-01", "end": "2020-06-01"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["count"], 0)
