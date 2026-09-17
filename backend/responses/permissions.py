@@ -33,14 +33,14 @@ class IsOrganisationAdminOrHasApiKey(permissions.BasePermission):
 
     def has_permission(self, request, view):
         org_id = view.kwargs.get("org_id")
+        if isinstance(request.auth, ApiKey):
+            return str(request.auth.organisation_id) == str(org_id)
         if request.user and request.user.is_authenticated:
             return Membership.objects.filter(
                 user=request.user,
                 organisation_id=org_id,
                 membership_type=MembershipType.ADMIN,
             ).exists()
-        if isinstance(request.auth, ApiKey):
-            return str(request.auth.organisation_id) == str(org_id)
         return False
 
 
