@@ -1,6 +1,7 @@
 from .response import (
     ResponseCsvExportView,
     ResponseFullListAPIView,
+    ResponseImagesListView,
     ResponseJsonExportView,
     ResponseListCreateAPIView,
     ResponseRetrieveDestroyAPIView,

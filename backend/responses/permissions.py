@@ -1,7 +1,47 @@
-from organisations.models import Membership, MembershipType
+from organisations.models import ApiKey, Membership, MembershipType
 from rest_framework import permissions
 from surveys.models import Survey, SurveyFollowUp
 from surveys.permissions import CanDeleteSurvey
+
+
+class IsOrganisationAdmin(permissions.BasePermission):
+    """
+    Vérifie que l'utilisateur est ADMIN de l'organisation demandée (org_id dans l'URL).
+    Aucune restriction de pôle : l'accès est accordé si l'utilisateur est admin
+    au niveau de l'organisation, quel que soit le pôle.
+    """
+
+    message = "Vous n'avez pas l'autorisation pour accéder aux données de cette organisation"
+
+    def has_permission(self, request, view):
+        org_id = view.kwargs.get("org_id")
+        return Membership.objects.filter(
+            user=request.user,
+            organisation_id=org_id,
+            membership_type=MembershipType.ADMIN,
+        ).exists()
+
+
+class IsOrganisationAdminOrHasApiKey(permissions.BasePermission):
+    """
+    Accorde l'accès si :
+    - l'utilisateur connecté est ADMIN de l'organisation demandée, ou
+    - la requête porte une clé API valide associée à cette organisation.
+    """
+
+    message = "Vous n'avez pas l'autorisation pour accéder aux données de cette organisation"
+
+    def has_permission(self, request, view):
+        org_id = view.kwargs.get("org_id")
+        if isinstance(request.auth, ApiKey):
+            return str(request.auth.organisation_id) == str(org_id)
+        if request.user and request.user.is_authenticated:
+            return Membership.objects.filter(
+                user=request.user,
+                organisation_id=org_id,
+                membership_type=MembershipType.ADMIN,
+            ).exists()
+        return False
 
 
 def _has_responder_permission(request, organisation, pole):

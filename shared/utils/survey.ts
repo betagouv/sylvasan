@@ -140,3 +140,15 @@ const formatCondition = (condition: Condition): string => {
 export const conditionsText = (condition: Condition): string => {
   return "Affiché si : " + formatCondition(condition)
 }
+
+/**
+ * Retourne tous les champs d'un schéma à plat, en parcourant jusqu'à deux
+ * niveaux de sous-champs (champ → sous-champ → sous-sous-champ).
+ */
+export const flattenFields = (fields: SurveyField[]): SurveyField[] => [
+  ...fields,
+  ...fields.flatMap((f) => [
+    ...(f.fields ?? []),
+    ...(f.fields ?? []).flatMap((sf) => sf.fields ?? []),
+  ]),
+]
