@@ -354,6 +354,9 @@ class ResponseImagesListView(ListAPIView):
         except ValueError:
             raise DRFValidationError({"detail": "Les dates doivent être au format YYYY-MM-DD."})
 
+        if start_date >= end_date:
+            raise DRFValidationError({"detail": "La date 'start' doit être antérieure à la date 'end'."})
+
         start_dt = timezone.make_aware(datetime.datetime.combine(start_date, datetime.time.min))
         end_dt = timezone.make_aware(datetime.datetime.combine(end_date, datetime.time.min))
 

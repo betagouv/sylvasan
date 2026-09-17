@@ -78,6 +78,20 @@ class TestResponseImagesListView(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @authenticate
+    def test_start_after_end_returns_400(self):
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        response = self.client.get(_response_images_url(org.id), {"start": "2024-06-01", "end": "2024-01-01"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
+    def test_start_equal_end_returns_400(self):
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        response = self.client.get(_response_images_url(org.id), {"start": "2024-01-01", "end": "2024-01-01"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
     def test_admin_gets_org_images(self):
         org = OrganisationFactory()
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
