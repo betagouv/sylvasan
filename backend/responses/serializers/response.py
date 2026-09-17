@@ -27,6 +27,13 @@ def get_base_url() -> str:
     return f"{scheme}://{settings.HOSTNAME}/"
 
 
+def _absolute_file_url(obj) -> str:
+    url = obj.file.url
+    if url.startswith("http"):
+        return url
+    return get_base_url().rstrip("/") + url
+
+
 class ResponseSerializer(serializers.ModelSerializer):
     # validators=[] désactive le UniqueValidator auto-généré par DRF : l'unicité est
     # garantie par la contrainte DB, gérée explicitement dans la vue pour l'idempotence.
@@ -251,10 +258,7 @@ class ResponseImageSerializer(serializers.ModelSerializer):
             return base64.b64encode(f.read()).decode("utf-8")
 
     def get_file_url(self, obj):
-        url = obj.file.url
-        if url.startswith("http"):
-            return url
-        return get_base_url().rstrip("/") + url
+        return _absolute_file_url(obj)
 
     def validate_file(self, value):
         if len(value) > int(MAX_IMAGE_SIZE_BYTES * 4 / 3):
@@ -295,10 +299,7 @@ class ResponseImageExportSerializer(serializers.ModelSerializer):
         fields = ("id", "file_url")
 
     def get_file_url(self, obj):
-        url = obj.file.url
-        if url.startswith("http"):
-            return url
-        return get_base_url().rstrip("/") + url
+        return _absolute_file_url(obj)
 
 
 class ResponseImageListSerializer(serializers.ModelSerializer):
@@ -311,10 +312,7 @@ class ResponseImageListSerializer(serializers.ModelSerializer):
         fields = ("id", "file_url", "response_id", "response_creation_date")
 
     def get_file_url(self, obj):
-        url = obj.file.url
-        if url.startswith("http"):
-            return url
-        return get_base_url().rstrip("/") + url
+        return _absolute_file_url(obj)
 
 
 class SurveyExportSerializer(serializers.ModelSerializer):

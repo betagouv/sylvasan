@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watch } from "vue"
 import type { ResponseFull } from "@shared-types/response"
-import { resolveFieldValue } from "@shared-utils/survey"
+import { flattenFields, resolveFieldValue } from "@shared-utils/survey"
 import type { SurveyField, ImageItem } from "@shared-types/survey"
 import { storeToRefs } from "pinia"
 import { useRootStore } from "../../stores/root.ts"
@@ -17,20 +17,12 @@ const jsonSchema = computed(
 )
 
 const surveyCodes = computed(() => {
-  const schema = jsonSchema.value
-  const allFields: SurveyField[] = [
-    ...(schema?.fields ?? []),
-    ...(schema?.fields ?? []).flatMap((f: SurveyField) => [
-      ...(f.fields ?? []),
-      ...(f.fields ?? []).flatMap((sf: SurveyField) => sf.fields ?? []),
-    ]),
-  ]
-  const codes = [
+  const allFields = flattenFields(jsonSchema.value?.fields ?? [])
+  return [
     ...new Set(
       allFields.filter((f) => f.vocabulary).map((f) => f.vocabulary as string)
     ),
   ]
-  return codes
 })
 
 watch(surveyCodes, async () => {

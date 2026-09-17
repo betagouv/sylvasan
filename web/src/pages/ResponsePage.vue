@@ -12,7 +12,8 @@
 import { ref, computed, watch } from "vue"
 import { useRoute } from "vue-router"
 import { useApiFetch } from "../utils/data-fetching.ts"
-import type { SurveyField, ImageItem } from "@shared-types/survey"
+import type { ImageItem } from "@shared-types/survey"
+import { flattenFields } from "@shared-utils/survey"
 import SurveyRenderer from "@shared-components/SurveyRenderer.vue"
 import ImageViewer from "@shared-components/ImageViewer.vue"
 import { storeToRefs } from "pinia"
@@ -54,13 +55,7 @@ watch([response, isFetching], async ([val, fetching]) => {
     return
   }
   const schema = val.survey?.jsonSchema
-  const allFields: SurveyField[] = [
-    ...(schema?.fields ?? []),
-    ...(schema?.fields ?? []).flatMap((f: SurveyField) => [
-      ...(f.fields ?? []),
-      ...(f.fields ?? []).flatMap((sf: SurveyField) => sf.fields ?? []),
-    ]),
-  ]
+  const allFields = flattenFields(schema?.fields ?? [])
   surveyCodes.value = [
     ...new Set(
       allFields.filter((f) => f.vocabulary).map((f) => f.vocabulary as string)
