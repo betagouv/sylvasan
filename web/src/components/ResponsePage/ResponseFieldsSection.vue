@@ -124,10 +124,20 @@ const getSubFields = (fieldId: string): SurveyField[] =>
                   >
                     <div v-for="subSubField in (subField.fields ?? [])" :key="subSubField.id">
                       <p class="fr-text--sm text-stone-400 mb-0!">{{ subSubField.label }}</p>
-                      <p class="font-medium mb-0!" v-if="resolveSubFieldValue(subSubField, subItem[subSubField.id])">
-                        {{ resolveSubFieldValue(subSubField, subItem[subSubField.id]) }}
-                      </p>
-                      <p class="italic text-stone-500 mb-0!" v-else>Non renseigné</p>
+                      <template v-if="subSubField.ui?.widget === 'image'">
+                        <SummaryImage
+                          v-if="Array.isArray(subItem[subSubField.id]) && (subItem[subSubField.id] as unknown[]).length"
+                          :images="(subItem[subSubField.id] as ImageItem[])"
+                          @open-viewer="(imgs, idx) => emit('open-viewer', imgs, idx)"
+                        />
+                        <p v-else class="italic text-stone-500 mb-0!">Non renseigné</p>
+                      </template>
+                      <template v-else>
+                        <p class="font-medium mb-0!" v-if="resolveSubFieldValue(subSubField, subItem[subSubField.id])">
+                          {{ resolveSubFieldValue(subSubField, subItem[subSubField.id]) }}
+                        </p>
+                        <p class="italic text-stone-500 mb-0!" v-else>Non renseigné</p>
+                      </template>
                     </div>
                   </div>
                 </template>

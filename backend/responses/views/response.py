@@ -376,6 +376,7 @@ class ResponseImagesListView(ListAPIView):
         return (
             ResponseImage.objects.filter(
                 Q(response__survey__organisation_id=org_id) | Q(response__survey_follow_up__organisation_id=org_id),
+                response__is_active=True,
                 response__creation_date__gte=start_dt,
                 response__creation_date__lt=end_dt,
             )
