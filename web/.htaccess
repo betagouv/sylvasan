@@ -2,9 +2,9 @@
     Header always set Content-Security-Policy "\
         default-src 'self' *.gouv.fr *.services.clever-cloud.com; \
         font-src 'self' https://data.geopf.fr; \
-        script-src 'self' *.gouv.fr https://cdn.jsdelivr.net/; \
+        script-src 'self' *.gouv.fr https://cdn.jsdelivr.net/ 'unsafe-eval'; \
         style-src 'self' https://cdn.jsdelivr.net/; \
-        img-src 'self' *.services.clever-cloud.com data: *.nasa.gov; \
+        img-src 'self' *.services.clever-cloud.com data: *.nasa.gov https://mirrors.creativecommons.org; \
         connect-src 'self' *.gouv.fr https://api.iconify.design https://api.unisvg.com https://api.simplesvg.com; \
     "
 </IfModule>
