@@ -487,8 +487,8 @@ const dragSrcIndex = ref<number | null>(null)
 let cleanupDragListeners: (() => void) | null = null
 
 const reorderPages = (fromIndex: number, toIndex: number) => {
-  if (fromIndex === toIndex) return
   const pages = [...(schema.value.pages ?? [])]
+  if (fromIndex === toIndex || toIndex < 0 || toIndex >= pages.length) return
   const [moved] = pages.splice(fromIndex, 1)
   pages.splice(toIndex, 0, moved)
   schema.value = { ...schema.value, pages }
@@ -584,14 +584,17 @@ onUnmounted(() => cleanupDragListeners?.())
             @click="activeTab = index"
           >
             <span class="flex items-center gap-1">
-              <span
-                class="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing flex items-center px-0.5"
-                title="Déplacer cette page"
+              <button
+                type="button"
+                class="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing flex items-center px-0.5 bg-transparent border-0 p-0"
+                :aria-label="`Déplacer la page « ${tab.title} » (← →)`"
                 @mousedown.stop="onHandleMouseDown($event, index)"
                 @click.stop
+                @keydown.left.stop="reorderPages(index, index - 1)"
+                @keydown.right.stop="reorderPages(index, index + 1)"
               >
                 <v-icon name="ri-menu-line" scale="0.85" />
-              </span>
+              </button>
               {{ tab.title }}
               <button
                 v-if="tabTitles.length > 1"
