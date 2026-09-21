@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from "vue"
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from "vue"
 import type {
   SurveySchema,
   SurveyField,
@@ -480,6 +480,91 @@ const confirmPageDeletion = async () => {
   await deletePage(confirmDeletePageId.value!)
   confirmDeletePageId.value = null
 }
+
+// --- Drag-to-reorder pages ---
+
+const dragSrcIndex = ref<number | null>(null)
+let cleanupDragListeners: (() => void) | null = null
+
+const reorderPages = (fromIndex: number, toIndex: number) => {
+  if (fromIndex === toIndex) return
+  const pages = [...(schema.value.pages ?? [])]
+  const [moved] = pages.splice(fromIndex, 1)
+  pages.splice(toIndex, 0, moved)
+  schema.value = { ...schema.value, pages }
+  activeTab.value = toIndex
+}
+
+const onHandleMouseDown = (_e: MouseEvent, index: number) => {
+  const ul = tabsRef.value?.querySelector('ul[role="tablist"]') as HTMLElement | null
+  if (!ul) return
+  const li = Array.from(ul.querySelectorAll<HTMLElement>(':scope > li'))[index]
+  if (!li) return
+  li.setAttribute('draggable', 'true')
+  const onMouseUp = () => {
+    li.removeAttribute('draggable')
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+  window.addEventListener('mouseup', onMouseUp)
+}
+
+const setupDragListeners = () => {
+  cleanupDragListeners?.()
+  const ul = tabsRef.value?.querySelector('ul[role="tablist"]') as HTMLElement | null
+  if (!ul) return
+
+  const getPageLis = () => Array.from(ul.querySelectorAll<HTMLElement>(':scope > li'))
+
+  const onDragStart = (e: DragEvent) => {
+    const li = (e.target as HTMLElement).closest('li')
+    if (!li) return
+    dragSrcIndex.value = getPageLis().indexOf(li)
+    li.classList.add('dragging')
+  }
+
+  const onDragOver = (e: DragEvent) => {
+    if (dragSrcIndex.value === null) return
+    const li = (e.target as HTMLElement).closest('li')
+    if (!li) return
+    e.preventDefault()
+    getPageLis().forEach((el) => el.classList.remove('drag-over'))
+    li.classList.add('drag-over')
+  }
+
+  const onDrop = (e: DragEvent) => {
+    e.preventDefault()
+    const li = (e.target as HTMLElement).closest('li')
+    if (!li) return
+    const toIndex = getPageLis().indexOf(li)
+    if (dragSrcIndex.value !== null) reorderPages(dragSrcIndex.value, toIndex)
+    getPageLis().forEach((el) => el.classList.remove('drag-over', 'dragging'))
+    dragSrcIndex.value = null
+  }
+
+  const onDragEnd = () => {
+    getPageLis().forEach((el) => {
+      el.removeAttribute('draggable')
+      el.classList.remove('drag-over', 'dragging')
+    })
+    dragSrcIndex.value = null
+  }
+
+  ul.addEventListener('dragstart', onDragStart)
+  ul.addEventListener('dragover', onDragOver)
+  ul.addEventListener('drop', onDrop)
+  ul.addEventListener('dragend', onDragEnd)
+
+  cleanupDragListeners = () => {
+    ul.removeEventListener('dragstart', onDragStart)
+    ul.removeEventListener('dragover', onDragOver)
+    ul.removeEventListener('drop', onDrop)
+    ul.removeEventListener('dragend', onDragEnd)
+  }
+}
+
+onMounted(() => nextTick(() => setupDragListeners()))
+watch(tabsKey, () => nextTick(() => setupDragListeners()))
+onUnmounted(() => cleanupDragListeners?.())
 </script>
 
 <template>
@@ -498,7 +583,15 @@ const confirmPageDeletion = async () => {
             :panel-id="tab.panelId"
             @click="activeTab = index"
           >
-            <span class="flex items-center gap-2">
+            <span class="flex items-center gap-1">
+              <span
+                class="text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing flex items-center px-0.5"
+                title="Déplacer cette page"
+                @mousedown.stop="onHandleMouseDown($event, index)"
+                @click.stop
+              >
+                <v-icon name="ri-menu-line" scale="0.85" />
+              </span>
               {{ tab.title }}
               <button
                 v-if="tabTitles.length > 1"
@@ -634,5 +727,13 @@ const confirmPageDeletion = async () => {
 <style scoped>
 .field-list-move {
   transition: transform 0.25s ease;
+}
+
+:deep(ul[role="tablist"] li.dragging) {
+  opacity: 0.4;
+}
+
+:deep(ul[role="tablist"] li.drag-over) {
+  border-left: 3px solid #000091;
 }
 </style>
