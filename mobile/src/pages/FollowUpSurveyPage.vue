@@ -30,6 +30,7 @@ import {
 } from "../utils/imageStorage"
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera"
 import type { LocalImageItem } from "@shared-types/survey"
+import { compressBase64Image } from "@shared-utils/image"
 
 const captureImage = async (): Promise<LocalImageItem | null> => {
   try {
@@ -42,7 +43,8 @@ const captureImage = async (): Promise<LocalImageItem | null> => {
       height: 2000,
     })
     if (!photo.base64String) return null
-    return { file: photo.base64String }
+    const file = await compressBase64Image(photo.base64String)
+    return { file }
   } catch {
     return null
   }
