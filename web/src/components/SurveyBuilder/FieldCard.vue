@@ -105,36 +105,32 @@ const confirmFieldDeletion = () => {
         />
       </div>
       <div
-        class="flex flex-col grow border-r border-slate-300 pr-4 max-w-[80%]"
+        class="flex flex-col grow border-r border-slate-300 pr-4 max-w-[80%] mb-4"
       >
-        <div class="flex gap-2 items-end mb-4">
+        <div class="flex gap-2 items-center mb-4">
           <div
-            :class="`border border-slate-100 px-1 rounded-full pt-1 field-${widgetData?.widget}`"
+            :class="`border border-slate-100 px-1 aspect-square rounded-full pt-1 field-${widgetData?.widget}`"
           >
             <v-icon :icon="icon" />
           </div>
-          <h3
-            class="fr-text--sm mb-0! min-w-0 truncate max-w-[30%]"
-            :title="field.label"
-          >
-            {{ field.label }}
-          </h3>
-          <p class="fr-text--sm mb-0! text-gray-500 shrink-0 max-w-[30%]">
-            {{ label }}
-          </p>
-          <p
-            class="mb-0! fr-text--sm italic text-gray-500 shrink-0"
-            v-if="field.required"
-          >
-            *Champ requis
-          </p>
-          <div class="grow"></div>
-          <div
-            class="font-mono text-gray-400 truncate max-w-[30%]"
-            :title="field.id"
-          >
-            {{ field.id }}
+          <div class="min-w-0">
+            <div class="flex items-center gap-1 min-w-0" :title="field.label">
+              <h3 class="fr-text--sm mb-0! min-w-0 truncate">
+                {{ field.label }}
+              </h3>
+            </div>
+            <div class="flex gap-2 items-center">
+              <div
+                class="fr-text--sm mb-0! text-gray-500 truncate max-w-[100%]"
+              >
+                <span class="mr-4">{{ field.id }}</span>
+                <span class="mr-4">{{ label }}</span>
+                <span class="mr-4" v-if="field.required">*Champ requis</span>
+              </div>
+            </div>
           </div>
+
+          <div class="grow"></div>
         </div>
 
         <div v-if="field.condition" class="flex items-center">
