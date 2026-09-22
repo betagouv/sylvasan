@@ -7,6 +7,7 @@ import type {
   VocabularyEntry,
   MapValue,
   ImageItem,
+  LocalImageItem,
 } from "@shared-types/survey"
 import ArrayField from "./ArrayField.vue"
 import AutocompleteField from "./AutocompleteField.vue"
@@ -22,6 +23,7 @@ const props = defineProps<{
   vocabularies?: VocabularySet[]
   mapComponent?: Component
   resolveImagePath?: (path: string) => Promise<string | null>
+  captureImage?: () => Promise<LocalImageItem | null>
 }>()
 
 const localId = useId()
@@ -246,6 +248,7 @@ if (
       :vocabularies="props.vocabularies"
       :map-component="mapComponent"
       :resolve-image-path="resolveImagePath"
+      :captureImage="captureImage"
       @busy-change="(val) => emit('busyChange', val)"
     />
 
@@ -268,6 +271,7 @@ if (
       :required="field.required ?? false"
       :disabled="disabled"
       :resolveImagePath="resolveImagePath"
+      :captureImage="captureImage"
       @busyChange="(val) => emit('busyChange', val)"
     />
 

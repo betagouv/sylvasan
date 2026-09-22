@@ -28,6 +28,7 @@ import {
   saveImagesToFilesystem,
   resolveLocalImageSrc,
 } from "../utils/imageStorage"
+import { captureImage } from "../utils/camera"
 import { validateResponse } from "@shared-utils/validateField"
 import { evaluateCondition } from "@shared-utils/survey"
 
@@ -341,6 +342,7 @@ const confirmDelete = async () => {
             :vocabularies="vocabularySets"
             :mapComponent="MapField"
             :resolveImagePath="resolveLocalImageSrc"
+            :captureImage="captureImage"
             @done="onSurveyDone"
             @change="currentFormData = $event"
           />

@@ -47,6 +47,10 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>SylvaSan utilise votre caméra pour prendre des photos dans le cadre des enquêtes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SylvaSan accède à votre bibliothèque de photos pour ajouter des images aux enquêtes.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SylvaSan utilise votre position pour centrer la carte sur votre emplacement.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
