@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue"
 import type { Component } from "vue"
-import type { SurveyField, VocabularySet } from "../types/survey"
+import type { SurveyField, VocabularySet, LocalImageItem } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
 import { getEmptyValue, evaluateCondition } from "../utils/survey"
 import { getDefaultValue } from "../utils/defaultValues"
@@ -21,6 +21,7 @@ const props = defineProps<{
   vocabularies?: VocabularySet[]
   mapComponent?: Component
   resolveImagePath?: (path: string) => Promise<string | null>
+  captureImage?: () => Promise<LocalImageItem | null>
 }>()
 
 const emit = defineEmits<{ busyChange: [value: boolean] }>()
@@ -159,6 +160,7 @@ watch(
             :vocabularies="props.vocabularies"
             :map-component="props.mapComponent"
             :resolve-image-path="props.resolveImagePath"
+            :captureImage="props.captureImage"
             @update:model-value="updateItem(index, subField.id, $event)"
             @busy-change="emit('busyChange', $event)"
           />

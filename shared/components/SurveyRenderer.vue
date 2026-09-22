@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref, computed, watch } from "vue"
 import type { Component } from "vue"
-import type { SurveySchema, SurveyField, VocabularySet } from "../types/survey"
+import type { SurveySchema, SurveyField, VocabularySet, LocalImageItem } from "../types/survey"
 import FieldRenderer from "./FieldRenderer.vue"
 
 import { getEmptyValue, evaluateCondition } from "../utils/survey"
@@ -17,6 +17,7 @@ const props = withDefaults(
     vocabularies?: VocabularySet[]
     mapComponent?: Component
     resolveImagePath?: (path: string) => Promise<string | null>
+    captureImage?: () => Promise<LocalImageItem | null>
   }>(),
   { vocabularies: () => [] }
 )
@@ -125,6 +126,7 @@ const onFieldBusyChange = (val: boolean) => {
           :vocabularies="props.vocabularies"
           :mapComponent="mapComponent"
           :resolveImagePath="props.resolveImagePath"
+          :captureImage="props.captureImage"
           @busyChange="onFieldBusyChange"
         />
       </template>

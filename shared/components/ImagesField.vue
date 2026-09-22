@@ -12,6 +12,7 @@ const props = defineProps<{
   required?: boolean
   disabled?: boolean
   resolveImagePath?: (path: string) => Promise<string | null>
+  captureImage?: () => Promise<LocalImageItem | null>
 }>()
 
 const emit = defineEmits<{
@@ -23,6 +24,22 @@ const inputId = useId()
 const fileInput = ref<HTMLInputElement | null>(null)
 
 const openFilePicker = () => fileInput.value?.click()
+
+const handleAddPhoto = async () => {
+  if (props.captureImage) {
+    compressing.value = true
+    emit("busyChange", true)
+    try {
+      const item = await props.captureImage()
+      if (item) modelValue.value = [...modelValue.value, item]
+    } finally {
+      compressing.value = false
+      emit("busyChange", false)
+    }
+  } else {
+    openFilePicker()
+  }
+}
 
 const maxImages = computed(() => props.field.validation?.maxItems ?? 5)
 const atMax = computed(() => modelValue.value.length >= maxImages.value)
@@ -182,6 +199,7 @@ const openViewer = (index: number) => {
 
     <template v-if="!atMax && !disabled">
       <input
+        v-if="!captureImage"
         :id="inputId"
         ref="fileInput"
         type="file"
@@ -196,7 +214,7 @@ const openViewer = (index: number) => {
         icon="ri-image-add-line"
         :label="`Ajouter une photo (${modelValue.length} / ${maxImages})`"
         :disabled="compressing"
-        @click="openFilePicker"
+        @click="handleAddPhoto"
       />
       <p v-if="compressing" class="fr-hint-text my-4!">
         Merci de patienter, l'image est en cours d'optimisation...

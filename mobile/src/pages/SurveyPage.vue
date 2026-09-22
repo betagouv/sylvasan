@@ -30,6 +30,25 @@ import {
   saveImagesToFilesystem,
   resolveLocalImageSrc,
 } from "../utils/imageStorage"
+import { Camera, CameraResultType, CameraSource } from "@capacitor/camera"
+import type { LocalImageItem } from "@shared-types/survey"
+
+const captureImage = async (): Promise<LocalImageItem | null> => {
+  try {
+    const photo = await Camera.getPhoto({
+      quality: 85,
+      allowEditing: false,
+      resultType: CameraResultType.Base64,
+      source: CameraSource.Prompt,
+      width: 2000,
+      height: 2000,
+    })
+    if (!photo.base64String) return null
+    return { file: photo.base64String }
+  } catch {
+    return null
+  }
+}
 import { validateResponse } from "@shared-utils/validateField"
 import { evaluateCondition } from "@shared-utils/survey"
 
@@ -250,6 +269,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
             :vocabularies="vocabularySets"
             :mapComponent="MapField"
             :resolveImagePath="resolveLocalImageSrc"
+            :captureImage="captureImage"
             @done="onSurveyDone"
             @change="handleFormChange"
           />
