@@ -6,7 +6,7 @@ import type {
   LocalImageItem,
 } from "@shared-types/survey"
 import ImageViewer from "./ImageViewer.vue"
-import { compressBase64Image, compressFileImage } from "@shared-utils/image"
+import { compressFileImage } from "@shared-utils/image"
 
 const props = defineProps<{
   field: SurveyField
