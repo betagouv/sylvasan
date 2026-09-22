@@ -113,17 +113,15 @@ const confirmFieldDeletion = () => {
           >
             <v-icon :icon="icon" />
           </div>
-          <div>
-            <h3
-              class="fr-text--sm mb-0! min-w-0 truncate max-w-[100%]"
-              :title="field.label"
-            >
-              {{ field.label }}
-            </h3>
+          <div class="min-w-0">
+            <div class="flex items-center gap-1 min-w-0" :title="field.label">
+              <h3 class="fr-text--sm mb-0! min-w-0 truncate">
+                {{ field.label }}
+              </h3>
+            </div>
             <div class="flex gap-2 items-center">
               <div
                 class="fr-text--sm mb-0! text-gray-500 truncate max-w-[100%]"
-                :title="field.id"
               >
                 <span class="mr-4">{{ field.id }}</span>
                 <span class="mr-4">{{ label }}</span>
