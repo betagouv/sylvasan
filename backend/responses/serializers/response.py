@@ -27,8 +27,12 @@ def get_base_url() -> str:
     return f"{scheme}://{settings.HOSTNAME}/"
 
 
-def _absolute_file_url(obj) -> str:
-    url = obj.file.url
+def _absolute_file_url(obj) -> str | None:
+    try:
+        url = obj.file.url
+    except FileNotFoundError:
+        logger.error("Fichier introuvable pour l'image %s : %s", obj.id, obj.file.name)
+        return None
     if url.startswith("http"):
         return url
     return get_base_url().rstrip("/") + url
@@ -254,8 +258,12 @@ class ResponseImageSerializer(serializers.ModelSerializer):
     def get_thumbnail(self, obj):
         if not obj.thumbnail:
             return None
-        with obj.thumbnail.open("rb") as f:
-            return base64.b64encode(f.read()).decode("utf-8")
+        try:
+            with obj.thumbnail.open("rb") as f:
+                return base64.b64encode(f.read()).decode("utf-8")
+        except FileNotFoundError:
+            logger.error("Miniature introuvable pour l'image %s : %s", obj.id, obj.thumbnail.name)
+            return None
 
     def get_file_url(self, obj):
         return _absolute_file_url(obj)
