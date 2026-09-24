@@ -15,10 +15,15 @@ const { response, data, survey } = defineProps<{
   survey: Survey
 }>()
 
+const emit = defineEmits<{ goToPage: [page: number] }>()
+
 const { vocabularySets } = useVocabulariesStore()
 
 const isRemote = (res: LocalResponse | ResponseFull): res is ResponseFull =>
   (<ResponseFull>res).id !== undefined
+
+// On montre la validation seulement quand la réponse n'est pas encore sauvegardée dans le backend
+const showValidation = computed(() => !response)
 
 const resolvedData = computed(() => response?.data ?? data ?? {})
 
@@ -46,25 +51,45 @@ const visibleFieldIds = computed(
   () => new Set(visibleFields.value.map((f) => f.id))
 )
 
-// On montre la validation seulement lors que la réponse n'est pas sauvegardé dans le backend
 const validationErrors = computed(() =>
-  response
-    ? {}
-    : validateResponse(
+  showValidation.value
+    ? validateResponse(
         survey.jsonSchema.fields,
         resolvedData.value,
         visibleFieldIds.value
       )
+    : {}
 )
 
 const getSubFieldError = (
   subField: SurveyField,
   value: unknown
 ): string | null => {
-  if (response) return null
+  if (!showValidation.value) return null
   return validateField(subField, value ?? null)
 }
 
+// Liste de sections — une par page si le schéma a des pages, sinon une seule section plate.
+// Chaque section avec `pageNumber` est une vraie page (en-tête affiché).
+const sections = computed(() => {
+  const schema = survey.jsonSchema
+  if (!schema.pages || schema.pages.length <= 1) {
+    return [{ pageNumber: null as number | null, title: null as string | null, fields: visibleFields.value, errorCount: 0 }]
+  }
+  return schema.pages.map((page, index) => {
+    const fields = page.fields
+      .map((fid) => schema.fields.find((f) => f.id === fid))
+      .filter((f): f is SurveyField => f !== undefined)
+      .filter((f) => visibleFieldIds.value.has(f.id))
+    const errorCount = fields.filter((f) => validationErrors.value[f.id]).length
+    return {
+      pageNumber: index + 1,
+      title: page.title ?? `Page ${index + 1}`,
+      fields,
+      errorCount,
+    }
+  })
+})
 </script>
 
 <template>
@@ -83,133 +108,178 @@ const getSubFieldError = (
     </div>
 
     <div class="p-4">
-      <div v-for="field in visibleFields" :key="field.id">
-        <p class="fr-text--sm font-bold text-stone-500 mb-0!">
-          {{ field.label }}
-        </p>
-
-        <!-- Array field -->
-        <template
-          v-if="isArrayField(field.id) && Array.isArray(resolvedData[field.id])"
+      <template v-for="(section, si) in sections" :key="si">
+        <!-- En-tête de page (seulement quand il y a plusieurs pages) -->
+        <div
+          v-if="section.pageNumber !== null"
+          class="flex items-center justify-between gap-2 mb-3"
+          :class="si > 0 ? 'mt-6' : ''"
         >
-          <p
-            v-if="!(resolvedData[field.id] as unknown[]).length"
-            class="italic mb-0! text-stone-500"
-          >
-            Non renseigné
-          </p>
-          <p v-else class="font-medium mb-2! text-stone-500">
-            {{ (resolvedData[field.id] as unknown[]).length }} entrée(s) :
-          </p>
+          <h2 class="fr-h6 mb-0!">{{ section.title }}</h2>
           <div
-            v-for="(item, idx) in (resolvedData[field.id] as Record<string, unknown>[])"
-            :key="`${field.id}-${idx}`"
-            class="border border-slate-200 rounded p-3 mb-2 bg-slate-50"
+            v-if="showValidation && section.errorCount > 0"
+            class="flex items-center gap-2 shrink-0"
           >
-            <div v-for="subField in getSubFields(field.id)" :key="subField.id">
-              <p class="fr-text--sm text-stone-400 mb-0!">
-                {{ subField.label }}
-              </p>
-              <!-- Image sub-field -->
-              <template v-if="subField.ui?.widget === 'image'">
-                <SummaryImage
-                  v-if="Array.isArray(item[subField.id]) && (item[subField.id] as unknown[]).length"
-                  :images="(item[subField.id] as ImageItem[])"
-                />
-                <p v-else class="italic mb-0! text-stone-500">Non renseigné</p>
-              </template>
-              <!-- Nested array sub-field -->
-              <template v-else-if="subField.ui?.widget === 'array'">
-                <p v-if="!Array.isArray(item[subField.id]) || !(item[subField.id] as unknown[]).length" class="italic mb-0! text-stone-500">
-                  Non renseigné
-                </p>
-                <template v-else>
-                  <p class="font-medium mb-1! text-stone-500">
-                    {{ (item[subField.id] as unknown[]).length }} entrée(s) :
-                  </p>
-                  <div
-                    v-for="(subItem, subIdx) in (item[subField.id] as Record<string, unknown>[])"
-                    :key="subIdx"
-                    class="border border-slate-200 rounded p-2 mb-1 bg-white"
-                  >
-                    <div v-for="subSubField in (subField.fields ?? [])" :key="subSubField.id">
-                      <p class="fr-text--sm text-stone-400 mb-0!">{{ subSubField.label }}</p>
-                      <template v-if="subSubField.ui?.widget === 'image'">
-                        <SummaryImage
-                          v-if="Array.isArray(subItem[subSubField.id]) && (subItem[subSubField.id] as unknown[]).length"
-                          :images="(subItem[subSubField.id] as ImageItem[])"
-                        />
-                        <p v-else class="italic mb-0! text-stone-500">Non renseigné</p>
-                      </template>
-                      <template v-else>
-                        <p class="font-medium mb-0!" v-if="resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets)">
-                          {{ resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets) }}
-                        </p>
-                        <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
-                      </template>
-                    </div>
-                  </div>
-                </template>
-              </template>
-              <!-- Other sub-fields -->
-              <template v-else>
-                <div class="flex gap-4">
-                  <p
-                    class="font-medium mb-0!"
-                    v-if="resolveFieldValue(subField, item[subField.id], vocabularySets)"
-                  >
-                    {{ resolveFieldValue(subField, item[subField.id], vocabularySets) }}
-                  </p>
-                  <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
-                </div>
-                <p
-                  v-if="getSubFieldError(subField, item[subField.id])"
-                  class="fr-error-text fr-text--sm mt-0! mb-2!"
-                >
-                  {{ getSubFieldError(subField, item[subField.id]) }}
-                </p>
-              </template>
-            </div>
+            <span class="fr-error-text fr-text--sm">
+              {{ section.errorCount }}
+              erreur{{ section.errorCount > 1 ? "s" : "" }}
+            </span>
+            <ion-button
+              size="small"
+              fill="outline"
+              color="danger"
+              @click="emit('goToPage', section.pageNumber!)"
+            >
+              Corriger
+            </ion-button>
           </div>
-        </template>
+        </div>
 
-        <!-- Champ images -->
-        <template
-          v-else-if="
-            isImageField(field.id) && Array.isArray(resolvedData[field.id])
-          "
-        >
-          <p
-            v-if="!(resolvedData[field.id] as unknown[]).length"
-            class="italic mb-0! text-stone-500"
-          >
-            Non renseigné
+        <!-- Champs de la section -->
+        <div v-for="field in section.fields" :key="field.id">
+          <p class="fr-text--sm font-bold text-stone-500 mb-0!">
+            {{ field.label }}
           </p>
-          <SummaryImage
-            v-else
-            :images="(resolvedData[field.id] as ImageItem[])"
-          />
-        </template>
-        <!-- All other fields -->
-        <template v-else>
-          <p
-            class="font-medium mb-0!"
-            v-if="resolveValue(field.id, resolvedData[field.id])"
-          >
-            {{ resolveValue(field.id, resolvedData[field.id]) }}
-          </p>
-          <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
-        </template>
-        <p
-          v-if="validationErrors[field.id]"
-          class="fr-error-text fr-text--sm mt-1! mb-0!"
-        >
-          {{ validationErrors[field.id] }}
-        </p>
 
-        <hr class="p-1! mt-2!" />
-      </div>
+          <!-- Array field -->
+          <template
+            v-if="isArrayField(field.id) && Array.isArray(resolvedData[field.id])"
+          >
+            <p
+              v-if="!(resolvedData[field.id] as unknown[]).length"
+              class="italic mb-0! text-stone-500"
+            >
+              Non renseigné
+            </p>
+            <p v-else class="font-medium mb-2! text-stone-500">
+              {{ (resolvedData[field.id] as unknown[]).length }} entrée(s) :
+            </p>
+            <div
+              v-for="(item, idx) in (resolvedData[field.id] as Record<string, unknown>[])"
+              :key="`${field.id}-${idx}`"
+              class="border border-slate-200 rounded p-3 mb-2 bg-slate-50"
+            >
+              <div v-for="subField in getSubFields(field.id)" :key="subField.id">
+                <p class="fr-text--sm text-stone-400 mb-0!">
+                  {{ subField.label }}
+                </p>
+                <!-- Image sub-field -->
+                <template v-if="subField.ui?.widget === 'image'">
+                  <SummaryImage
+                    v-if="Array.isArray(item[subField.id]) && (item[subField.id] as unknown[]).length"
+                    :images="(item[subField.id] as ImageItem[])"
+                  />
+                  <p v-else class="italic mb-0! text-stone-500">Non renseigné</p>
+                </template>
+                <!-- Nested array sub-field -->
+                <template v-else-if="subField.ui?.widget === 'array'">
+                  <p
+                    v-if="!Array.isArray(item[subField.id]) || !(item[subField.id] as unknown[]).length"
+                    class="italic mb-0! text-stone-500"
+                  >
+                    Non renseigné
+                  </p>
+                  <template v-else>
+                    <p class="font-medium mb-1! text-stone-500">
+                      {{ (item[subField.id] as unknown[]).length }} entrée(s) :
+                    </p>
+                    <div
+                      v-for="(subItem, subIdx) in (item[subField.id] as Record<string, unknown>[])"
+                      :key="subIdx"
+                      class="border border-slate-200 rounded p-2 mb-1 bg-white"
+                    >
+                      <div
+                        v-for="subSubField in subField.fields ?? []"
+                        :key="subSubField.id"
+                      >
+                        <p class="fr-text--sm text-stone-400 mb-0!">
+                          {{ subSubField.label }}
+                        </p>
+                        <template v-if="subSubField.ui?.widget === 'image'">
+                          <SummaryImage
+                            v-if="Array.isArray(subItem[subSubField.id]) && (subItem[subSubField.id] as unknown[]).length"
+                            :images="(subItem[subSubField.id] as ImageItem[])"
+                          />
+                          <p v-else class="italic mb-0! text-stone-500">
+                            Non renseigné
+                          </p>
+                        </template>
+                        <template v-else>
+                          <p
+                            class="font-medium mb-0!"
+                            v-if="resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets)"
+                          >
+                            {{ resolveFieldValue(subSubField, subItem[subSubField.id], vocabularySets) }}
+                          </p>
+                          <p class="italic mb-0! text-stone-500" v-else>
+                            Non renseigné
+                          </p>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </template>
+                <!-- Other sub-fields -->
+                <template v-else>
+                  <div class="flex gap-4">
+                    <p
+                      class="font-medium mb-0!"
+                      v-if="resolveFieldValue(subField, item[subField.id], vocabularySets)"
+                    >
+                      {{ resolveFieldValue(subField, item[subField.id], vocabularySets) }}
+                    </p>
+                    <p class="italic mb-0! text-stone-500" v-else>
+                      Non renseigné
+                    </p>
+                  </div>
+                  <p
+                    v-if="getSubFieldError(subField, item[subField.id])"
+                    class="fr-error-text fr-text--sm mt-0! mb-2!"
+                  >
+                    {{ getSubFieldError(subField, item[subField.id]) }}
+                  </p>
+                </template>
+              </div>
+            </div>
+          </template>
+
+          <!-- Champ images -->
+          <template
+            v-else-if="isImageField(field.id) && Array.isArray(resolvedData[field.id])"
+          >
+            <p
+              v-if="!(resolvedData[field.id] as unknown[]).length"
+              class="italic mb-0! text-stone-500"
+            >
+              Non renseigné
+            </p>
+            <SummaryImage
+              v-else
+              :images="(resolvedData[field.id] as ImageItem[])"
+            />
+          </template>
+
+          <!-- Tous les autres champs -->
+          <template v-else>
+            <p
+              class="font-medium mb-0!"
+              v-if="resolveValue(field.id, resolvedData[field.id])"
+            >
+              {{ resolveValue(field.id, resolvedData[field.id]) }}
+            </p>
+            <p class="italic mb-0! text-stone-500" v-else>Non renseigné</p>
+          </template>
+
+          <p
+            v-if="validationErrors[field.id]"
+            class="fr-error-text fr-text--sm mt-1! mb-0!"
+          >
+            {{ validationErrors[field.id] }}
+          </p>
+
+          <hr class="p-1! mt-2!" />
+        </div>
+      </template>
     </div>
   </div>
-
 </template>

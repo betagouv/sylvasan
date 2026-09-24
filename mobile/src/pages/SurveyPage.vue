@@ -51,6 +51,12 @@ const currentFormData = ref<Record<string, unknown>>({})
 const prefillData = ref<Record<string, unknown> | undefined>(undefined)
 const dataReady = ref(false)
 const showSummary = ref(false)
+const targetPage = ref<number | undefined>(undefined)
+
+const goToPage = (page: number) => {
+  showSummary.value = false
+  targetPage.value = page
+}
 const summaryData = ref<Record<string, unknown>>({})
 const saving = ref(false)
 const forceValidate = ref(false)
@@ -255,12 +261,13 @@ const saveResponse = async (data: Record<string, unknown>) => {
             :mapComponent="MapField"
             :resolveImagePath="resolveLocalImageSrc"
             :captureImage="captureImageFn"
+            :goToPage="targetPage"
             @done="onSurveyDone"
             @change="handleFormChange"
           />
         </div>
         <template v-if="showSummary">
-          <SurveySummary :survey="survey" :data="summaryData" />
+          <SurveySummary :survey="survey" :data="summaryData" @go-to-page="goToPage" />
           <div class="flex justify-between p-4">
             <DsfrButton
               label="Modifier"

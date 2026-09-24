@@ -128,6 +128,12 @@ const followUpAsSurvey = computed((): Survey | undefined => {
 const currentLocalId = ref<string | undefined>(undefined)
 const currentFormData = ref<Record<string, unknown>>({})
 const showSummary = ref(false)
+const targetPage = ref<number | undefined>(undefined)
+
+const goToPage = (page: number) => {
+  showSummary.value = false
+  targetPage.value = page
+}
 const summaryData = ref<Record<string, unknown>>({})
 const saving = ref(false)
 const forceValidate = ref(false)
@@ -346,6 +352,7 @@ const confirmDelete = async () => {
             :mapComponent="MapField"
             :resolveImagePath="resolveLocalImageSrc"
             :captureImage="captureImageFn"
+            :goToPage="targetPage"
             @done="onSurveyDone"
             @change="currentFormData = $event"
           />
@@ -353,7 +360,7 @@ const confirmDelete = async () => {
 
         <!-- Summary -->
         <template v-if="showSummary && followUpAsSurvey">
-          <SurveySummary :survey="followUpAsSurvey" :data="summaryData" />
+          <SurveySummary :survey="followUpAsSurvey" :data="summaryData" @go-to-page="goToPage" />
           <div class="flex justify-between p-4">
             <DsfrButton
               label="Modifier"
