@@ -30,7 +30,10 @@ import {
   saveImagesToFilesystem,
   resolveLocalImageSrc,
 } from "../utils/imageStorage"
+import { Capacitor } from "@capacitor/core"
 import { captureImage } from "../utils/camera"
+
+const captureImageFn = Capacitor.isNativePlatform() ? captureImage : undefined
 import { validateResponse } from "@shared-utils/validateField"
 import { evaluateCondition } from "@shared-utils/survey"
 
@@ -251,7 +254,7 @@ const saveResponse = async (data: Record<string, unknown>) => {
             :vocabularies="vocabularySets"
             :mapComponent="MapField"
             :resolveImagePath="resolveLocalImageSrc"
-            :captureImage="captureImage"
+            :captureImage="captureImageFn"
             @done="onSurveyDone"
             @change="handleFormChange"
           />
