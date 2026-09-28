@@ -18,6 +18,7 @@ const props = withDefaults(
     mapComponent?: Component
     resolveImagePath?: (path: string) => Promise<string | null>
     captureImage?: () => Promise<LocalImageItem | null>
+    goToPage?: number
   }>(),
   { vocabularies: () => [] }
 )
@@ -32,6 +33,13 @@ const hasPages = computed(
 )
 
 const currentStep = ref(1)
+
+watch(
+  () => props.goToPage,
+  (page) => {
+    if (page && page >= 1 && page <= stepTitles.value.length) currentStep.value = page
+  }
+)
 
 const stepTitles = computed(
   () => props.schema.pages?.map((p) => p.title ?? `Page ${p.id}`) ?? []
