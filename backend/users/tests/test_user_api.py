@@ -6,6 +6,7 @@ from organisations.factories import MembershipFactory, OrganisationFactory, Pole
 from rest_framework import status
 from rest_framework.test import APITestCase
 from surveys.factories import VocabularySetFactory
+from surveys.models import VocabularyCategory
 
 User = get_user_model()
 
@@ -145,35 +146,34 @@ class TestUserApiVocabularies(APITestCase):
         self.assertIn("vocabularies", response.json())
 
     @authenticate
-    def test_me_returns_shared_vocabularies_without_membership(self):
+    def test_me_returns_no_vocabularies_without_membership(self):
         """
-        Un utilisateur sans rôle voit les vocabulaires partagés (organisation=None)
+        Un utilisateur sans rôle ne voit aucun vocabulaire — l'accès est basé sur les catégories de l'organisation
         """
-        shared = VocabularySetFactory(organisation=None)
-        VocabularySetFactory(organisation=OrganisationFactory())  # non partagé, non accessible
+        VocabularySetFactory()
 
         response = self.client.get(reverse("me"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         codes = {v["code"] for v in response.json()["vocabularies"]}
-        self.assertIn(shared.code, codes)
+        self.assertEqual(len(codes), 0)
 
     @authenticate
-    def test_me_returns_org_vocabularies_for_member(self):
+    def test_me_returns_vocabularies_of_accessible_categories(self):
         """
-        Un utilisateur avec un rôle dans une organisation voit les vocabulaires de cette organisation
+        Un utilisateur avec un rôle voit les vocabulaires des catégories accessibles à son organisation
         """
-        org = OrganisationFactory()
+        org = OrganisationFactory(vocabulary_categories=[VocabularyCategory.FOREST])
         MembershipFactory(user=authenticate.user, organisation=org)
-        org_vocab = VocabularySetFactory(organisation=org)
-        other_vocab = VocabularySetFactory(organisation=OrganisationFactory())
+        visible = VocabularySetFactory(category=VocabularyCategory.FOREST)
+        invisible = VocabularySetFactory(category="other")
 
         response = self.client.get(reverse("me"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         codes = {v["code"] for v in response.json()["vocabularies"]}
-        self.assertIn(org_vocab.code, codes)
-        self.assertNotIn(other_vocab.code, codes)
+        self.assertIn(visible.code, codes)
+        self.assertNotIn(invisible.code, codes)
 
     @authenticate
     def test_me_vocabularies_contain_only_display_fields(self):
@@ -181,7 +181,9 @@ class TestUserApiVocabularies(APITestCase):
         Les vocabulaires retournés par /me ne contiennent que id, code et name —
         pas les entrées (représentation allégée, identique à l'endpoint /vocabularies/)
         """
-        VocabularySetFactory(organisation=None)
+        org = OrganisationFactory(vocabulary_categories=[VocabularyCategory.FOREST])
+        MembershipFactory(user=authenticate.user, organisation=org)
+        VocabularySetFactory(category=VocabularyCategory.FOREST)
 
         response = self.client.get(reverse("me"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)

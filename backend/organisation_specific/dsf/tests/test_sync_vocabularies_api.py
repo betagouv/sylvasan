@@ -5,7 +5,7 @@ from django.test import TestCase
 
 import requests
 from organisations.models import Organisation
-from surveys.models import VocabularyEntry, VocabularySet
+from surveys.models import VocabularyCategory, VocabularyEntry, VocabularySet
 
 from organisation_specific.dsf.sync_vocabularies_api import DSFApiError, sync_dsf_vocabularies_from_api
 
@@ -173,7 +173,9 @@ class SyncDsfVocabulariesApiTest(TestCase):
         """
         Les entrées existantes sont mises à jour (label, position) sans être recréées.
         """
-        vocab = VocabularySet.objects.create(organisation=self.dsf_org, code="0/1", name="Ancien nom")
+        vocab = VocabularySet.objects.create(
+            organisation=self.dsf_org, category=VocabularyCategory.FOREST, code="0/1", name="Ancien nom"
+        )
         VocabularyEntry.objects.create(vocabulary_set=vocab, code="0", label="Ancien label", position=99)
 
         mock_get.side_effect = _standard_side_effect()
@@ -192,7 +194,9 @@ class SyncDsfVocabulariesApiTest(TestCase):
         """
         Les entrées présentes en base mais absentes de l'API sont désactivées (is_active=False).
         """
-        vocab = VocabularySet.objects.create(organisation=self.dsf_org, code="0/1", name="0/1")
+        vocab = VocabularySet.objects.create(
+            organisation=self.dsf_org, category=VocabularyCategory.FOREST, code="0/1", name="0/1"
+        )
         VocabularyEntry.objects.create(vocabulary_set=vocab, code="OBSOLETE", label="Entrée obsolète", is_active=True)
 
         mock_get.side_effect = _standard_side_effect()
@@ -209,7 +213,11 @@ class SyncDsfVocabulariesApiTest(TestCase):
         Un VocabularySet DSF présent en base mais absent de l'API est désactivé (is_active=False).
         """
         VocabularySet.objects.create(
-            organisation=self.dsf_org, code="OBSOLETE", name="Référentiel obsolète", is_active=True
+            organisation=self.dsf_org,
+            category=VocabularyCategory.FOREST,
+            code="OBSOLETE",
+            name="Référentiel obsolète",
+            is_active=True,
         )
         mock_get.side_effect = _standard_side_effect()
 
@@ -224,7 +232,13 @@ class SyncDsfVocabulariesApiTest(TestCase):
         """
         Un VocabularySet précédemment désactivé est réactivé si l'API le renvoie à nouveau.
         """
-        VocabularySet.objects.create(organisation=self.dsf_org, code="0/1", name="Ancien nom", is_active=False)
+        VocabularySet.objects.create(
+            organisation=self.dsf_org,
+            category=VocabularyCategory.FOREST,
+            code="0/1",
+            name="Ancien nom",
+            is_active=False,
+        )
         mock_get.side_effect = _standard_side_effect()
 
         result = sync_dsf_vocabularies_from_api()
@@ -239,7 +253,11 @@ class SyncDsfVocabulariesApiTest(TestCase):
         Avec only_unite, les autres VocabularySets ne sont pas désactivés même s'ils sont absents.
         """
         other = VocabularySet.objects.create(
-            organisation=self.dsf_org, code="AUTRE", name="Autre référentiel", is_active=True
+            organisation=self.dsf_org,
+            category=VocabularyCategory.FOREST,
+            code="AUTRE",
+            name="Autre référentiel",
+            is_active=True,
         )
         mock_get.side_effect = _standard_side_effect()
 

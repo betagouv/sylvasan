@@ -12,7 +12,7 @@ import time
 
 import requests
 from organisations.models import Organisation
-from surveys.models import VocabularyEntry, VocabularySet
+from surveys.models import VocabularyCategory, VocabularyEntry, VocabularySet
 
 logger = logging.getLogger(__name__)
 
@@ -241,10 +241,21 @@ def sync_dsf_vocabularies_from_api(
                 logger.debug("  [dry-run] %s — %s (position: %s)", m.get("mode"), m.get("libelle"), m.get("position"))
             continue
 
+        # Éviter d'écraser un set forest appartenant à une autre organisation
+        if (
+            VocabularySet.objects.filter(category=VocabularyCategory.FOREST, code=unite_code)
+            .exclude(organisation=dsf_org)
+            .exists()
+        ):
+            logger.warning(
+                "Code '%s' existe déjà dans la catégorie forest avec une autre organisation — ignoré", unite_code
+            )
+            continue
+
         vocab, created = VocabularySet.objects.update_or_create(
-            organisation=dsf_org,
+            category=VocabularyCategory.FOREST,
             code=unite_code,
-            defaults={"name": name, "is_active": True},
+            defaults={"name": name, "is_active": True, "organisation": dsf_org},
         )
         if created:
             totals["sets_created"] += 1
@@ -291,6 +302,7 @@ def sync_dsf_vocabularies_from_api(
         sets_deactivated = (
             VocabularySet.objects.filter(
                 organisation=dsf_org,
+                category=VocabularyCategory.FOREST,
                 is_active=True,
             )
             .exclude(code__in=nominal_unites)

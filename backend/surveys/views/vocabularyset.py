@@ -1,5 +1,8 @@
-from django.db.models import Prefetch, Q
+from itertools import chain
 
+from django.db.models import Prefetch
+
+from organisations.models import Organisation
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 
@@ -16,10 +19,12 @@ def _active_entries_prefetch():
 
 
 def _accessible_vocab_queryset(user):
-    """VocabularySets visibles par l'utilisateur (son organisation ou partagés)."""
+    """VocabularySets visibles par l'utilisateur selon les catégories de ses organisations."""
     org_ids = user.memberships.values_list("organisation_id", flat=True)
+    category_arrays = Organisation.objects.filter(id__in=org_ids).values_list("vocabulary_categories", flat=True)
+    accessible = set(chain.from_iterable(cats or [] for cats in category_arrays))
     return VocabularySet.objects.filter(
-        Q(organisation__in=org_ids) | Q(organisation__isnull=True),
+        category__in=accessible,
         is_active=True,
     ).order_by("code")
 

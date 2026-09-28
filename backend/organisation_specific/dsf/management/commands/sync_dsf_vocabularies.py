@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import connections
 
 from organisations.models import Organisation
-from surveys.models import VocabularyEntry, VocabularySet
+from surveys.models import VocabularyCategory, VocabularyEntry, VocabularySet
 
 from organisation_specific.dsf.sync_vocabularies_api import (
     BLACKLISTED_UNITES,
@@ -212,10 +212,23 @@ class Command(BaseCommand):
                 self.stdout.write(f"{mode} — {libelle} (position: {position})")
             return
 
+        # Éviter d'écraser un set forest appartenant à une autre organisation
+        if (
+            VocabularySet.objects.filter(category=VocabularyCategory.FOREST, code=code)
+            .exclude(organisation=organisation)
+            .exists()
+        ):
+            self.stderr.write(
+                self.style.WARNING(
+                    f"Code '{code}' existe déjà dans la catégorie forest avec une autre organisation — ignoré"
+                )
+            )
+            return
+
         vocab, created = VocabularySet.objects.update_or_create(
-            organisation=organisation,
+            category=VocabularyCategory.FOREST,
             code=code,
-            defaults={"name": name, "is_active": True},
+            defaults={"name": name, "is_active": True, "organisation": organisation},
         )
 
         if created:

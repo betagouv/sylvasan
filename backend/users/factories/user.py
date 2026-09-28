@@ -1,14 +1,6 @@
-import random
-import string
-
 from django.contrib.auth import get_user_model
 
 import factory
-
-
-def _make_username():
-    suffix = "".join(random.choice(string.ascii_letters) for _ in range(10))
-    return "user_" + suffix
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -17,8 +9,8 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     first_name = factory.Faker("first_name")
     last_name = factory.Faker("last_name")
-    email = factory.Faker("email")
-    username = factory.LazyFunction(_make_username)
+    email = factory.Sequence(lambda n: f"user{n}@example.com")
+    username = factory.Sequence(lambda n: f"user_{n}")
 
     @classmethod
     def _create(cls, model_class, *args, **kwargs):

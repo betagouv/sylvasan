@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 
 from organisations.models import Organisation
-from surveys.models import VocabularyEntry, VocabularySet
+from surveys.models import VocabularyCategory, VocabularyEntry, VocabularySet
 
 from organisation_specific.dsf.management.commands.sync_dsf_vocabularies import Command
 
@@ -45,7 +45,11 @@ class SyncDsfVocabulariesCommandTest(TestCase):
         lors d'une synchronisation DB classique (sans --api).
         """
         inactive = VocabularySet.objects.create(
-            organisation=self.dsf_org, code="ESSDSF", name="Ancien nom", is_active=False
+            organisation=self.dsf_org,
+            code="ESSDSF",
+            name="Ancien nom",
+            is_active=False,
+            category=VocabularyCategory.FOREST,
         )
         mock_conns.__getitem__ = _mock_connections([("OUL", "Orme à larges feuilles", 1)]).__getitem__
 
@@ -87,7 +91,9 @@ class SyncDsfVocabulariesCommandTest(TestCase):
         """
         Les entrées présentes en base mais absentes de metadsf sont désactivées.
         """
-        vocab = VocabularySet.objects.create(organisation=self.dsf_org, code="0/1", name="0/1")
+        vocab = VocabularySet.objects.create(
+            organisation=self.dsf_org, code="0/1", name="0/1", category=VocabularyCategory.FOREST
+        )
         VocabularyEntry.objects.create(vocabulary_set=vocab, code="OBSOLETE", label="Obsolète", is_active=True)
 
         mock_conns.__getitem__ = _mock_connections([("NON", "Non", 0)]).__getitem__
