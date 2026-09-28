@@ -135,7 +135,7 @@ const sections = computed(() => {
               size="small"
               tertiary
               @click="emit('goToPage', section.pageNumber!)"
-              label="Corriger"
+              label="Modifier"
             />
           </div>
         </div>
