@@ -7,6 +7,6 @@ from surveys.models import VocabularySet
 
 @admin.register(VocabularySet)
 class VocabularySetAdmin(SimpleHistoryAdmin):
-    list_display = ("code", "name", "organisation", "is_active")
-    list_filter = ("is_active",)
+    list_display = ("code", "name", "category", "organisation", "is_active")
+    list_filter = ("is_active", "category")
     search_fields = ("code", "name")

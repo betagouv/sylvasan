@@ -12,7 +12,7 @@ import time
 
 import requests
 from organisations.models import Organisation
-from surveys.models import VocabularyEntry, VocabularySet
+from surveys.models import VocabularyCategory, VocabularyEntry, VocabularySet
 
 logger = logging.getLogger(__name__)
 
@@ -242,9 +242,9 @@ def sync_dsf_vocabularies_from_api(
             continue
 
         vocab, created = VocabularySet.objects.update_or_create(
-            organisation=dsf_org,
+            category=VocabularyCategory.FOREST,
             code=unite_code,
-            defaults={"name": name, "is_active": True},
+            defaults={"name": name, "is_active": True, "organisation": dsf_org},
         )
         if created:
             totals["sets_created"] += 1

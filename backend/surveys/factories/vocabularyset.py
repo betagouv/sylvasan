@@ -10,4 +10,5 @@ class VocabularySetFactory(factory.django.DjangoModelFactory):
     code = factory.Faker("lexify", text="????")
     name = factory.Faker("text", max_nb_chars=20)
     organisation = None
+    category = None
     is_active = True
