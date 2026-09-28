@@ -6,6 +6,20 @@ from django.db import migrations, models
 def assign_forest_category(apps, schema_editor):
     """Assigne la catégorie 'forest' à tous les VocabularySet existants."""
     VocabularySet = apps.get_model("surveys", "VocabularySet")
+    # Détecter les codes en doublon avant d'appliquer la contrainte (category, code)
+    from django.db.models import Count
+    duplicates = (
+        VocabularySet.objects.values("code")
+        .annotate(n=Count("id"))
+        .filter(n__gt=1)
+        .values_list("code", flat=True)
+    )
+    if duplicates:
+        raise Exception(
+            f"Migration impossible : les codes suivants existent dans plusieurs lignes et "
+            f"créeraient des doublons sous la contrainte (category='forest', code) : "
+            f"{sorted(duplicates)}. Corrigez ces doublons avant de relancer la migration."
+        )
     VocabularySet.objects.filter(category__isnull=True).update(category="forest")
 
 

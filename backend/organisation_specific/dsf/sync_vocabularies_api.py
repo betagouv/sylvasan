@@ -241,6 +241,17 @@ def sync_dsf_vocabularies_from_api(
                 logger.debug("  [dry-run] %s — %s (position: %s)", m.get("mode"), m.get("libelle"), m.get("position"))
             continue
 
+        # Éviter d'écraser un set forest appartenant à une autre organisation
+        if (
+            VocabularySet.objects.filter(category=VocabularyCategory.FOREST, code=unite_code)
+            .exclude(organisation=dsf_org)
+            .exists()
+        ):
+            logger.warning(
+                "Code '%s' existe déjà dans la catégorie forest avec une autre organisation — ignoré", unite_code
+            )
+            continue
+
         vocab, created = VocabularySet.objects.update_or_create(
             category=VocabularyCategory.FOREST,
             code=unite_code,
@@ -291,6 +302,7 @@ def sync_dsf_vocabularies_from_api(
         sets_deactivated = (
             VocabularySet.objects.filter(
                 organisation=dsf_org,
+                category=VocabularyCategory.FOREST,
                 is_active=True,
             )
             .exclude(code__in=nominal_unites)
