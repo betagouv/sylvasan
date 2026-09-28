@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from "vue"
+import { computed, nextTick, ref, watch, onMounted } from "vue"
 import { closeOutline, trashOutline } from "ionicons/icons"
 import {
   IonPage,
@@ -133,6 +133,7 @@ const targetPage = ref<number | undefined>(undefined)
 const goToPage = (page: number) => {
   showSummary.value = false
   targetPage.value = page
+  nextTick(() => { targetPage.value = undefined })
 }
 const summaryData = ref<Record<string, unknown>>({})
 const saving = ref(false)
