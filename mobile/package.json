@@ -32,7 +32,7 @@
     "@ionic/vue": "^9.0.4",
     "@ionic/vue-router": "^9.0.4",
     "@tailwindcss/vite": "^4.3.3",
-    "@vueuse/core": "^14.4.0",
+    "@vueuse/core": "^15.0.0",
     "idb": "^8.0.3",
     "maplibre-gl": "^5.24.0",
     "pinia": "^4.0.3",
