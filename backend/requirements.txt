@@ -24,7 +24,7 @@ jmespath==1.1.0
 joserfc==1.7.5
 packaging==26.3
 pillow==12.3.0
-pipdeptree==4.2.1
+pipdeptree==4.2.5
 psycopg2==2.9.12
 pycparser==3.0
 PyJWT==2.14.0
