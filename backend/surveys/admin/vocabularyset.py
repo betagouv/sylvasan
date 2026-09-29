@@ -4,6 +4,9 @@ from simple_history.admin import SimpleHistoryAdmin
 
 from surveys.models import VocabularySet
 
+VocabularySet._meta.verbose_name = "référentiel"
+VocabularySet._meta.verbose_name_plural = "référentiels"
+
 
 @admin.register(VocabularySet)
 class VocabularySetAdmin(SimpleHistoryAdmin):
