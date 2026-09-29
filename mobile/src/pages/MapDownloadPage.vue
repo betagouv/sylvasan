@@ -13,7 +13,7 @@ import {
   IonTitle,
 } from "@ionic/vue"
 import { closeOutline } from "ionicons/icons"
-import maplibregl from "maplibre-gl"
+import * as maplibregl from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css"
 import MapDownloader from "../components/MapDownloader.vue"
 import type { BoundaryBox } from "@shared-types/maps"

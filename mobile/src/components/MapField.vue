@@ -13,7 +13,8 @@ import {
   IonSpinner,
 } from "@ionic/vue"
 import { closeOutline } from "ionicons/icons"
-import maplibregl, { type StyleSpecification } from "maplibre-gl"
+import * as maplibregl from "maplibre-gl"
+import type { StyleSpecification } from "maplibre-gl"
 import { loadAllMapRecords } from "../composables/offlineMapMetadata"
 import { Geolocation } from "@capacitor/geolocation"
 import { Capacitor } from "@capacitor/core"
