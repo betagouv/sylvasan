@@ -34,7 +34,7 @@ import "maplibre-gl/dist/maplibre-gl.css"
 // ce qui casse les références à des variables renommées dans le scope isolé du worker.
 // On pointe explicitement vers le worker pré-compilé et auto-suffisant fourni par MapLibre.
 import { setWorkerUrl } from "maplibre-gl"
-import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-csp-worker?url"
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url"
 setWorkerUrl(maplibreWorkerUrl)
 
 const pinia = createPinia()

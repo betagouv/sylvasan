@@ -1,6 +1,6 @@
 import { ref, watch } from "vue"
 import type { Ref, ShallowRef } from "vue"
-import maplibregl from "maplibre-gl"
+import * as maplibregl from "maplibre-gl"
 import { useApiFetch } from "../utils/data-fetching"
 import { useAuthStore } from "../stores/auth"
 import type { GeoFollowUp, ResponseGeo } from "@shared-types/response"

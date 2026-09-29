@@ -1,6 +1,6 @@
 import { ref, computed, watch, onBeforeUnmount } from "vue"
 import type { ShallowRef } from "vue"
-import maplibregl from "maplibre-gl"
+import * as maplibregl from "maplibre-gl"
 import { storeToRefs } from "pinia"
 import { useResponsesStore } from "../stores/responses"
 import { useSurveysStore } from "../stores/surveys"
