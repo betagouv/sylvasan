@@ -45,16 +45,16 @@ class IsOrganisationAdminOrHasApiKey(permissions.BasePermission):
 
 
 def _has_responder_permission(request, organisation, pole):
-    """Vérifie qu'un·e utilisateur·ice a le rôle RESPONDER pour une ressource donnée."""
+    """Vérifie qu'un·e utilisateur·ice a le rôle RESPONDER pour une ressource donnée.
+    Les enquêtes org (pole=None) sont accessibles à tout RESPONDER de l'organisation.
+    Les enquêtes de pôle ne sont accessibles qu'aux RESPONDER de ce pôle précis."""
     qs = Membership.objects.filter(
         user=request.user,
         organisation=organisation,
         membership_type=MembershipType.RESPONDER,
     )
-    if qs.filter(pole__isnull=True).exists():
-        return True
     if pole is None:
-        return qs.filter(pole__isnull=False).exists()
+        return qs.exists()
     return qs.filter(pole=pole).exists()
 
 

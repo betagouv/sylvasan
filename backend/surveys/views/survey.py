@@ -55,7 +55,12 @@ class SurveyQuerySetMixin:
     def get_queryset(self):
         user = self.request.user
 
-        org_ids = Membership.objects.filter(user=user, pole__isnull=True).values_list("organisation_id", flat=True)
+        admin_org_ids = Membership.objects.filter(
+            user=user, pole__isnull=True, membership_type=MembershipType.ADMIN
+        ).values_list("organisation_id", flat=True)
+        responder_org_ids = Membership.objects.filter(
+            user=user, pole__isnull=True, membership_type=MembershipType.RESPONDER
+        ).values_list("organisation_id", flat=True)
         pole_ids = Membership.objects.filter(user=user, pole__isnull=False).values_list("pole_id", flat=True)
         # Les RESPONDER rattachés à un pôle voient aussi les enquêtes au niveau organisation
         responder_pole_org_ids = Membership.objects.filter(
@@ -65,7 +70,8 @@ class SurveyQuerySetMixin:
         return (
             Survey.objects.active()
             .filter(
-                Q(organisation_id__in=org_ids)
+                Q(organisation_id__in=admin_org_ids)
+                | Q(organisation_id__in=responder_org_ids, pole__isnull=True)
                 | Q(pole_id__in=pole_ids)
                 | Q(organisation_id__in=responder_pole_org_ids, pole__isnull=True)
             )
@@ -98,7 +104,8 @@ class SurveyListCreateAPIView(SurveyQuerySetMixin, ListCreateAPIView):
 
 def _responder_survey_queryset(user):
     """Enquêtes auxquelles user peut répondre (rôle RESPONDER uniquement).
-    Les RESPONDER rattachés à un pôle voient aussi les enquêtes sans pôle de la même organisation."""
+    Les RESPONDER org ne voient que les enquêtes sans pôle.
+    Les RESPONDER pôle voient les enquêtes de leur pôle et les enquêtes sans pôle de la même organisation."""
     org_ids = Membership.objects.filter(
         user=user, membership_type=MembershipType.RESPONDER, pole__isnull=True
     ).values_list("organisation_id", flat=True)
@@ -115,7 +122,7 @@ def _responder_survey_queryset(user):
     return (
         Survey.objects.active()
         .filter(
-            Q(organisation_id__in=org_ids)
+            Q(organisation_id__in=org_ids, pole__isnull=True)
             | Q(pole_id__in=pole_ids)
             | Q(organisation_id__in=pole_org_ids, pole__isnull=True)
         )

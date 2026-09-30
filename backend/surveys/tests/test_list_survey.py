@@ -47,20 +47,18 @@ class TestListSurvey(APITestCase):
         self.assertEqual(results[0]["id"], survey.id)
 
     @authenticate
-    def test_org_member_sees_pole_surveys_within_org(self):
+    def test_org_member_cannot_see_pole_surveys_within_org(self):
         """
-        Un membre d'organisation voit aussi les enquêtes des pôles de son organisation
+        Un RESPONDER org ne voit pas les enquêtes des pôles de son organisation
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
-        survey = SurveyFactory(organisation=org, pole=pole)
+        SurveyFactory(organisation=org, pole=pole)
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
 
         response = self.client.get(reverse("survey_list_create"), format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        results = response.json()["results"]
-        self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["id"], survey.id)
+        self.assertEqual(response.json()["results"], [])
 
     @authenticate
     def test_pole_member_sees_pole_and_org_level_surveys(self):
@@ -216,10 +214,10 @@ class TestListSurvey(APITestCase):
         org = OrganisationFactory()
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         old_survey = SurveyFactory(organisation=org)
-        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
+        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=datetime.UTC)
         old_survey.save()
         recent_survey = SurveyFactory(organisation=org)
-        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=datetime.timezone.utc)
+        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=datetime.UTC)
         recent_survey.save()
 
         response = self.client.get(
@@ -239,10 +237,10 @@ class TestListSurvey(APITestCase):
         org = OrganisationFactory()
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
         old_survey = SurveyFactory(organisation=org)
-        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=datetime.timezone.utc)
+        old_survey.creation_date = timezone.datetime(2020, 1, 1, tzinfo=datetime.UTC)
         old_survey.save()
         recent_survey = SurveyFactory(organisation=org)
-        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=datetime.timezone.utc)
+        recent_survey.creation_date = timezone.datetime(2024, 6, 1, tzinfo=datetime.UTC)
         recent_survey.save()
 
         response = self.client.get(
