@@ -96,9 +96,9 @@ class TestCreateResponse(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @authenticate
-    def test_org_responder_can_create_response_for_pole_survey(self):
+    def test_org_responder_cannot_create_response_for_pole_survey(self):
         """
-        Un·e RESPONDER au niveau de l'organisation peut répondre à une enquête d'un pôle de cette organisation
+        Un·e RESPONDER au niveau de l'organisation ne peut pas répondre à une enquête d'un pôle
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
@@ -109,7 +109,7 @@ class TestCreateResponse(APITestCase):
             response_payload(survey),
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @authenticate
     def test_org_responder_cannot_create_response_for_other_org_survey(self):
@@ -568,10 +568,10 @@ class TestCreateFollowUpResponse(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     @authenticate
-    def test_responder_org_peut_creer_une_reponse_pour_un_suivi_de_pole(self):
+    def test_responder_org_ne_peut_pas_creer_une_reponse_pour_un_suivi_de_pole(self):
         """
-        Un·e RESPONDER au niveau de l'organisation peut créer une réponse
-        pour un suivi rattaché à un pôle de cette organisation
+        Un·e RESPONDER au niveau de l'organisation ne peut pas créer une réponse
+        pour un suivi rattaché à un pôle
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
@@ -584,7 +584,7 @@ class TestCreateFollowUpResponse(APITestCase):
             follow_up_response_payload(follow_up, parent),
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @authenticate
     def test_responder_pole_peut_creer_une_reponse_pour_le_suivi_de_son_pole(self):

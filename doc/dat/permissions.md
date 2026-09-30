@@ -16,7 +16,7 @@ Les enquêtes sont visibles par exemple via `/enquetes` dans le web.
 |----------------|--------------------------------------------|-----------------------------------------|---------------------------------------------|
 | Admin org      | ✅ | ✅ | ✅ |
 | Admin pôle     | ❌ (Probabelement à changer) | ✅ | ❌ |
-| Responder org  | ✅ | ✅ | ✅ |
+| Responder org  | ✅ | ❌ | ❌ |
 | Responder pôle | ✅ | ✅ | ❌ |
 |  |
 | *Django super-admin* | ✅ | ✅ | ✅ |
@@ -79,7 +79,7 @@ En ce moment les répondant·e·s peuvent seulement voir leurs propres réponses
 |----------------|--------------------------------------------|-----------------------------------------|---------------------------------------------|
 | Admin org      | ❌ | ❌ | ❌ |
 | Admin pôle     | ❌ | ❌ | ❌ |
-| Responder org  | ✅ | ✅ | ✅ |
+| Responder org  | ✅ | ❌ | ❌ |
 | Responder pôle | ✅ | ✅ | ❌ |
 |  |
 | *Django super-admin* | ✅ | ✅ | ✅ |

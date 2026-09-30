@@ -57,9 +57,9 @@ class TestRetrieveSurvey(APITestCase):
         self.assertEqual(response.json()["id"], survey.id)
 
     @authenticate
-    def test_org_responder_can_retrieve_pole_survey_within_org(self):
+    def test_org_responder_cannot_retrieve_pole_survey_within_org(self):
         """
-        Un·e RESPONDER au niveau organisation peut accéder à une enquête d'un pôle de cette organisation
+        Un·e RESPONDER au niveau organisation ne peut pas accéder à une enquête d'un pôle
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
@@ -68,8 +68,7 @@ class TestRetrieveSurvey(APITestCase):
 
         response = self.client.get(survey_url(survey.id), format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json()["id"], survey.id)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @authenticate
     def test_org_responder_cannot_retrieve_survey_from_other_org(self):
@@ -289,20 +288,19 @@ class TestSurveyResponderList(APITestCase):
         self.assertIn(survey.id, ids)
 
     @authenticate
-    def test_org_responder_sees_pole_surveys_within_org(self):
+    def test_org_responder_does_not_see_pole_surveys_within_org(self):
         """
-        Un·e RESPONDER au niveau organisation voit aussi les enquêtes des pôles de cette organisation
+        Un·e RESPONDER au niveau organisation ne voit pas les enquêtes des pôles de cette organisation
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
-        survey = SurveyFactory(organisation=org, pole=pole)
+        SurveyFactory(organisation=org, pole=pole)
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
 
         response = self.client.get(reverse("survey_responder_retrieve"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        ids = [s["id"] for s in response.json()]
-        self.assertIn(survey.id, ids)
+        self.assertEqual(response.json(), [])
 
     @authenticate
     def test_org_responder_cannot_see_surveys_from_other_org(self):
