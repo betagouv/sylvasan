@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 from django.db.models import Prefetch, Q
 
 from django_filters import rest_framework as django_filters
@@ -18,7 +22,7 @@ class SurveyPagination(LimitOffsetPagination):
     default_limit = 20
     max_limit = 100
 
-    organisations = []
+    organisations: ClassVar[list] = []
 
     def paginate_queryset(self, queryset, request, view=None):
         org_ids = queryset.values_list("organisation_id", flat=True).distinct().order_by()
@@ -44,7 +48,7 @@ class SurveyFilterSet(django_filters.FilterSet):
 
     class Meta:
         model = Survey
-        fields = []
+        fields: ClassVar[list] = []
 
 
 class SurveyQuerySetMixin:
@@ -71,11 +75,11 @@ class SurveyQuerySetMixin:
 
 class SurveyListCreateAPIView(SurveyQuerySetMixin, ListCreateAPIView):
     pagination_class = SurveyPagination
-    filter_backends = [
+    filter_backends: ClassVar[list] = [
         django_filters.DjangoFilterBackend,
         OrderingFilter,
     ]
-    ordering_fields = ["creation_date", "id"]
+    ordering_fields: ClassVar[list] = ["creation_date", "id"]
     filterset_class = SurveyFilterSet
 
     def get_serializer_class(self):
@@ -116,6 +120,7 @@ def _responder_survey_queryset(user):
             | Q(organisation_id__in=pole_org_ids, pole__isnull=True)
         )
         .distinct()
+        .order_by("-creation_date")
     )
 
 
@@ -126,7 +131,7 @@ class SurveyResponderListAPIView(ListAPIView):
     """
 
     serializer_class = FullSurveySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar[list] = [IsAuthenticated]
 
     def get_queryset(self):
         active_follow_ups = Prefetch("follow_ups", queryset=SurveyFollowUp.objects.filter(is_active=True))
