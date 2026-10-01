@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import ClassVar
+
 from django.contrib.auth import authenticate, get_user_model, login, logout
 from django.db.models import Q
 from django.middleware.csrf import get_token
@@ -8,12 +12,14 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from users.serializers import SimpleUserSerializer
 
 
 class TestAuthView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes: ClassVar[list] = [IsAuthenticated]
 
     def get(self, request, format=None):
         return Response({"get": True})
@@ -74,3 +80,23 @@ class LogoutView(APIView):
     def post(self, request, *args, **kwargs):
         logout(request)
         return Response()
+
+
+class EmailOrUsernameTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Accepte un nom d'utilisateur ou une adresse email dans le champ username."""
+
+    def validate(self, attrs):
+        username_or_email = attrs.get(self.username_field, "")
+        User = get_user_model()
+        try:
+            # On tente avec l'email. Si cela échoue, on utilise la méthode validate
+            # de la superclasse, qui, elle, regarde le nom d'utilisateur
+            user = User.objects.get(email=username_or_email)
+            attrs[self.username_field] = user.username
+        except (User.DoesNotExist, User.MultipleObjectsReturned):
+            pass
+        return super().validate(attrs)
+
+
+class MobileTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailOrUsernameTokenObtainPairSerializer
