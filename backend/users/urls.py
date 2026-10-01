@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 from users.views import (
     CsrfView,
@@ -9,6 +9,7 @@ from users.views import (
     LoggedUserView,
     LoginView,
     LogoutView,
+    MobileTokenObtainPairView,
     ResendVerificationEmailView,
     TestAuthView,
     UserRegistrationView,
@@ -22,7 +23,7 @@ urlpatterns = [
     path("api/auth/logout/", LogoutView.as_view()),
     path("api/auth/register/", UserRegistrationView.as_view(), name="register"),
     path("api/auth/resend-verification/", ResendVerificationEmailView.as_view(), name="resend_verification"),
-    path("api/mobile/token/", TokenObtainPairView.as_view()),
+    path("api/mobile/token/", MobileTokenObtainPairView.as_view(), name="mobile_token"),
     path("api/mobile/token/refresh/", TokenRefreshView.as_view()),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path(
