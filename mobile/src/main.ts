@@ -30,11 +30,10 @@ import "@ionic/vue/css/core.css"
 // import "@ionic/vue/css/typography.css"
 
 import "maplibre-gl/dist/maplibre-gl.css"
-// Le worker GeoJSON de MapLibre est créé depuis le bundle principal minifié par Vite,
-// ce qui casse les références à des variables renommées dans le scope isolé du worker.
-// On pointe explicitement vers le worker pré-compilé et auto-suffisant fourni par MapLibre.
+// Vite regroupe le worker et ses dépendances (maplibre-gl-shared.mjs) dans un seul fichier,
+// évitant les erreurs 404 sur les imports internes du worker en mode natif Capacitor.
 import { setWorkerUrl } from "maplibre-gl"
-import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url"
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
 setWorkerUrl(maplibreWorkerUrl)
 
 const pinia = createPinia()
