@@ -329,36 +329,53 @@ const updateCondition = (c: Condition | undefined) => {
 
     <!-- Options pour widget "input" / number -->
     <div
-      class="flex gap-6"
+      class="flex flex-col gap-4"
       v-if="payload.ui?.widget === 'input' || payload.ui?.widget === 'number'"
     >
-      <DsfrInputGroup>
-        <DsfrInput
-          label-visible
-          v-model="payload.ui.hint"
-          v-if="payload.ui"
-          label="Aide"
-        />
-      </DsfrInputGroup>
-      <DsfrInputGroup>
-        <DsfrInput
-          label-visible
-          v-model="payload.ui.placeholder"
-          label="Placeholder"
-        />
-      </DsfrInputGroup>
+      <div class="flex gap-6">
+        <DsfrInputGroup>
+          <DsfrInput
+            label-visible
+            v-model="payload.ui.hint"
+            v-if="payload.ui"
+            label="Aide"
+          />
+        </DsfrInputGroup>
+        <DsfrInputGroup>
+          <DsfrInput
+            label-visible
+            v-model="payload.ui.placeholder"
+            label="Placeholder"
+          />
+        </DsfrInputGroup>
+        <DsfrInputGroup v-if="payload.ui.widget === 'input'">
+          <DsfrInput
+            label-visible
+            v-model="payload.default"
+            label="Valeur par défaut"
+          />
+        </DsfrInputGroup>
+        <DsfrInputGroup v-if="payload.ui.widget === 'number'">
+          <DsfrInput
+            label-visible
+            type="number"
+            v-model="payload.default"
+            label="Valeur par défaut"
+          />
+        </DsfrInputGroup>
 
-      <div
-        class="grow"
-        v-if="payload.validation && payload.ui.widget === 'input'"
-      ></div>
-      <DsfrToggleSwitch
-        v-if="payload.validation && payload.ui.widget === 'input'"
-        label="Champ multiligne"
-        activeText="Oui"
-        inactiveText="Non"
-        v-model="payload.ui.textarea"
-      />
+        <div
+          class="grow"
+          v-if="payload.validation && payload.ui.widget === 'input'"
+        ></div>
+        <DsfrToggleSwitch
+          v-if="payload.validation && payload.ui.widget === 'input'"
+          label="Champ multiligne"
+          activeText="Oui"
+          inactiveText="Non"
+          v-model="payload.ui.textarea"
+        />
+      </div>
 
       <!-- Validation min/max pour les chiffres -->
       <div v-if="payload.validation && payload.ui.widget === 'number'">
