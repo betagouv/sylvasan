@@ -114,6 +114,7 @@ VITE_API_ROOT= La racine de l'URL pour l'API backend (par exemple `http://localh
 VITE_CREDENTIALS= S'il faut inclure les credentials dans les appels API. Pour le développement mettre à `include`.
 VITE_MATOMO_URL= URL pour le tracking de Matomo (laisser vide pour le développement)
 VITE_MATOMO_ID= ID du site Matomo associé au projet (laisser vide pour le développement)
+VITE_SENTRY_DSN= DSN du projet Sentry pour le suivi des erreurs frontend (laisser vide pour désactiver)
 
 #### Variables d'environnement mobile
 
@@ -121,6 +122,7 @@ L'application mobile utilise également certaines variables d'environnement. Con
 
 VITE_API_ROOT= La racine de l'URL pour l'API backend (par exemple `http://localhost:8000/platform/api`)
 VITE_CREDENTIALS= S'il faut inclure les credentials dans les appels API. Pour le développement mettre à `include`.
+VITE_SENTRY_DSN= DSN du projet Sentry pour le suivi des erreurs (laisser vide pour désactiver). Les erreurs sont conservées sur l'appareil hors connexion et envoyées au prochain démarrage.
 
 
 #### Créer les différents modèles Django dans la base de données

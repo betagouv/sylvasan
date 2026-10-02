@@ -36,8 +36,24 @@ import { setWorkerUrl } from "maplibre-gl"
 import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
 setWorkerUrl(maplibreWorkerUrl)
 
+import * as Sentry from "@sentry/capacitor"
+import * as SentryVue from "@sentry/vue"
+import router from "./router/root"
+
 const pinia = createPinia()
 const app = createApp(App).use(pinia).use(VueDsfr).use(IonicVue)
+
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init(
+    {
+      app,
+      dsn: import.meta.env.VITE_SENTRY_DSN,
+      integrations: [SentryVue.browserTracingIntegration({ router })],
+      tracesSampleRate: 0.2,
+    },
+    SentryVue.init,
+  )
+}
 
 import { useAuthStore } from "./stores/auth"
 const auth = useAuthStore()
@@ -46,7 +62,6 @@ await auth.bootstrap()
 import { setupAutoSync } from "./utils/autoSync"
 await setupAutoSync()
 
-import router from "./router/root"
 app.use(router)
 await router.isReady()
 
