@@ -27,7 +27,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     app,
     dsn: import.meta.env.VITE_SENTRY_DSN,
     integrations: [Sentry.browserTracingIntegration({ router })],
-    tracesSampleRate: 0.2,
+    tracesSampleRate: 1.0,
   })
 }
 
