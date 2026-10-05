@@ -13,12 +13,23 @@ import VueMatomo from "vue-matomo"
 
 import "maplibre-gl/dist/maplibre-gl.css"
 
+import * as Sentry from "@sentry/vue"
+
 const pinia = createPinia()
 
 const app = createApp(App)
 app.use(pinia)
 app.use(router)
 app.use(VueDsfr)
+
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    app,
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    integrations: [Sentry.browserTracingIntegration({ router })],
+    tracesSampleRate: 1.0,
+  })
+}
 
 // Si Matomo est configuré, on utilise vue-matomo
 const matomoUrl = import.meta.env.VITE_MATOMO_URL
