@@ -316,7 +316,7 @@ div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
 }
 
 .filter-button {
-  top: calc(env(safe-area-inset-top) + 3rem);
+  top: calc(env(safe-area-inset-top) + 7rem);
   right: 0.75rem;
   width: 50px;
   height: 50px;
