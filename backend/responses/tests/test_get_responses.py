@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
 from surveys.factories.surveyfollowup import SurveyFollowUpFactory
+from users.factories import UserFactory
 
 from responses.factories import ResponseFactory
 
@@ -142,24 +143,92 @@ class TestGetResponses(APITestCase):
         self.assertNotIn(survey_response_autre_org_a.id, ids)
 
     @authenticate
-    def test_admin_pole_voit_les_reponses_au_suivi_niveau_org(self):
+    def test_admin_pole_voit_les_reponses_enquete_org_de_son_pole(self):
         """
-        Un·e ADMIN de pôle voit les réponses aux suivis rattachés à l'organisation (pole=None),
-        et pas seulement ceux rattachés à son propre pôle
+        Un·e ADMIN de pôle voit les réponses à une enquête niveau org soumises par les répondant·es de son pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=None)
+        respondant = UserFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=respondant, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER)
+        reponse = ResponseFactory(survey=survey, respondant=respondant)
+
+        response = self.client.get(reverse("response_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [r["id"] for r in self.get_results(response)]
+        self.assertIn(reponse.id, ids)
+
+    @authenticate
+    def test_admin_pole_ne_voit_pas_les_reponses_enquete_org_dun_autre_pole(self):
+        """
+        Un·e ADMIN de pôle ne voit pas les réponses à une enquête niveau org soumises
+        par les répondant·es d'un autre pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        autre_pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=None)
+        respondant = UserFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=respondant, organisation=org, pole=autre_pole, membership_type=MembershipType.RESPONDER)
+        reponse_autre_pole = ResponseFactory(survey=survey, respondant=respondant)
+
+        response = self.client.get(reverse("response_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [r["id"] for r in self.get_results(response)]
+        self.assertNotIn(reponse_autre_pole.id, ids)
+
+    @authenticate
+    def test_admin_pole_voit_les_reponses_au_suivi_niveau_org_de_son_pole(self):
+        """
+        Un·e ADMIN de pôle voit les réponses aux suivis niveau org soumises par les répondant·es de son pôle
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
         survey = SurveyFactory(organisation=org)
         follow_up_org = SurveyFollowUpFactory(organisation=org, pole=None, parent_survey=survey)
+        respondant = UserFactory()
         MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=respondant, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER)
         parent = ResponseFactory(survey=survey)
-        reponse_suivi_org = ResponseFactory(survey=None, survey_follow_up=follow_up_org, parent_response=parent)
+        reponse_suivi_org = ResponseFactory(
+            survey=None, survey_follow_up=follow_up_org, parent_response=parent, respondant=respondant
+        )
 
         response = self.client.get(reverse("response_list_create"), {"include_follow_ups": "true"}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         ids = [r["id"] for r in self.get_results(response)]
         self.assertIn(reponse_suivi_org.id, ids)
+
+    @authenticate
+    def test_admin_pole_ne_voit_pas_les_reponses_au_suivi_niveau_org_dun_autre_pole(self):
+        """
+        Un·e ADMIN de pôle ne voit pas les réponses aux suivis niveau org soumises
+        par les répondant·es d'un autre pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        autre_pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org)
+        follow_up_org = SurveyFollowUpFactory(organisation=org, pole=None, parent_survey=survey)
+        respondant = UserFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=respondant, organisation=org, pole=autre_pole, membership_type=MembershipType.RESPONDER)
+        parent = ResponseFactory(survey=survey)
+        reponse_autre_pole = ResponseFactory(
+            survey=None, survey_follow_up=follow_up_org, parent_response=parent, respondant=respondant
+        )
+
+        response = self.client.get(reverse("response_list_create"), {"include_follow_ups": "true"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [r["id"] for r in self.get_results(response)]
+        self.assertNotIn(reponse_autre_pole.id, ids)
 
 
 class TestResponseFullList(APITestCase):
