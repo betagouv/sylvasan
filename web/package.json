@@ -18,7 +18,7 @@
     "@vue/devtools-api": "^8.2.1",
     "@vueuse/core": "^15.0.0",
     "@vueuse/integrations": "^15.0.0",
-    "maplibre-gl": "^6.10.0",
+    "maplibre-gl": "^6.11.2",
     "pinia": "^4.0.3",
     "tailwindcss": "^4.2.1",
     "universal-cookie": "^8.1.2",
