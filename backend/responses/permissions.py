@@ -94,4 +94,16 @@ class CanDeleteResponse(permissions.BasePermission):
         source = obj.survey_follow_up if obj.survey_follow_up_id else obj.survey
         if source is None:
             return False
-        return CanDeleteSurvey().has_object_permission(request, view, source)
+        if CanDeleteSurvey().has_object_permission(request, view, source):
+            return True
+        # ADMIN de pôle : réponse à une enquête/suivi niveau org soumise par un·e répondant·e de son pôle
+        if source.pole_id is None:
+            return Membership.objects.filter(
+                user=request.user,
+                organisation=source.organisation,
+                membership_type=MembershipType.ADMIN,
+                pole__isnull=False,
+                pole__memberships__user=obj.respondant,
+                pole__memberships__membership_type=MembershipType.RESPONDER,
+            ).exists()
+        return False

@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from surveys.factories import SurveyFactory
 from surveys.factories.surveyfollowup import SurveyFollowUpFactory
+from users.factories import UserFactory
 
 from responses.factories import ResponseFactory
 from responses.models import Response
@@ -150,10 +151,46 @@ class TestDeleteResponse(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @authenticate
-    def test_pole_admin_cannot_delete_response_from_org_level_survey(self):
+    def test_pole_admin_can_delete_response_from_org_survey_by_their_pole_responder(self):
         """
-        Un·e ADMIN de pôle ne peut pas supprimer les réponses d'enquêtes au niveau organisation — reçoit une 404
-        (la réponse n'est pas visible dans son queryset)
+        Un·e ADMIN de pôle peut supprimer une réponse à une enquête niveau org soumise par un·e répondant·e de son pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=None)
+        respondant = UserFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=respondant, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER)
+        org_level_response = ResponseFactory(survey=survey, respondant=respondant)
+
+        response = self.client.delete(response_url(org_level_response.id))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    @authenticate
+    def test_pole_admin_cannot_delete_response_from_org_survey_by_other_pole_responder(self):
+        """
+        Un·e ADMIN de pôle ne peut pas supprimer une réponse à une enquête niveau org
+        soumise par un·e répondant·e d'un autre pôle — reçoit une 404
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        autre_pole = PoleFactory(organisation=org)
+        survey = SurveyFactory(organisation=org, pole=None)
+        respondant = UserFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=respondant, organisation=org, pole=autre_pole, membership_type=MembershipType.RESPONDER)
+        org_level_response = ResponseFactory(survey=survey, respondant=respondant)
+
+        response = self.client.delete(response_url(org_level_response.id))
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_pole_admin_cannot_delete_response_from_org_level_survey_by_unaffiliated_responder(self):
+        """
+        Un·e ADMIN de pôle ne peut pas supprimer la réponse à une enquête niveau org
+        soumise par un·e répondant·e sans appartenance à un pôle — reçoit une 404
         """
         org = OrganisationFactory()
         pole = PoleFactory(organisation=org)
@@ -338,6 +375,44 @@ class TestDeleteFollowUpResponse(APITestCase):
         autre_pole = PoleFactory(organisation=org)
         suivi_reponse, _ = self._make_follow_up_response(org, pole=autre_pole)
         MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+
+        response = self.client.delete(response_url(suivi_reponse.id))
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_admin_pole_peut_supprimer_une_reponse_de_suivi_niveau_org_de_son_pole(self):
+        """
+        Un·e ADMIN de pôle peut supprimer une réponse à un suivi niveau org soumise par un·e répondant·e de son pôle
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        respondant = UserFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=respondant, organisation=org, pole=pole, membership_type=MembershipType.RESPONDER)
+        suivi_reponse, _ = self._make_follow_up_response(org, pole=None)
+        suivi_reponse.respondant = respondant
+        suivi_reponse.save()
+
+        response = self.client.delete(response_url(suivi_reponse.id))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    @authenticate
+    def test_admin_pole_ne_peut_pas_supprimer_une_reponse_de_suivi_niveau_org_dun_autre_pole(self):
+        """
+        Un·e ADMIN de pôle ne peut pas supprimer une réponse à un suivi niveau org
+        soumise par un·e répondant·e d'un autre pôle — reçoit un 404
+        """
+        org = OrganisationFactory()
+        pole = PoleFactory(organisation=org)
+        autre_pole = PoleFactory(organisation=org)
+        respondant = UserFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, pole=pole, membership_type=MembershipType.ADMIN)
+        MembershipFactory(user=respondant, organisation=org, pole=autre_pole, membership_type=MembershipType.RESPONDER)
+        suivi_reponse, _ = self._make_follow_up_response(org, pole=None)
+        suivi_reponse.respondant = respondant
+        suivi_reponse.save()
 
         response = self.client.delete(response_url(suivi_reponse.id))
 

@@ -64,14 +64,14 @@ Modifier les enquêtes comprend l'ajout ou suppression des champs, modification 
 
 En ce moment les répondant·e·s peuvent seulement voir leurs propres réponses. Le tableau ci-dessous décrit ce qui devrait se passer prochainement.
 
-|  | Voir les réponses au niveau organisation | Voir les réponses au niveau de son pôle | Voir les réponses au niveau d'un autre pôle |
-|----------------|--------------------------------------------|-----------------------------------------|---------------------------------------------|
-| Admin org      | ✅ | ✅ | ✅ |
-| Admin pôle     | ❌ | ✅ | ❌ |
-| Responder org  | ✅ | ✅ | ✅ |
-| Responder pôle | ❌ | ✅ | ❌ |
+|  | Voir les réponses au niveau organisation | Voir les réponses au niveau de son pôle | Voir les réponses d'enquêtes org soumises par les répondant·es de son pôle | Voir les réponses au niveau d'un autre pôle |
+|----------------|--------------------------------------------|-----------------------------------------|---------------------------------------------------------------------------|---------------------------------------------|
+| Admin org      | ✅ | ✅ | ✅ | ✅ |
+| Admin pôle     | ❌ | ✅ | ✅ | ❌ |
+| Responder org  | ✅ | ✅ | ✅ | ✅ |
+| Responder pôle | ❌ | ✅ | — | ❌ |
 |  |
-| *Django super-admin* | ✅ | ✅ | ✅ |
+| *Django super-admin* | ✅ | ✅ | ✅ | ✅ |
 
 ### Créer des réponses
 
@@ -101,11 +101,11 @@ Lors que les réponses sont encore en brouillon dans le téléphone, elles peuve
 
 À noter que les réponses supprimées restent en base de données mais ne sont plus prises en compte dans l'application.
 
-|  | Supprimer des réponses au niveau organisation | Supprimer des réponses au niveau de son pôle | Supprimer des réponses au niveau d'un autre pôle |
-|----------------|--------------------------------------------|-----------------------------------------|---------------------------------------------|
-| Admin org      | ✅ | ✅ | ✅ |
-| Admin pôle     | ❌ | ✅ | ❌ |
-| Responder org  | ❌ | ❌ | ❌ |
-| Responder pôle | ❌ | ❌ | ❌ |
+|  | Supprimer des réponses au niveau organisation | Supprimer des réponses au niveau de son pôle | Supprimer des réponses d'enquêtes org soumises par les répondant·es de son pôle | Supprimer des réponses au niveau d'un autre pôle |
+|----------------|--------------------------------------------|-----------------------------------------|---------------------------------------------------------------------------------|--------------------------------------------------|
+| Admin org      | ✅ | ✅ | ✅ | ✅ |
+| Admin pôle     | ❌ | ✅ | ✅ | ❌ |
+| Responder org  | ❌ | ❌ | ❌ | ❌ |
+| Responder pôle | ❌ | ❌ | ❌ | ❌ |
 |  |
-| *Django super-admin* | ✅ | ✅ | ✅ |
+| *Django super-admin* | ✅ | ✅ | ✅ | ✅ |
