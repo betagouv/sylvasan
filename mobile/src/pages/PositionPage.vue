@@ -26,8 +26,14 @@ import type { StyleSpecification } from "maplibre-gl"
 import ignStyle from "../assets/ign-style.json"
 import { useGeoPins, DEFAULT_GEO_FILTERS } from "../composables/useGeoPins"
 import type { GeoFilters } from "../composables/useGeoPins"
+import {
+  useMapStyle,
+  IGN_SATELLITE_STYLE,
+} from "../composables/useMapStyle"
+import type { MapStyleKey } from "../composables/useMapStyle"
 import ResponsePinCard from "../components/ResponsePinCard.vue"
 import GeoFiltersPanel from "../components/GeoFiltersPanel.vue"
+import MapStylePicker from "../components/MapStylePicker.vue"
 import { useSurveysStore } from "../stores/surveys"
 import { storeToRefs } from "pinia"
 
@@ -37,6 +43,9 @@ const centerOfFrance: [number, number] = [2.35, 46.8]
 
 const activeFilters = ref<GeoFilters>({ ...DEFAULT_GEO_FILTERS })
 const filterPanelOpen = ref(false)
+const mapStylePickerOpen = ref(false)
+
+const { activeStyle } = useMapStyle()
 
 const activeFilterCount = computed(() => {
   let n = 0
@@ -89,15 +98,23 @@ const destroyMap = () => {
   tilesLoaded.value = false
 }
 
-const initMap = () => {
+const initMap = (
+  center?: [number, number],
+  zoom?: number,
+) => {
   if (!mapContainer.value) return
   destroyMap()
 
+  const style: StyleSpecification =
+    activeStyle.value === "satellite"
+      ? IGN_SATELLITE_STYLE
+      : (ignStyle as StyleSpecification)
+
   const m = new maplibregl.Map({
     container: mapContainer.value,
-    style: ignStyle as StyleSpecification,
-    center: centerOfFrance,
-    zoom: 6,
+    style,
+    center: center ?? centerOfFrance,
+    zoom: zoom ?? 6,
     maxZoom: 18.9,
     attributionControl: false,
     fadeDuration: 0,
@@ -132,6 +149,15 @@ const initMap = () => {
   })
 
   mapRef.value = m
+}
+
+const switchMapStyle = (key: MapStyleKey) => {
+  mapStylePickerOpen.value = false
+  if (activeStyle.value === key) return
+  const c = mapRef.value?.getCenter()
+  const z = mapRef.value?.getZoom()
+  activeStyle.value = key
+  initMap(c ? [c.lng, c.lat] : undefined, z)
 }
 
 watch(isOnline, async (online, wasOnline) => {
@@ -238,20 +264,42 @@ onBeforeUnmount(() => {
           </div>
         </Transition>
 
-        <!-- Bouton filtre -->
-        <button
+        <!-- Boutons flottants (filtre + style de carte) -->
+        <div
           v-if="tilesLoaded"
-          class="filter-button absolute z-10 flex items-center justify-center rounded-full shadow-lg bg-white!"
-          @click="filterPanelOpen = true"
+          class="map-controls absolute z-10 flex flex-col gap-3"
         >
-          <v-icon name="ri-filter-line" scale="1.2" />
-          <span
-            v-if="activeFilterCount > 0"
-            class="filter-badge absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#000091]! text-white text-xs font-bold flex items-center justify-center"
+          <button
+            class="map-control-button flex items-center justify-center rounded-full shadow-lg bg-white!"
+            @click="filterPanelOpen = true"
           >
-            {{ activeFilterCount }}
-          </span>
-        </button>
+            <v-icon name="ri-filter-line" scale="1.2" />
+            <span
+              v-if="activeFilterCount > 0"
+              class="filter-badge absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#000091]! text-white text-xs font-bold flex items-center justify-center"
+            >
+              {{ activeFilterCount }}
+            </span>
+          </button>
+
+          <button
+            class="map-control-button flex items-center justify-center rounded-full shadow-lg bg-white!"
+            :class="{ 'ring-2 ring-[#000091]': activeStyle === 'satellite' }"
+            @click="mapStylePickerOpen = !mapStylePickerOpen"
+          >
+            <v-icon name="ri-layers-line" scale="1.2" />
+          </button>
+        </div>
+
+        <Transition name="drop">
+          <MapStylePicker
+            v-if="mapStylePickerOpen && tilesLoaded"
+            :model-value="activeStyle"
+            class="map-style-picker absolute z-20"
+            @update:model-value="switchMapStyle"
+            @close="mapStylePickerOpen = false"
+          />
+        </Transition>
 
         <Transition name="slide-up">
           <ResponsePinCard
@@ -315,12 +363,21 @@ div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
   z-index: 0;
 }
 
-.filter-button {
+.map-controls {
   top: calc(env(safe-area-inset-top) + 7rem);
   right: 0.75rem;
+}
+
+.map-control-button {
   width: 50px;
   height: 50px;
   border: 1.5px solid #e2e8f0;
+}
+
+.map-style-picker {
+  top: calc(env(safe-area-inset-top) + 7rem + 50px + 0.75rem);
+  right: calc(0.75rem + 50px + 0.5rem);
+  width: 145px;
 }
 
 .fade-panel-enter-active,
