@@ -16,7 +16,7 @@ const select = (key: MapStyleKey) => {
 
 <template>
   <div
-    class="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden"
+    class="bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden w-48!"
   >
     <button
       v-for="(option, key) in MAP_STYLE_OPTIONS"
@@ -27,11 +27,7 @@ const select = (key: MapStyleKey) => {
     >
       <v-icon :name="option.icon" scale="1.1" />
       <span>{{ option.label }}</span>
-      <v-icon
-        v-if="modelValue === key"
-        name="ri-check-line"
-        class="ml-auto"
-      />
+      <v-icon v-if="modelValue === key" name="ri-check-line" class="ml-auto" />
     </button>
   </div>
 </template>

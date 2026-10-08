@@ -24,8 +24,8 @@ export const IGN_SATELLITE_STYLE: StyleSpecification = {
 }
 
 export const MAP_STYLE_OPTIONS: Record<MapStyleKey, MapStyleOption> = {
-  vector: { label: "Carte", icon: "ri-map-2-line" },
-  satellite: { label: "Orthophoto", icon: "ri-radar-line" },
+  vector: { label: "Carte IGN", icon: "ri-map-2-line" },
+  satellite: { label: "Photos aériennes", icon: "ri-radar-line" },
 }
 
 export function useMapStyle(initial: MapStyleKey = "vector") {
