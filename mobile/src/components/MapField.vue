@@ -239,17 +239,11 @@ const setupMapInteractions = (m: maplibregl.Map) => {
 // Long / Lat et non pas Lat / Lon (https://maplibre.org/maplibre-gl-js/docs/API/classes/LngLat/)
 const centerOfFrance: [number, number] = [2.35, 46.8]
 
-const initOnlineMap = (
-  container: HTMLDivElement,
-  center?: [number, number],
-  zoom?: number
-) => {
-  const initialCenter: [number, number] =
-    center ??
-    (modelValue.value
-      ? [modelValue.value.lon, modelValue.value.lat]
-      : centerOfFrance)
-  const initialZoom = zoom ?? (modelValue.value ? 17 : 5)
+const initOnlineMap = (container: HTMLDivElement) => {
+  const initialCenter: [number, number] = modelValue.value
+    ? [modelValue.value.lon, modelValue.value.lat]
+    : centerOfFrance
+  const initialZoom = modelValue.value ? 17 : 5
 
   const style: string | StyleSpecification =
     activeStyle.value === "satellite" ? IGN_SATELLITE_STYLE : IGN_STYLE_URL
@@ -352,12 +346,11 @@ const initOfflineMap = (container: HTMLDivElement) => {
 }
 
 const switchMapStyle = (key: MapStyleKey) => {
-  if (activeStyle.value === key || !mapContainer.value) return
-  const c = map?.getCenter()
-  const z = map?.getZoom()
+  if (activeStyle.value === key || !map) return
   activeStyle.value = key
-  destroyMap()
-  initOnlineMap(mapContainer.value, c ? [c.lng, c.lat] : undefined, z)
+  const style: string | StyleSpecification =
+    key === "satellite" ? IGN_SATELLITE_STYLE : IGN_STYLE_URL
+  map.setStyle(style)
 }
 
 const initMap = async () => {
