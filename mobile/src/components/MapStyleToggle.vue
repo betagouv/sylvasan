@@ -20,6 +20,8 @@ const onSelect = (key: MapStyleKey) => {
   <div class="relative">
     <button
       class="toggle-btn flex items-center justify-center rounded-full shadow-lg bg-white! border border-slate-200"
+      :aria-expanded="pickerOpen"
+      aria-label="Choisir le style de carte"
       @click="pickerOpen = !pickerOpen"
     >
       <v-icon name="ri-stack-line" scale="1.2" />
