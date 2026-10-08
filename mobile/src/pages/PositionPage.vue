@@ -30,7 +30,7 @@ import { useMapStyle, IGN_SATELLITE_STYLE } from "../composables/useMapStyle"
 import type { MapStyleKey } from "../composables/useMapStyle"
 import ResponsePinCard from "../components/ResponsePinCard.vue"
 import GeoFiltersPanel from "../components/GeoFiltersPanel.vue"
-import MapStylePicker from "../components/MapStylePicker.vue"
+import MapStyleToggle from "../components/MapStyleToggle.vue"
 import { useSurveysStore } from "../stores/surveys"
 import { storeToRefs } from "pinia"
 
@@ -40,7 +40,6 @@ const centerOfFrance: [number, number] = [2.35, 46.8]
 
 const activeFilters = ref<GeoFilters>({ ...DEFAULT_GEO_FILTERS })
 const filterPanelOpen = ref(false)
-const mapStylePickerOpen = ref(false)
 
 const { activeStyle } = useMapStyle()
 
@@ -146,7 +145,6 @@ const initMap = (center?: [number, number], zoom?: number) => {
 }
 
 const switchMapStyle = (key: MapStyleKey) => {
-  mapStylePickerOpen.value = false
   if (activeStyle.value === key) return
   const c = mapRef.value?.getCenter()
   const z = mapRef.value?.getZoom()
@@ -276,23 +274,12 @@ onBeforeUnmount(() => {
             </span>
           </button>
 
-          <button
-            class="map-control-button flex items-center justify-center rounded-full shadow-lg bg-white!"
-            @click="mapStylePickerOpen = !mapStylePickerOpen"
-          >
-            <v-icon name="ri-stack-line" scale="1.2" />
-          </button>
-        </div>
-
-        <Transition name="drop">
-          <MapStylePicker
-            v-if="mapStylePickerOpen && tilesLoaded"
+          <MapStyleToggle
             :model-value="activeStyle"
-            class="map-style-picker absolute z-20"
+            class="z-10"
             @update:model-value="switchMapStyle"
-            @close="mapStylePickerOpen = false"
           />
-        </Transition>
+        </div>
 
         <Transition name="slide-up">
           <ResponsePinCard
@@ -333,16 +320,6 @@ ion-content {
   opacity: 0;
 }
 
-.drop-enter-active,
-.drop-leave-active {
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-.drop-enter-from,
-.drop-leave-to {
-  transform: translateY(-0.5rem);
-  opacity: 0;
-}
-
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition: transform 0.25s ease, opacity 0.25s ease;
@@ -362,15 +339,9 @@ div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
 }
 
 .map-control-button {
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
   border: 1.5px solid #e2e8f0;
-}
-
-.map-style-picker {
-  top: calc(env(safe-area-inset-top) + 7rem + 50px + 0.75rem);
-  right: calc(0.75rem + 50px + 0.5rem);
-  width: 145px;
 }
 
 .fade-panel-enter-active,

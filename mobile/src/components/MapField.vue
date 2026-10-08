@@ -15,6 +15,9 @@ import {
 import { closeOutline } from "ionicons/icons"
 import * as maplibregl from "maplibre-gl"
 import type { StyleSpecification } from "maplibre-gl"
+import { useMapStyle, IGN_SATELLITE_STYLE } from "../composables/useMapStyle"
+import type { MapStyleKey } from "../composables/useMapStyle"
+import MapStyleToggle from "./MapStyleToggle.vue"
 import { loadAllMapRecords } from "../composables/offlineMapMetadata"
 import { Geolocation } from "@capacitor/geolocation"
 import { Capacitor } from "@capacitor/core"
@@ -43,6 +46,7 @@ const mapContainer = ref<HTMLDivElement | null>(null)
 let map: maplibregl.Map | null = null
 
 const mapMode = ref<"online" | "offline">("online")
+const { activeStyle } = useMapStyle()
 const offlineMaps = ref<OfflineMapRecord[]>([])
 const selectedMapId = ref("")
 const mapError = ref<string | null>(null)
@@ -235,15 +239,24 @@ const setupMapInteractions = (m: maplibregl.Map) => {
 // Long / Lat et non pas Lat / Lon (https://maplibre.org/maplibre-gl-js/docs/API/classes/LngLat/)
 const centerOfFrance: [number, number] = [2.35, 46.8]
 
-const initOnlineMap = (container: HTMLDivElement) => {
-  const initialCenter: [number, number] = modelValue.value
-    ? [modelValue.value.lon, modelValue.value.lat]
-    : centerOfFrance
-  const initialZoom = modelValue.value ? 17 : 5
+const initOnlineMap = (
+  container: HTMLDivElement,
+  center?: [number, number],
+  zoom?: number
+) => {
+  const initialCenter: [number, number] =
+    center ??
+    (modelValue.value
+      ? [modelValue.value.lon, modelValue.value.lat]
+      : centerOfFrance)
+  const initialZoom = zoom ?? (modelValue.value ? 17 : 5)
+
+  const style: string | StyleSpecification =
+    activeStyle.value === "satellite" ? IGN_SATELLITE_STYLE : IGN_STYLE_URL
 
   map = new maplibregl.Map({
     container,
-    style: IGN_STYLE_URL,
+    style,
     center: initialCenter,
     zoom: initialZoom,
     maxZoom: 18.9,
@@ -336,6 +349,15 @@ const initOfflineMap = (container: HTMLDivElement) => {
   addGeolocateControl(map, false)
   setupMapInteractions(map)
   mapInitialized.value = true
+}
+
+const switchMapStyle = (key: MapStyleKey) => {
+  if (activeStyle.value === key || !mapContainer.value) return
+  const c = map?.getCenter()
+  const z = map?.getZoom()
+  activeStyle.value = key
+  destroyMap()
+  initOnlineMap(mapContainer.value, c ? [c.lng, c.lat] : undefined, z)
 }
 
 const initMap = async () => {
@@ -507,6 +529,14 @@ onBeforeUnmount(() => {
               </div>
             </Transition>
 
+            <!-- Bouton style de carte (mode en ligne uniquement) -->
+            <MapStyleToggle
+              v-if="mapMode === 'online' && tilesLoaded"
+              :model-value="activeStyle"
+              class="map-style-toggle absolute! z-10"
+              @update:model-value="switchMapStyle"
+            />
+
             <div
               class="pointer-events-none absolute bottom-14 left-0 right-0 flex justify-center z-10"
               v-if="tilesLoaded"
@@ -612,5 +642,10 @@ onBeforeUnmount(() => {
   50% {
     opacity: 0.2;
   }
+}
+
+.map-style-toggle {
+  top: 0.75rem;
+  right: 0.75rem;
 }
 </style>
