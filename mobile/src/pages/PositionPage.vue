@@ -26,10 +26,7 @@ import type { StyleSpecification } from "maplibre-gl"
 import ignStyle from "../assets/ign-style.json"
 import { useGeoPins, DEFAULT_GEO_FILTERS } from "../composables/useGeoPins"
 import type { GeoFilters } from "../composables/useGeoPins"
-import {
-  useMapStyle,
-  IGN_SATELLITE_STYLE,
-} from "../composables/useMapStyle"
+import { useMapStyle, IGN_SATELLITE_STYLE } from "../composables/useMapStyle"
 import type { MapStyleKey } from "../composables/useMapStyle"
 import ResponsePinCard from "../components/ResponsePinCard.vue"
 import GeoFiltersPanel from "../components/GeoFiltersPanel.vue"
@@ -98,10 +95,7 @@ const destroyMap = () => {
   tilesLoaded.value = false
 }
 
-const initMap = (
-  center?: [number, number],
-  zoom?: number,
-) => {
+const initMap = (center?: [number, number], zoom?: number) => {
   if (!mapContainer.value) return
   destroyMap()
 
@@ -284,10 +278,9 @@ onBeforeUnmount(() => {
 
           <button
             class="map-control-button flex items-center justify-center rounded-full shadow-lg bg-white!"
-            :class="{ 'ring-2 ring-[#000091]': activeStyle === 'satellite' }"
             @click="mapStylePickerOpen = !mapStylePickerOpen"
           >
-            <v-icon name="ri-layers-line" scale="1.2" />
+            <v-icon name="ri-stack-line" scale="1.2" />
           </button>
         </div>
 
