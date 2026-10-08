@@ -60,10 +60,8 @@ const mapRef = shallowRef<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
 let gpsWatchId: string | null = null
 
-const { selectedPin, showSearchHere, loading, fetchPins } = useGeoPins(
-  mapRef,
-  activeFilters
-)
+const { selectedPin, showSearchHere, loading, fetchPins, reattachLayers } =
+  useGeoPins(mapRef, activeFilters)
 
 const startAccuracyWatch = async () => {
   try {
@@ -94,7 +92,7 @@ const destroyMap = () => {
   tilesLoaded.value = false
 }
 
-const initMap = (center?: [number, number], zoom?: number) => {
+const initMap = () => {
   if (!mapContainer.value) return
   destroyMap()
 
@@ -106,8 +104,8 @@ const initMap = (center?: [number, number], zoom?: number) => {
   const m = new maplibregl.Map({
     container: mapContainer.value,
     style,
-    center: center ?? centerOfFrance,
-    zoom: zoom ?? 6,
+    center: centerOfFrance,
+    zoom: 6,
     maxZoom: 18.9,
     attributionControl: false,
     fadeDuration: 0,
@@ -144,12 +142,17 @@ const initMap = (center?: [number, number], zoom?: number) => {
   mapRef.value = m
 }
 
-const switchMapStyle = (key: MapStyleKey) => {
-  if (activeStyle.value === key) return
-  const c = mapRef.value?.getCenter()
-  const z = mapRef.value?.getZoom()
+const switchMapStyle = async (key: MapStyleKey) => {
+  if (activeStyle.value === key || !mapRef.value) return
   activeStyle.value = key
-  initMap(c ? [c.lng, c.lat] : undefined, z)
+  const style: StyleSpecification | string =
+    key === "satellite" ? IGN_SATELLITE_STYLE : (ignStyle as StyleSpecification)
+  mapRef.value.once("style.load", async () => {
+    if (!mapRef.value) return
+    await reattachLayers(mapRef.value)
+    fetchPins()
+  })
+  mapRef.value.setStyle(style)
 }
 
 watch(isOnline, async (online, wasOnline) => {
