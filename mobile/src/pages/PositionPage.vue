@@ -109,7 +109,7 @@ const initMap = () => {
   })
   m.addControl(geolocate, "bottom-right")
 
-  geolocate.on("geolocate", (e: GeolocationPosition) => {
+  geolocate.on("geolocate", (e) => {
     liveAccuracy.value = Math.round(e.coords.accuracy)
   })
 

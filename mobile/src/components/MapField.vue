@@ -92,7 +92,7 @@ const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
     if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
     if (autoTrigger) geolocate.trigger()
   })
-  geolocate.on("geolocate", (e: GeolocationPosition) => {
+  geolocate.on("geolocate", (e) => {
     gpsUnavailable.value = false
     livePosition.value = {
       lat: Math.round(e.coords.latitude * 1_000_000) / 1_000_000,
