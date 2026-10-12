@@ -147,7 +147,9 @@ export function useGeoPins(
   const showSearchHere = ref(false)
   const loading = ref(false)
 
-  const setupLayers = async (mapInstance: maplibregl.Map) => {
+  // Ajoute les images, la source GeoJSON et les couches. Appelé à l'initialisation
+  // et après chaque setStyle() qui efface les sources/couches de l'instance.
+  const setupSourceAndLayers = async (mapInstance: maplibregl.Map) => {
     await Promise.all([
       loadPinImage(mapInstance, IMAGE_PIN_OWN, COLOR_OWN),
       loadPinImage(mapInstance, IMAGE_PIN_OTHER, COLOR_OTHER),
@@ -209,6 +211,10 @@ export function useGeoPins(
         "icon-ignore-placement": true,
       },
     })
+  }
+
+  const setupLayers = async (mapInstance: maplibregl.Map) => {
+    await setupSourceAndLayers(mapInstance)
 
     // Click dans un cercle de cluster
     mapInstance.on("click", LAYER_CLUSTERS, async (e) => {
@@ -333,5 +339,5 @@ export function useGeoPins(
     }
   })
 
-  return { selectedPin, showSearchHere, loading, fetchPins }
+  return { selectedPin, showSearchHere, loading, fetchPins, reattachLayers: setupSourceAndLayers }
 }

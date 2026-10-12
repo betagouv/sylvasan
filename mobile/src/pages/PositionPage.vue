@@ -26,8 +26,11 @@ import type { StyleSpecification } from "maplibre-gl"
 import ignStyle from "../assets/ign-style.json"
 import { useGeoPins, DEFAULT_GEO_FILTERS } from "../composables/useGeoPins"
 import type { GeoFilters } from "../composables/useGeoPins"
+import { useMapStyle, IGN_SATELLITE_STYLE } from "../composables/useMapStyle"
+import type { MapStyleKey } from "../composables/useMapStyle"
 import ResponsePinCard from "../components/ResponsePinCard.vue"
 import GeoFiltersPanel from "../components/GeoFiltersPanel.vue"
+import MapStyleToggle from "../components/MapStyleToggle.vue"
 import { useSurveysStore } from "../stores/surveys"
 import { storeToRefs } from "pinia"
 
@@ -37,6 +40,8 @@ const centerOfFrance: [number, number] = [2.35, 46.8]
 
 const activeFilters = ref<GeoFilters>({ ...DEFAULT_GEO_FILTERS })
 const filterPanelOpen = ref(false)
+
+const { activeStyle } = useMapStyle()
 
 const activeFilterCount = computed(() => {
   let n = 0
@@ -55,10 +60,8 @@ const mapRef = shallowRef<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
 let gpsWatchId: string | null = null
 
-const { selectedPin, showSearchHere, loading, fetchPins } = useGeoPins(
-  mapRef,
-  activeFilters
-)
+const { selectedPin, showSearchHere, loading, fetchPins, reattachLayers } =
+  useGeoPins(mapRef, activeFilters)
 
 const startAccuracyWatch = async () => {
   try {
@@ -93,9 +96,14 @@ const initMap = () => {
   if (!mapContainer.value) return
   destroyMap()
 
+  const style: StyleSpecification =
+    activeStyle.value === "satellite"
+      ? IGN_SATELLITE_STYLE
+      : (ignStyle as StyleSpecification)
+
   const m = new maplibregl.Map({
     container: mapContainer.value,
-    style: ignStyle as StyleSpecification,
+    style,
     center: centerOfFrance,
     zoom: 6,
     maxZoom: 18.9,
@@ -132,6 +140,19 @@ const initMap = () => {
   })
 
   mapRef.value = m
+}
+
+const switchMapStyle = async (key: MapStyleKey) => {
+  if (activeStyle.value === key || !mapRef.value) return
+  activeStyle.value = key
+  const style: StyleSpecification | string =
+    key === "satellite" ? IGN_SATELLITE_STYLE : (ignStyle as StyleSpecification)
+  mapRef.value.once("style.load", async () => {
+    if (!mapRef.value) return
+    await reattachLayers(mapRef.value)
+    fetchPins()
+  })
+  mapRef.value.setStyle(style)
 }
 
 watch(isOnline, async (online, wasOnline) => {
@@ -238,20 +259,30 @@ onBeforeUnmount(() => {
           </div>
         </Transition>
 
-        <!-- Bouton filtre -->
-        <button
+        <!-- Boutons flottants (filtre + style de carte) -->
+        <div
           v-if="tilesLoaded"
-          class="filter-button absolute z-10 flex items-center justify-center rounded-full shadow-lg bg-white!"
-          @click="filterPanelOpen = true"
+          class="map-controls absolute z-10 flex flex-col gap-3"
         >
-          <v-icon name="ri-filter-line" scale="1.2" />
-          <span
-            v-if="activeFilterCount > 0"
-            class="filter-badge absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#000091]! text-white text-xs font-bold flex items-center justify-center"
+          <button
+            class="map-control-button flex items-center justify-center rounded-full shadow-lg bg-white!"
+            @click="filterPanelOpen = true"
           >
-            {{ activeFilterCount }}
-          </span>
-        </button>
+            <v-icon name="ri-filter-line" scale="1.2" />
+            <span
+              v-if="activeFilterCount > 0"
+              class="filter-badge absolute -top-1 -right-1 w-5 h-5 rounded-full bg-[#000091]! text-white text-xs font-bold flex items-center justify-center"
+            >
+              {{ activeFilterCount }}
+            </span>
+          </button>
+
+          <MapStyleToggle
+            :model-value="activeStyle"
+            class="z-10"
+            @update:model-value="switchMapStyle"
+          />
+        </div>
 
         <Transition name="slide-up">
           <ResponsePinCard
@@ -292,16 +323,6 @@ ion-content {
   opacity: 0;
 }
 
-.drop-enter-active,
-.drop-leave-active {
-  transition: transform 0.2s ease, opacity 0.2s ease;
-}
-.drop-enter-from,
-.drop-leave-to {
-  transform: translateY(-0.5rem);
-  opacity: 0;
-}
-
 .slide-up-enter-active,
 .slide-up-leave-active {
   transition: transform 0.25s ease, opacity 0.25s ease;
@@ -315,11 +336,14 @@ div :deep(.maplibregl-marker.maplibregl-user-location-accuracy-circle) {
   z-index: 0;
 }
 
-.filter-button {
+.map-controls {
   top: calc(env(safe-area-inset-top) + 7rem);
   right: 0.75rem;
-  width: 50px;
-  height: 50px;
+}
+
+.map-control-button {
+  width: 44px;
+  height: 44px;
   border: 1.5px solid #e2e8f0;
 }
 
