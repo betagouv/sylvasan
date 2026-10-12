@@ -96,7 +96,7 @@ const initMap = () => {
     "bottom-left"
   )
   m.addControl(
-    new maplibregl.NavigationControl({ showCompass: false }),
+    new maplibregl.NavigationControl({ showCompass: true }),
     "bottom-right"
   )
 

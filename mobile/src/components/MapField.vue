@@ -226,7 +226,7 @@ const initOnlineMap = (container: HTMLDivElement) => {
     "bottom-left"
   )
   map.addControl(
-    new maplibregl.NavigationControl({ showCompass: false }),
+    new maplibregl.NavigationControl({ showCompass: true }),
     "bottom-right"
   )
 
@@ -299,7 +299,7 @@ const initOfflineMap = (container: HTMLDivElement) => {
     "bottom-left"
   )
   map.addControl(
-    new maplibregl.NavigationControl({ showCompass: false }),
+    new maplibregl.NavigationControl({ showCompass: true }),
     "bottom-right"
   )
 
