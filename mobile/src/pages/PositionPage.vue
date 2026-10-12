@@ -58,33 +58,9 @@ const liveAccuracy = ref<number | null>(null)
 const mapContainer = ref<HTMLDivElement | null>(null)
 const mapRef = shallowRef<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
-let gpsWatchId: string | null = null
 
 const { selectedPin, showSearchHere, loading, fetchPins, reattachLayers } =
   useGeoPins(mapRef, activeFilters)
-
-const startAccuracyWatch = async () => {
-  try {
-    if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
-    gpsWatchId = await Geolocation.watchPosition(
-      { enableHighAccuracy: true, timeout: 30000, minimumUpdateInterval: 1000 },
-      (pos, err) => {
-        if (err || !pos) return
-        liveAccuracy.value = Math.round(pos.coords.accuracy)
-      }
-    )
-  } catch {
-    // GPS non disponible
-  }
-}
-
-const stopAccuracyWatch = () => {
-  if (gpsWatchId !== null) {
-    Geolocation.clearWatch({ id: gpsWatchId })
-    gpsWatchId = null
-    liveAccuracy.value = null
-  }
-}
 
 const destroyMap = () => {
   mapRef.value?.remove()
@@ -120,18 +96,22 @@ const initMap = () => {
     "bottom-left"
   )
   m.addControl(
-    new maplibregl.NavigationControl({ showCompass: false }),
+    new maplibregl.NavigationControl({ showCompass: true }),
     "bottom-right"
   )
 
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true, timeout: 30000 },
-    trackUserLocation: false,
+    trackUserLocation: true,
     showUserLocation: true,
     showAccuracyCircle: true,
     fitBoundsOptions: { maxZoom: 13 },
   })
   m.addControl(geolocate, "bottom-right")
+
+  geolocate.on("geolocate", (e) => {
+    liveAccuracy.value = Math.round(e.coords.accuracy)
+  })
 
   m.once("idle", async () => {
     tilesLoaded.value = true
@@ -181,17 +161,15 @@ onMounted(async () => {
 
 onIonViewDidEnter(() => {
   fetchPins()
-  startAccuracyWatch()
 })
 
 onIonViewWillLeave(() => {
-  stopAccuracyWatch()
+  liveAccuracy.value = null
 })
 
 onBeforeUnmount(() => {
   destroyMap()
   networkListener?.remove()
-  stopAccuracyWatch()
 })
 </script>
 
