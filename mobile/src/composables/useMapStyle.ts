@@ -18,6 +18,7 @@ export const IGN_SATELLITE_STYLE: StyleSpecification = {
       ],
       tileSize: 256,
       maxzoom: 19,
+      attribution: "© IGN",
     },
   },
   layers: [{ id: "orthophotos", type: "raster", source: "orthophotos" }],

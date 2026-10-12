@@ -62,8 +62,6 @@ const livePosition = ref<{ lat: number; lon: number; accuracy: number } | null>(
   null
 )
 const gpsUnavailable = ref(false)
-let gpsWatchId: string | null = null
-let gpsStartGeneration = 0
 
 const modeOptions = [
   { label: "Carte en ligne", value: "online", icon: "ri-global-fill" },
@@ -84,7 +82,7 @@ onMounted(async () => {
 const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
   const geolocate = new maplibregl.GeolocateControl({
     positionOptions: { enableHighAccuracy: true, timeout: 30000 },
-    trackUserLocation: false,
+    trackUserLocation: true,
     showUserLocation: true,
     showAccuracyCircle: true,
     fitBoundsOptions: { maxZoom: 17 },
@@ -93,6 +91,17 @@ const addGeolocateControl = (m: maplibregl.Map, autoTrigger: boolean) => {
   m.once("load", async () => {
     if (Capacitor.isNativePlatform()) await Geolocation.requestPermissions()
     if (autoTrigger) geolocate.trigger()
+  })
+  geolocate.on("geolocate", (e: GeolocationPosition) => {
+    gpsUnavailable.value = false
+    livePosition.value = {
+      lat: Math.round(e.coords.latitude * 1_000_000) / 1_000_000,
+      lon: Math.round(e.coords.longitude * 1_000_000) / 1_000_000,
+      accuracy: Math.round(e.coords.accuracy),
+    }
+  })
+  geolocate.on("error", () => {
+    gpsUnavailable.value = true
   })
 }
 
@@ -160,52 +169,6 @@ const onCoordinatesInput = useDebounceFn(() => {
   }
 }, 500)
 
-const startGpsWatch = async () => {
-  const gen = ++gpsStartGeneration
-  gpsUnavailable.value = false
-  try {
-    if (Capacitor.isNativePlatform()) {
-      const { location } = await Geolocation.requestPermissions()
-      if (gen !== gpsStartGeneration) return // stopGpsWatch appelé pendant l'attente
-      if (location === "denied") {
-        gpsUnavailable.value = true
-        return
-      }
-    }
-    const watchId = await Geolocation.watchPosition(
-      { enableHighAccuracy: true, timeout: 30000, minimumUpdateInterval: 1000 },
-      (pos, err) => {
-        if (err || !pos) {
-          gpsUnavailable.value = true
-          return
-        }
-        livePosition.value = {
-          lat: Math.round(pos.coords.latitude * 1_000_000) / 1_000_000,
-          lon: Math.round(pos.coords.longitude * 1_000_000) / 1_000_000,
-          accuracy: Math.round(pos.coords.accuracy),
-        }
-      }
-    )
-    if (gen !== gpsStartGeneration) {
-      // stopGpsWatch appelé pendant watchPosition — on nettoie immédiatement
-      Geolocation.clearWatch({ id: watchId })
-      return
-    }
-    gpsWatchId = watchId
-  } catch {
-    gpsUnavailable.value = true
-  }
-}
-
-const stopGpsWatch = () => {
-  gpsStartGeneration++ // invalide tout startGpsWatch en cours
-  if (gpsWatchId !== null) {
-    Geolocation.clearWatch({ id: gpsWatchId })
-    gpsWatchId = null
-    livePosition.value = null
-    gpsUnavailable.value = false
-  }
-}
 
 const fillWithGps = () => {
   if (!livePosition.value) return
@@ -373,13 +336,12 @@ watch([mapMode, selectedMapId], () => {
 
 const onModalPresent = () => {
   initMap()
-  startGpsWatch()
 }
 
 const onModalDismiss = () => {
+  livePosition.value = null
   gpsUnavailable.value = false
   opened.value = false
-  stopGpsWatch()
   destroyMap()
   deregisterOfflineProtocol()
   mapError.value = null
@@ -392,7 +354,6 @@ const confirm = () => {
 }
 
 onBeforeUnmount(() => {
-  stopGpsWatch()
   destroyMap()
   deregisterOfflineProtocol()
 })
