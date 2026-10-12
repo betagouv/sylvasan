@@ -17,6 +17,7 @@ import {
   onIonViewWillLeave,
 } from "@ionic/vue"
 import { cloudOfflineOutline } from "ionicons/icons"
+import { App } from "@capacitor/app"
 import { Network } from "@capacitor/network"
 import { Geolocation } from "@capacitor/geolocation"
 import { Capacitor } from "@capacitor/core"
@@ -58,6 +59,7 @@ const liveAccuracy = ref<number | null>(null)
 const mapContainer = ref<HTMLDivElement | null>(null)
 const mapRef = shallowRef<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
+let appStateListener: PluginListenerHandle | null = null
 
 const { selectedPin, showSearchHere, loading, fetchPins, reattachLayers } =
   useGeoPins(mapRef, activeFilters)
@@ -153,6 +155,14 @@ onMounted(async () => {
     isOnline.value = s.connected
   })
 
+  // Certains appareils ne revoient pas d'événement "connecté" au retour en premier plan ;
+  // on resynchronise manuellement le statut réseau pour éviter l'écran hors-ligne fantôme.
+  appStateListener = await App.addListener("appStateChange", async ({ isActive }) => {
+    if (!isActive) return
+    const status = await Network.getStatus()
+    isOnline.value = status.connected
+  })
+
   if (isOnline.value) {
     await nextTick()
     initMap()
@@ -170,6 +180,7 @@ onIonViewWillLeave(() => {
 onBeforeUnmount(() => {
   destroyMap()
   networkListener?.remove()
+  appStateListener?.remove()
 })
 </script>
 
