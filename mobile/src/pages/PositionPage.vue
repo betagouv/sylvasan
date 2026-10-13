@@ -17,6 +17,7 @@ import {
   onIonViewWillLeave,
 } from "@ionic/vue"
 import { cloudOfflineOutline } from "ionicons/icons"
+import { App } from "@capacitor/app"
 import { Network } from "@capacitor/network"
 import { Geolocation } from "@capacitor/geolocation"
 import { Capacitor } from "@capacitor/core"
@@ -58,6 +59,9 @@ const liveAccuracy = ref<number | null>(null)
 const mapContainer = ref<HTMLDivElement | null>(null)
 const mapRef = shallowRef<maplibregl.Map | null>(null)
 let networkListener: PluginListenerHandle | null = null
+let appStateListener: PluginListenerHandle | null = null
+let isMounted = false
+let isPageActive = false
 
 const { selectedPin, showSearchHere, loading, fetchPins, reattachLayers } =
   useGeoPins(mapRef, activeFilters)
@@ -145,6 +149,7 @@ watch(isOnline, async (online, wasOnline) => {
 })
 
 onMounted(async () => {
+  isMounted = true
   const status = await Network.getStatus()
   isOnline.value = status.connected
   ready.value = true
@@ -153,23 +158,48 @@ onMounted(async () => {
     isOnline.value = s.connected
   })
 
+  // Certains appareils ne revoient pas d'événement "connecté" au retour en premier plan ;
+  // on resynchronise manuellement le statut réseau pour éviter l'écran hors-ligne fantôme.
+  const handle = await App.addListener("appStateChange", async ({ isActive }) => {
+    if (!isActive || !isPageActive) return
+    const status = await Network.getStatus()
+    isOnline.value = status.connected
+  })
+  // Le composant peut avoir été démonté pendant l'attente de addListener
+  if (isMounted) {
+    appStateListener = handle
+  } else {
+    handle.remove()
+  }
+
   if (isOnline.value) {
     await nextTick()
     initMap()
   }
 })
 
-onIonViewDidEnter(() => {
+onIonViewDidEnter(async () => {
+  isPageActive = true
   fetchPins()
+  // Resynchronisation au cas où l'état réseau aurait changé hors de cette vue
+  try {
+    const status = await Network.getStatus()
+    isOnline.value = status.connected
+  } catch {
+    // En cas d'échec, on conserve l'état réseau courant
+  }
 })
 
 onIonViewWillLeave(() => {
+  isPageActive = false
   liveAccuracy.value = null
 })
 
 onBeforeUnmount(() => {
+  isMounted = false
   destroyMap()
   networkListener?.remove()
+  appStateListener?.remove()
 })
 </script>
 
