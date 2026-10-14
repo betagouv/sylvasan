@@ -136,4 +136,6 @@ export interface VocabularySet {
 export interface MapValue {
   lat: number
   lon: number
+  gpsAccuracy?: number
+  userSelected?: boolean
 }
