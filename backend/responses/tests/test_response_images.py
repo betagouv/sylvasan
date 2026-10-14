@@ -147,7 +147,7 @@ class TestResponseImagesListView(APITestCase):
         resp = ResponseFactory(survey=survey)
         _make_image(resp)
 
-        today = timezone.now().date()
+        today = timezone.localdate()
         tomorrow = today + datetime.timedelta(days=1)
 
         response = self.client.get(
