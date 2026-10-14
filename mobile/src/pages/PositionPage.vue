@@ -109,7 +109,7 @@ const initMap = () => {
     trackUserLocation: true,
     showUserLocation: true,
     showAccuracyCircle: true,
-    fitBoundsOptions: { maxZoom: 13 },
+    fitBoundsOptions: { maxZoom: 17 },
   })
   m.addControl(geolocate, "bottom-right")
 
@@ -160,11 +160,14 @@ onMounted(async () => {
 
   // Certains appareils ne revoient pas d'événement "connecté" au retour en premier plan ;
   // on resynchronise manuellement le statut réseau pour éviter l'écran hors-ligne fantôme.
-  const handle = await App.addListener("appStateChange", async ({ isActive }) => {
-    if (!isActive || !isPageActive) return
-    const status = await Network.getStatus()
-    isOnline.value = status.connected
-  })
+  const handle = await App.addListener(
+    "appStateChange",
+    async ({ isActive }) => {
+      if (!isActive || !isPageActive) return
+      const status = await Network.getStatus()
+      isOnline.value = status.connected
+    }
+  )
   // Le composant peut avoir été démonté pendant l'attente de addListener
   if (isMounted) {
     appStateListener = handle
