@@ -20,12 +20,16 @@ const opened = ref(false)
 const mapContainer = ref<HTMLDivElement | null>(null)
 let map: maplibregl.Map | null = null
 let resizeObserver: ResizeObserver | null = null
+let lastGpsAccuracy: number | null = null
 
 const getUserPosition = (): Promise<[number, number] | null> =>
   new Promise((resolve) => {
     if (!("geolocation" in navigator)) return resolve(null)
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => resolve([coords.longitude, coords.latitude]),
+      ({ coords }) => {
+        lastGpsAccuracy = Math.round(coords.accuracy)
+        resolve([coords.longitude, coords.latitude])
+      },
       () => resolve(null),
       { timeout: 5000, maximumAge: 60_000 }
     )
@@ -74,6 +78,7 @@ watch(opened, async (isOpen) => {
     resizeObserver = null
     map?.remove()
     map = null
+    lastGpsAccuracy = null
     return
   }
 
@@ -106,6 +111,8 @@ const confirm = () => {
   modelValue.value = {
     lat: Math.round(lat * 1_000_000) / 1_000_000,
     lon: Math.round(lng * 1_000_000) / 1_000_000,
+    userSelected: true,
+    ...(lastGpsAccuracy !== null ? { gpsAccuracy: lastGpsAccuracy } : {}),
   }
   opened.value = false
 }

@@ -43,8 +43,20 @@ export const resolveFieldValue = (
       "lat" in raw &&
       "lon" in raw
     ) {
-      const { lat, lon } = raw as { lat: number; lon: number }
-      return `Latitude : ${lat}, longitude : ${lon}`
+      const { lat, lon, gpsAccuracy, userSelected } = raw as {
+        lat: number
+        lon: number
+        gpsAccuracy?: number
+        userSelected?: boolean
+      }
+      const coords = `Latitude : ${lat}, longitude : ${lon}`
+      if (userSelected === true) return `${coords} - Sélection manuelle`
+      if (userSelected === false) {
+        const precision =
+          gpsAccuracy !== undefined ? ` (précision : ${gpsAccuracy} m)` : ""
+        return `${coords} - Sélection automatique${precision}`
+      }
+      return coords
     } else return ""
   }
 

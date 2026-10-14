@@ -57,6 +57,7 @@ const pickedPosition = ref<{ lat: number; lon: number } | null>(null)
 const latInput = ref("")
 const lonInput = ref("")
 let marker: maplibregl.Marker | null = null
+let userSelected = false
 
 const livePosition = ref<{ lat: number; lon: number; accuracy: number } | null>(
   null
@@ -118,6 +119,7 @@ const destroyMap = () => {
   pickedPosition.value = null
   latInput.value = ""
   lonInput.value = ""
+  userSelected = false
 }
 
 const updateMarker = (lng: number, lat: number) => {
@@ -135,11 +137,13 @@ const updateMarker = (lng: number, lat: number) => {
   }
 }
 
-// Appelé depuis un clic sur la carte — met aussi à jour les inputs
-const placeMarker = (lng: number, lat: number) => {
+// Appelé depuis un clic sur la carte — met aussi à jour les inputs.
+// fromUser=false lors de la restauration automatique (idle) pour ne pas écraser userSelected.
+const placeMarker = (lng: number, lat: number, fromUser = true) => {
   updateMarker(lng, lat)
   latInput.value = String(pickedPosition.value!.lat)
   lonInput.value = String(pickedPosition.value!.lon)
+  if (fromUser) userSelected = true
 }
 
 // Appelé depuis les inputs — déplace le marqueur sans écraser ce que l'utilisateur tape
@@ -155,6 +159,7 @@ const onCoordinatesInput = useDebounceFn(() => {
     lon > 180
   )
     return
+  userSelected = true
   if (tilesLoaded.value) {
     updateMarker(lon, lat)
     if (map)
@@ -176,6 +181,7 @@ const fillWithGps = () => {
   latInput.value = String(lat)
   lonInput.value = String(lon)
   pickedPosition.value = { lat, lon }
+  userSelected = false
   // N'affiche le marqueur que si la carte est déjà rendue ; sinon setupMapInteractions
   // le placera à l'idle suivant en lisant pickedPosition.
   if (map && tilesLoaded.value) {
@@ -193,7 +199,7 @@ const setupMapInteractions = (m: maplibregl.Map) => {
     // Priorité : position GPS remplie pendant le chargement, sinon valeur sauvegardée
     const pos = pickedPosition.value ?? modelValue.value
     if (pos) {
-      placeMarker(pos.lon, pos.lat)
+      placeMarker(pos.lon, pos.lat, false)
       m.flyTo({ center: [pos.lon, pos.lat], zoom: Math.max(m.getZoom(), 13) })
     }
   })
@@ -349,7 +355,11 @@ const onModalDismiss = () => {
 
 const confirm = () => {
   if (!pickedPosition.value) return
-  modelValue.value = pickedPosition.value
+  modelValue.value = {
+    ...pickedPosition.value,
+    userSelected,
+    ...(livePosition.value !== null ? { gpsAccuracy: livePosition.value.accuracy } : {}),
+  }
   opened.value = false
 }
 
