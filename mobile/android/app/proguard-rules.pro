@@ -2,12 +2,11 @@
 -keepattributes LineNumberTable,SourceFile
 -renamesourcefileattribute SourceFile
 
-# Capacitor : conserver les plugins et leurs méthodes annotées
--keep public class * extends com.getcapacitor.Plugin
--keepclassmembers class * extends com.getcapacitor.Plugin {
-    @com.getcapacitor.annotation.CapacitorPlugin <init>(...);
-    @com.getcapacitor.PluginMethod public *;
-}
+# Capacitor : conserver le runtime interne (gestion des permissions, réflexion) et les plugins
+-keep class com.getcapacitor.** { *; }
+-dontwarn com.getcapacitor.**
+-keep class com.capacitorjs.** { *; }
+-dontwarn com.capacitorjs.**
 
 # Sentry
 -keep class io.sentry.** { *; }
