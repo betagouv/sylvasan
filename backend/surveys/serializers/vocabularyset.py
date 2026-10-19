@@ -19,7 +19,8 @@ class VocabularySetDisplaySerializer(serializers.ModelSerializer):
 
 class VocabularySetSerializer(serializers.ModelSerializer):
     entries = VocabularyEntrySerializer(many=True, read_only=True)
+    organisation_name = serializers.CharField(source="organisation.name", allow_null=True)
 
     class Meta:
         model = VocabularySet
-        fields = ("id", "code", "name", "entries")
+        fields = ("id", "code", "name", "entries", "organisation_name")

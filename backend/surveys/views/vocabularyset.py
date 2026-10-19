@@ -1,13 +1,21 @@
 from itertools import chain
+from typing import ClassVar
 
 from django.db.models import Prefetch
 
+from django_filters import rest_framework as django_filters
 from organisations.models import Organisation
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from organisations.models.membership import MembershipType
+from organisations.serializers import OrganisationSerializer
+from rest_framework.filters import OrderingFilter
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response as DRFResponse
+from users.permissions import HasAdminRole
 
 from surveys.models import VocabularyEntry, VocabularySet
-from surveys.serializers import VocabularySetDisplaySerializer, VocabularySetSerializer
+from surveys.serializers import VocabularySetSerializer
 from surveys.views.survey import _responder_survey_queryset
 
 
@@ -29,14 +37,71 @@ def _accessible_vocab_queryset(user):
     ).order_by("code")
 
 
-class VocabularySetListView(ListAPIView):
-    """Liste des référentiels accessibles — code et nom uniquement, sans les entrées."""
+class VocabularySetPagination(LimitOffsetPagination):
+    default_limit = 30
+    max_limit = 500
 
-    serializer_class = VocabularySetDisplaySerializer
-    permission_classes = (IsAuthenticated,)
+    # TODO: extract this (identical to SurveyPagination in backend/surveys/views/survey.py) into
+    # a different util.
+    organisations: ClassVar[list] = []
+
+    def paginate_queryset(self, queryset, request, view=None):
+        org_ids = queryset.values_list("organisation_id", flat=True).distinct().order_by()
+        self.organisations = Organisation.objects.filter(id__in=org_ids)
+        return super().paginate_queryset(queryset, request, view)
+
+    def get_paginated_response(self, data):
+        return DRFResponse(
+            {
+                "count": self.count,
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+                "results": data,
+                "organisations": OrganisationSerializer(self.organisations, many=True).data,
+            }
+        )
+
+
+class VocabularySetAdminMixin:
+    serializer_class = VocabularySetSerializer
+    permission_classes = (HasAdminRole,)
 
     def get_queryset(self):
-        return _accessible_vocab_queryset(self.request.user)
+        """
+        Cible les référentiels des organisations pour lequelles l'utilisateur a un
+        rôle admin.
+        """
+
+        admin_org_ids = self.request.user.memberships.filter(membership_type=MembershipType.ADMIN).values_list(
+            "organisation_id", flat=True
+        )
+        return (
+            VocabularySet.objects.filter(organisation_id__in=admin_org_ids, is_active=True)
+            .prefetch_related(_active_entries_prefetch())
+            .order_by("code")
+        )
+
+
+class VocabularySetFilterSet(django_filters.FilterSet):
+    organisation = django_filters.NumberFilter(field_name="organisation_id")
+
+    class Meta:
+        model = VocabularySet
+        fields: ClassVar[list] = []
+
+
+class VocabularySetListView(VocabularySetAdminMixin, ListCreateAPIView):
+    """Vue utilisée par les admins pour la gestion de référentiels"""
+
+    pagination_class = VocabularySetPagination
+    filter_backends: ClassVar[list] = [
+        django_filters.DjangoFilterBackend,
+        OrderingFilter,
+    ]
+
+
+class VocabularySetRetrieveView(VocabularySetAdminMixin, RetrieveAPIView):
+    """Vue pour les admins : Détail d'un référentiel avec toutes ses entrées actives."""
 
 
 class VocabularySetDetailView(RetrieveAPIView):

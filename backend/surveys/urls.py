@@ -2,7 +2,7 @@ from django.urls import path
 
 from rest_framework.urlpatterns import format_suffix_patterns
 
-import surveys.views as views
+from surveys import views
 
 urlpatterns = [
     path("api/surveys/", views.SurveyListCreateAPIView.as_view(), name="survey_list_create"),
@@ -22,7 +22,10 @@ urlpatterns = [
         name="follow_up_retrieve_update_destroy",
     ),
     path("api/mobile/surveys/", views.SurveyResponderListAPIView.as_view(), name="survey_responder_retrieve"),
-    path("api/vocabularies/", views.VocabularySetListView.as_view(), name="vocabulary_set_list"),
+    path("api/admin/vocabularies/", views.VocabularySetListView.as_view(), name="vocabulary_set_list"),
+    path(
+        "api/admin/vocabularies/<int:pk>/", views.VocabularySetRetrieveView.as_view(), name="vocabulary_retrieve_view"
+    ),
     path("api/vocabularies/<str:code>/", views.VocabularySetDetailView.as_view(), name="vocabulary_set_detail"),
     path("api/mobile/vocabularies/", views.MobileVocabularySetListView.as_view(), name="mobile_vocabulary_set_list"),
 ]

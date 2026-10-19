@@ -34,6 +34,11 @@ const adminActions = [
     description: "Réponses à mes enquêtes",
     link: { name: "/ResponseListPage" },
   },
+  {
+    title: "Mes référentiels",
+    description: "Gérez les référentiels pour votre organisation",
+    link: { name: "/VocabularySetPage" },
+  },
 ]
 
 const userActions = [
