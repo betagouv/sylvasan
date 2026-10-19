@@ -131,7 +131,7 @@ export interface VocabularySet {
   code: string
   name: string
   entries?: VocabularyEntry[]
-  organisationName: string
+  organisationName?: string | null
 }
 
 export interface MapValue {

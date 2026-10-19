@@ -14,11 +14,14 @@ import { useRouter, useRoute } from "vue-router"
 import { useToastStore } from "../stores/toast"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
 import { useApiFetch } from "../utils/data-fetching"
-import type { VocabularySet, VocabularyEntry } from "@shared-types/survey"
+import type { VocabularyEntry } from "@shared-types/survey"
 
 const toast = useToastStore()
 const router = useRouter()
 const route = useRoute()
+
+console.log(toast)
+console.log(router)
 
 const { data: vocabularySet, isFetching } = useApiFetch(
   `/admin/vocabularies/${route.params.id}/`
