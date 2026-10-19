@@ -10,6 +10,13 @@ from surveys.factories import SurveyFactory, VocabularyEntryFactory, VocabularyS
 from surveys.models import VocabularyCategory
 
 
+def _org_with_admin(user):
+    """Crée une organisation avec l'utilisateur comme ADMIN."""
+    org = OrganisationFactory()
+    MembershipFactory(user=user, organisation=org, membership_type=MembershipType.ADMIN)
+    return org
+
+
 def _org_with_forest(user):
     """Crée une organisation ayant accès à la catégorie forêt, avec l'utilisateur comme RESPONDER."""
     org = OrganisationFactory(vocabulary_categories=[VocabularyCategory.FOREST])
@@ -26,82 +33,178 @@ class TestVocabularySetList(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     @authenticate
-    def test_user_without_membership_sees_nothing(self):
+    def test_user_without_admin_role_gets_403(self):
         """
-        Un utilisateur sans rôle ne voit aucun vocabulaire — l'accès est basé sur les catégories de l'organisation
+        Un utilisateur sans rôle admin reçoit une 403
         """
         VocabularySetFactory()
 
         response = self.client.get(reverse("vocabulary_set_list"), format="json")
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), [])
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     @authenticate
-    def test_member_sees_vocabularies_of_accessible_categories(self):
+    def test_responder_only_gets_403(self):
         """
-        Un membre d'organisation voit les vocabulaires dont la catégorie est accessible à son organisation
+        Un utilisateur avec uniquement un rôle RESPONDER reçoit une 403
         """
         _org_with_forest(authenticate.user)
-        visible = VocabularySetFactory(category=VocabularyCategory.FOREST)
-        VocabularySetFactory(category="other")
+
+        response = self.client.get(reverse("vocabulary_set_list"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_admin_sees_vocabularies_of_their_organisation(self):
+        """
+        Un admin voit les référentiels appartenant à son organisation
+        """
+        org = _org_with_admin(authenticate.user)
+        visible = VocabularySetFactory(organisation=org)
+        VocabularySetFactory(organisation=OrganisationFactory())
 
         response = self.client.get(reverse("vocabulary_set_list"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        ids = [v["id"] for v in response.json()]
+        ids = [v["id"] for v in response.json()["results"]]
         self.assertIn(visible.id, ids)
         self.assertEqual(len(ids), 1)
 
     @authenticate
-    def test_member_cannot_see_vocabularies_of_inaccessible_categories(self):
+    def test_admin_does_not_see_other_orgs_vocabularies(self):
         """
-        Un membre ne voit pas les vocabulaires d'une catégorie à laquelle son organisation n'a pas accès
+        Un admin ne voit pas les référentiels d'organisations qu'il n'administre pas
         """
-        OrganisationFactory()
-        MembershipFactory(
-            user=authenticate.user, organisation=OrganisationFactory(), membership_type=MembershipType.RESPONDER
-        )
-        VocabularySetFactory(category=VocabularyCategory.FOREST)
+        _org_with_admin(authenticate.user)
+        VocabularySetFactory(organisation=OrganisationFactory())
 
         response = self.client.get(reverse("vocabulary_set_list"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.json(), [])
+        self.assertEqual(response.json()["results"], [])
+
+    @authenticate
+    def test_inactive_vocabulary_set_excluded_from_list(self):
+        """
+        Un VocabularySet inactif n'apparaît pas dans la liste admin
+        """
+        org = _org_with_admin(authenticate.user)
+        active = VocabularySetFactory(organisation=org, is_active=True)
+        VocabularySetFactory(organisation=org, is_active=False)
+
+        response = self.client.get(reverse("vocabulary_set_list"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [v["id"] for v in response.json()["results"]]
+        self.assertIn(active.id, ids)
+        self.assertEqual(len(ids), 1)
+
+    @authenticate
+    def test_response_is_paginated(self):
+        """
+        La réponse est paginée et contient count, results et organisations
+        """
+        org = _org_with_admin(authenticate.user)
+        VocabularySetFactory(organisation=org)
+
+        response = self.client.get(reverse("vocabulary_set_list"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.json()
+        self.assertIn("count", data)
+        self.assertIn("results", data)
+        self.assertIn("organisations", data)
 
     @authenticate
     def test_response_shape(self):
         """
-        La liste retourne uniquement id, code et name — sans les entrées
+        Chaque entrée de la liste contient id, code, name, organisation_name et entries
         """
-        _org_with_forest(authenticate.user)
-        vocab = VocabularySetFactory(category=VocabularyCategory.FOREST)
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
         VocabularyEntryFactory(vocabulary_set=vocab)
 
         response = self.client.get(reverse("vocabulary_set_list"), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        vocab_data = next(v for v in response.json() if v["id"] == vocab.id)
+        vocab_data = next(v for v in response.json()["results"] if v["id"] == vocab.id)
         self.assertIn("id", vocab_data)
         self.assertIn("code", vocab_data)
         self.assertIn("name", vocab_data)
-        self.assertNotIn("entries", vocab_data)
+        self.assertIn("organisationName", vocab_data)
+        self.assertIn("entries", vocab_data)
+
+
+class TestVocabularySetRetrieveView(APITestCase):
+    def test_unauthenticated_cannot_access(self):
+        """
+        Un utilisateur non authentifié reçoit une 401
+        """
+        vocab = VocabularySetFactory(organisation=OrganisationFactory())
+        response = self.client.get(reverse("vocabulary_retrieve_view", kwargs={"pk": vocab.pk}), format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     @authenticate
-    def test_inactive_vocabulary_set_excluded_from_list(self):
+    def test_responder_gets_403(self):
         """
-        Un VocabularySet inactif n'apparaît pas dans la liste, même si sa catégorie est accessible
+        Un utilisateur avec uniquement un rôle RESPONDER reçoit une 403
         """
-        _org_with_forest(authenticate.user)
-        active = VocabularySetFactory(category=VocabularyCategory.FOREST, is_active=True)
-        VocabularySetFactory(category=VocabularyCategory.FOREST, is_active=False)
+        org = _org_with_forest(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.get(reverse("vocabulary_retrieve_view", kwargs={"pk": vocab.pk}), format="json")
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        response = self.client.get(reverse("vocabulary_set_list"), format="json")
+    @authenticate
+    def test_admin_can_access_own_org_vocabulary(self):
+        """
+        Un admin peut accéder au détail d'un référentiel de son organisation
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.get(reverse("vocabulary_retrieve_view", kwargs={"pk": vocab.pk}), format="json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["id"], vocab.id)
+
+    @authenticate
+    def test_admin_cannot_access_other_org_vocabulary(self):
+        """
+        Un admin ne peut pas accéder au référentiel d'une autre organisation — 404
+        """
+        _org_with_admin(authenticate.user)
+        other_vocab = VocabularySetFactory(organisation=OrganisationFactory())
+        response = self.client.get(reverse("vocabulary_retrieve_view", kwargs={"pk": other_vocab.pk}), format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_inactive_vocabulary_returns_404(self):
+        """
+        Un VocabularySet inactif renvoie une 404, même pour un admin de l'organisation
+        """
+        org = _org_with_admin(authenticate.user)
+        inactive = VocabularySetFactory(organisation=org, is_active=False)
+        response = self.client.get(reverse("vocabulary_retrieve_view", kwargs={"pk": inactive.pk}), format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_response_shape(self):
+        """
+        Le détail contient id, code, name, organisation_name et entries
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        entry = VocabularyEntryFactory(vocabulary_set=vocab, is_active=True, position=1)
+
+        response = self.client.get(reverse("vocabulary_retrieve_view", kwargs={"pk": vocab.pk}), format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        ids = [v["id"] for v in response.json()]
-        self.assertIn(active.id, ids)
-        self.assertEqual(len(ids), 1)
+        data = response.json()
+        self.assertIn("id", data)
+        self.assertIn("code", data)
+        self.assertIn("name", data)
+        self.assertIn("organisationName", data)
+        self.assertIn("entries", data)
+        self.assertEqual(len(data["entries"]), 1)
+        self.assertEqual(data["entries"][0]["code"], entry.code)
 
 
 class TestVocabularySetDetail(APITestCase):
