@@ -1,5 +1,6 @@
 import logging
 import secrets
+from typing import ClassVar
 
 from django.conf import settings
 from django.contrib.auth import login
@@ -30,7 +31,7 @@ oauth.register(
 
 
 class DsfOAuthAppCallbackView(APIView):
-    permission_classes = []
+    permission_classes: ClassVar[list] = []
 
     def post(self, request):
         code = request.data.get("code")
@@ -102,7 +103,7 @@ class DsfOAuthAppCallbackView(APIView):
 
 
 class DsfOAuthWebCallbackView(APIView):
-    permission_classes = []
+    permission_classes: ClassVar[list] = []
 
     def get(self, request):
         state = request.query_params.get("state")
@@ -162,7 +163,7 @@ class DsfOAuthWebCallbackView(APIView):
 
 
 class DsfOAuthWebLoginView(APIView):
-    permission_classes = []
+    permission_classes: ClassVar[list] = []
 
     def get(self, request):
         logger.info("Web OAuth login initiated — user=%s", request.user)
@@ -283,7 +284,8 @@ def _assign_membership(user: User, organisation: Organisation, echelon: str, cod
         pole = Pole.objects.filter(organisation=organisation, dsf_code=echelon, is_active=True).first()
         logger.info("Pole lookup — echelon=%s found=%s pole_id=%s", echelon, bool(pole), pole.id if pole else None)
 
-    active_types = set()
+    # active_keys : ensemble des (type, pole_id) à conserver après la boucle
+    active_keys: set[tuple] = set()
     for membership_type, is_pole_scoped in roles_to_assign:
         if is_pole_scoped and not pole:
             logger.warning(
@@ -297,26 +299,38 @@ def _assign_membership(user: User, organisation: Organisation, echelon: str, cod
             continue
 
         assigned_pole = pole if is_pole_scoped else None
-        _, created = Membership.objects.update_or_create(
+        # Utiliser get_or_create avec la clé unique complète (type + pôle) pour éviter
+        # MultipleObjectsReturned si des doublons existent en base
+        _, created = Membership.objects.get_or_create(
             user=user,
             organisation=organisation,
             membership_type=membership_type,
-            defaults={"pole": assigned_pole},
+            pole=assigned_pole,
         )
         logger.info(
             "Membership %s — user_id=%s username=%s type=%s pole=%s",
-            "created" if created else "updated",
+            "created" if created else "existing",
             user.id,
             user.username,
             membership_type,
             assigned_pole,
         )
-        active_types.add(membership_type)
+        active_keys.add((membership_type, assigned_pole.id if assigned_pole else None))
 
+    # Supprimer les memberships dont le type n'est plus actif
+    deleted_total = 0
     deleted, _ = (
         Membership.objects.filter(user=user, organisation=organisation)
-        .exclude(membership_type__in=active_types)
+        .exclude(membership_type__in={k[0] for k in active_keys})
         .delete()
     )
-    if deleted:
-        logger.info("Removed %s stale membership(s) for user_id=%s username=%s", deleted, user.id, user.username)
+    deleted_total += deleted
+
+    # Supprimer les memberships du bon type mais avec un pôle devenu obsolète
+    for membership_type, pole_id in active_keys:
+        qs = Membership.objects.filter(user=user, organisation=organisation, membership_type=membership_type)
+        deleted, _ = (qs.filter(pole__isnull=False) if pole_id is None else qs.exclude(pole_id=pole_id)).delete()
+        deleted_total += deleted
+
+    if deleted_total:
+        logger.info("Removed %s stale membership(s) for user_id=%s username=%s", deleted_total, user.id, user.username)
