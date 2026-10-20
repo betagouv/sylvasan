@@ -317,12 +317,20 @@ def _assign_membership(user: User, organisation: Organisation, echelon: str, cod
         )
         active_keys.add((membership_type, assigned_pole.id if assigned_pole else None))
 
-    # Supprimer les memberships obsolètes : type absent OU même type avec un pôle différent
-    stale_ids = [
-        m.id
-        for m in Membership.objects.filter(user=user, organisation=organisation)
-        if (m.membership_type, m.pole_id) not in active_keys
-    ]
-    if stale_ids:
-        deleted, _ = Membership.objects.filter(id__in=stale_ids).delete()
-        logger.info("Removed %s stale membership(s) for user_id=%s username=%s", deleted, user.id, user.username)
+    # Supprimer les memberships dont le type n'est plus actif
+    deleted_total = 0
+    deleted, _ = (
+        Membership.objects.filter(user=user, organisation=organisation)
+        .exclude(membership_type__in={k[0] for k in active_keys})
+        .delete()
+    )
+    deleted_total += deleted
+
+    # Supprimer les memberships du bon type mais avec un pôle devenu obsolète
+    for membership_type, pole_id in active_keys:
+        qs = Membership.objects.filter(user=user, organisation=organisation, membership_type=membership_type)
+        deleted, _ = (qs.filter(pole__isnull=False) if pole_id is None else qs.exclude(pole_id=pole_id)).delete()
+        deleted_total += deleted
+
+    if deleted_total:
+        logger.info("Removed %s stale membership(s) for user_id=%s username=%s", deleted_total, user.id, user.username)
