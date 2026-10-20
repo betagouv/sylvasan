@@ -24,11 +24,11 @@ MOCK_CLAIMS = {
     "codes_da": ["SYLV-EDIT-T"],
 }
 
-DSF_SETTINGS = dict(
-    DSF_OAUTH2_REDIRECT_APP_URI="sylvasan://oauth/callback",
-    DSF_OAUTH2_REDIRECT_WEB_URI="https://example.com/platform/dsf/oauth/web/callback/",
-    DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT="https://example.com",
-)
+DSF_SETTINGS = {
+    "DSF_OAUTH2_REDIRECT_APP_URI": "sylvasan://oauth/callback",
+    "DSF_OAUTH2_REDIRECT_WEB_URI": "https://example.com/platform/dsf/oauth/web/callback/",
+    "DSF_OAUTH2_WEB_SUCCESS_REDIRECT_ROOT": "https://example.com",
+}
 
 
 def _mock_oauth(claims=None):
@@ -361,6 +361,49 @@ class TestAssignMembership(APITestCase):
         _assign_membership(self.user, self.org, "", ["SYLV-EDIT-T"])
 
         self.assertTrue(Membership.objects.filter(pk=other_membership.pk).exists())
+
+    def test_duplicate_memberships_do_not_raise_multiple_objects_returned(self):
+        """
+        Si deux lignes Membership existent pour le même (user, org, type) avec des pôles
+        différents (doublon en base), _assign_membership ne doit pas lever
+        MultipleObjectsReturned et doit normaliser en une seule adhésion.
+        """
+        pole = PoleFactory.create(organisation=self.org, dsf_code="ECH001")
+        # Simulation d'un doublon : une adhésion nationale et une adhésion pôle pour le même type
+        MembershipFactory.create(
+            user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN, pole=None
+        )
+        MembershipFactory.create(
+            user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN, pole=pole
+        )
+
+        # Ne doit pas lever d'exception ; l'utilisateur a maintenant le code national
+        _assign_membership(self.user, self.org, "", ["SYLV-CREECAMPNAT-T"])
+
+        memberships = Membership.objects.filter(
+            user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN
+        )
+        self.assertEqual(memberships.count(), 1)
+        self.assertIsNone(memberships.first().pole)
+
+    def test_pole_change_removes_old_scoped_membership(self):
+        """
+        Quand le pôle d'un utilisateur change, l'ancienne adhésion pôle-scopée est supprimée
+        et remplacée par la nouvelle.
+        """
+        old_pole = PoleFactory.create(organisation=self.org, dsf_code="ECH001")
+        new_pole = PoleFactory.create(organisation=self.org, dsf_code="ECH002")
+        MembershipFactory.create(
+            user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN, pole=old_pole
+        )
+
+        _assign_membership(self.user, self.org, "ECH002", ["SYLV-CREECAMPECH-T"])
+
+        memberships = Membership.objects.filter(
+            user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN
+        )
+        self.assertEqual(memberships.count(), 1)
+        self.assertEqual(memberships.first().pole, new_pole)
 
     def test_stale_role_removal_does_not_touch_other_org_memberships(self):
         """
