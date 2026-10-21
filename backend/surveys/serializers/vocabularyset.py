@@ -6,7 +6,7 @@ from surveys.models import VocabularyEntry, VocabularySet
 class VocabularyEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = VocabularyEntry
-        fields = ("code", "label", "position")
+        fields = ("id", "code", "label", "position")
 
 
 class VocabularySetDisplaySerializer(serializers.ModelSerializer):

@@ -9,14 +9,20 @@ from organisations.models.membership import MembershipType
 from organisations.serializers import OrganisationSerializer
 from rest_framework import filters
 from rest_framework.filters import OrderingFilter
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView, RetrieveDestroyAPIView
+from rest_framework.generics import (
+    ListAPIView,
+    ListCreateAPIView,
+    RetrieveAPIView,
+    RetrieveDestroyAPIView,
+    RetrieveUpdateDestroyAPIView,
+)
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from users.permissions import HasAdminRole
 
 from surveys.models import VocabularyEntry, VocabularySet
-from surveys.serializers import VocabularySetSerializer
+from surveys.serializers import VocabularyEntrySerializer, VocabularySetSerializer
 from surveys.views.survey import _responder_survey_queryset
 
 
@@ -111,6 +117,31 @@ class VocabularySetRetrieveView(VocabularySetAdminMixin, RetrieveDestroyAPIView)
 
     def perform_destroy(self, obj):
         obj.deactivate()
+
+
+class VocabularyEntryAdminView(RetrieveUpdateDestroyAPIView):
+    """Vue pour les admins : Permet de modifier ou supprimer une entrée."""
+
+    permission_classes = (HasAdminRole,)
+    serializer_class = VocabularyEntrySerializer
+
+    def get_queryset(self):
+        """
+        Limite l'accès aux entrées actives du référentiel indiqué dans l'URL,
+        à condition que ce référentiel appartienne à une organisation administrée par l'utilisateur.
+        """
+        admin_org_ids = self.request.user.memberships.filter(membership_type=MembershipType.ADMIN).values_list(
+            "organisation_id", flat=True
+        )
+        return VocabularyEntry.objects.filter(
+            vocabulary_set_id=self.kwargs["vocabularyset_pk"],
+            vocabulary_set__organisation_id__in=admin_org_ids,
+            vocabulary_set__is_active=True,
+            is_active=True,
+        )
+
+    def perform_destroy(self, instance):
+        instance.deactivate()
 
 
 class VocabularySetDetailView(RetrieveAPIView):
