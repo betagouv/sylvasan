@@ -2,6 +2,7 @@ from itertools import chain
 from typing import ClassVar
 
 from django.db.models import Prefetch
+from django.shortcuts import get_object_or_404
 
 from django_filters import rest_framework as django_filters
 from organisations.models import Organisation
@@ -10,6 +11,7 @@ from organisations.serializers import OrganisationSerializer
 from rest_framework import filters
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import (
+    CreateAPIView,
     ListAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
@@ -142,6 +144,31 @@ class VocabularyEntryAdminView(RetrieveUpdateDestroyAPIView):
 
     def perform_destroy(self, instance):
         instance.deactivate()
+
+
+class VocabularyEntryAdminCreateView(CreateAPIView):
+    """Vue pour les admins : Création d'une entrée dans un référentiel."""
+
+    permission_classes = (HasAdminRole,)
+    serializer_class = VocabularyEntrySerializer
+
+    def get_queryset(self):
+        admin_org_ids = self.request.user.memberships.filter(membership_type=MembershipType.ADMIN).values_list(
+            "organisation_id", flat=True
+        )
+        return VocabularySet.objects.filter(
+            id=self.kwargs["vocabularyset_pk"],
+            organisation_id__in=admin_org_ids,
+            is_active=True,
+        )
+
+    def perform_create(self, serializer):
+        """
+        Vérifie que le référentiel cible appartient à une organisation administrée
+        par l'utilisateur, puis crée l'entrée.
+        """
+        vocabulary_set = get_object_or_404(self.get_queryset(), pk=self.kwargs["vocabularyset_pk"])
+        serializer.save(vocabulary_set=vocabulary_set)
 
 
 class VocabularySetDetailView(RetrieveAPIView):

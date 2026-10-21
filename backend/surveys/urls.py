@@ -27,6 +27,11 @@ urlpatterns = [
         "api/admin/vocabularies/<int:pk>/", views.VocabularySetRetrieveView.as_view(), name="vocabulary_retrieve_view"
     ),
     path(
+        "api/admin/vocabularies/<int:vocabularyset_pk>/entries/",
+        views.VocabularyEntryAdminCreateView.as_view(),
+        name="vocabulary_entry_admin_create_view",
+    ),
+    path(
         "api/admin/vocabularies/<int:vocabularyset_pk>/entries/<int:pk>/",
         views.VocabularyEntryAdminView.as_view(),
         name="vocabulary_entry_admin_view",

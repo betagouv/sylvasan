@@ -7,6 +7,14 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from surveys.factories import VocabularyEntryFactory, VocabularySetFactory
+from surveys.models import VocabularyEntry
+
+
+def _create_url(vocabularyset_pk):
+    return reverse(
+        "vocabulary_entry_admin_create_view",
+        kwargs={"vocabularyset_pk": vocabularyset_pk},
+    )
 
 
 def _url(vocabularyset_pk, entry_pk):
@@ -235,3 +243,118 @@ class TestVocabularyEntryAdminViewDelete(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         entry.refresh_from_db()
         self.assertTrue(entry.is_active)
+
+
+class TestVocabularyEntryAdminCreateView(APITestCase):
+    def test_unauthenticated_cannot_create(self):
+        """
+        Un utilisateur non authentifié reçoit une 401
+        """
+        vocab = VocabularySetFactory(organisation=OrganisationFactory())
+        response = self.client.post(
+            _create_url(vocab.pk),
+            {"code": "A", "label": "Alpha"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @authenticate
+    def test_responder_gets_403(self):
+        """
+        Un utilisateur avec uniquement un rôle RESPONDER reçoit une 403
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(
+            _create_url(vocab.pk),
+            {"code": "A", "label": "Alpha"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_admin_can_create_entry(self):
+        """
+        Un admin peut créer une entrée dans un référentiel de son organisation — 201
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        vocab = VocabularySetFactory(organisation=org)
+
+        response = self.client.post(
+            _create_url(vocab.pk),
+            {"code": "NEW", "label": "Nouvelle entrée", "position": 5},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = response.json()
+        self.assertEqual(data["code"], "NEW")
+        self.assertEqual(data["label"], "Nouvelle entrée")
+        self.assertEqual(data["position"], 5)
+
+    @authenticate
+    def test_created_entry_is_linked_to_vocabulary_set(self):
+        """
+        L'entrée créée est bien rattachée au référentiel indiqué dans l'URL
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        vocab = VocabularySetFactory(organisation=org)
+
+        self.client.post(
+            _create_url(vocab.pk),
+            {"code": "X", "label": "Entrée X"},
+            format="json",
+        )
+
+        self.assertTrue(VocabularyEntry.objects.filter(vocabulary_set=vocab, code="X").exists())
+
+    @authenticate
+    def test_admin_cannot_create_entry_in_other_org_vocabulary(self):
+        """
+        Un admin ne peut pas créer une entrée dans un référentiel d'une autre organisation — 404
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        other_vocab = VocabularySetFactory(organisation=OrganisationFactory())
+
+        response = self.client.post(
+            _create_url(other_vocab.pk),
+            {"code": "A", "label": "Alpha"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertFalse(VocabularyEntry.objects.filter(vocabulary_set=other_vocab).exists())
+
+    @authenticate
+    def test_admin_cannot_create_entry_in_inactive_vocabulary(self):
+        """
+        Un admin ne peut pas créer une entrée dans un référentiel inactif — 404
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        vocab = VocabularySetFactory(organisation=org, is_active=False)
+
+        response = self.client.post(
+            _create_url(vocab.pk),
+            {"code": "A", "label": "Alpha"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_missing_required_fields_returns_400(self):
+        """
+        Les champs obligatoires manquants renvoient une 400
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+        vocab = VocabularySetFactory(organisation=org)
+
+        response = self.client.post(_create_url(vocab.pk), {}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
