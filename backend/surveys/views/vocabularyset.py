@@ -9,7 +9,7 @@ from organisations.models.membership import MembershipType
 from organisations.serializers import OrganisationSerializer
 from rest_framework import filters
 from rest_framework.filters import OrderingFilter
-from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView, RetrieveDestroyAPIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
@@ -106,8 +106,11 @@ class VocabularySetListView(VocabularySetAdminMixin, ListCreateAPIView):
     )
 
 
-class VocabularySetRetrieveView(VocabularySetAdminMixin, RetrieveAPIView):
+class VocabularySetRetrieveView(VocabularySetAdminMixin, RetrieveDestroyAPIView):
     """Vue pour les admins : Détail d'un référentiel avec toutes ses entrées actives."""
+
+    def perform_destroy(self, obj):
+        obj.deactivate()
 
 
 class VocabularySetDetailView(RetrieveAPIView):

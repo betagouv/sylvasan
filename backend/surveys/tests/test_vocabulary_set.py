@@ -285,6 +285,64 @@ class TestVocabularySetRetrieveView(APITestCase):
         self.assertEqual(len(data["entries"]), 1)
         self.assertEqual(data["entries"][0]["code"], entry.code)
 
+    @authenticate
+    def test_admin_can_delete_own_org_vocabulary(self):
+        """
+        Un admin peut supprimer (désactiver) un référentiel de son organisation — 204
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+
+        response = self.client.delete(reverse("vocabulary_retrieve_view", kwargs={"pk": vocab.pk}), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        vocab.refresh_from_db()
+        self.assertFalse(vocab.is_active)
+
+    @authenticate
+    def test_delete_is_soft(self):
+        """
+        La suppression ne détruit pas la ligne en base — elle la marque inactive
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+
+        self.client.delete(reverse("vocabulary_retrieve_view", kwargs={"pk": vocab.pk}), format="json")
+
+        from surveys.models import VocabularySet
+
+        self.assertTrue(VocabularySet.objects.filter(pk=vocab.pk).exists())
+
+    @authenticate
+    def test_responder_cannot_delete(self):
+        """
+        Un utilisateur avec uniquement un rôle RESPONDER ne peut pas supprimer — 403
+        """
+        org = _org_with_forest(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+
+        response = self.client.delete(reverse("vocabulary_retrieve_view", kwargs={"pk": vocab.pk}), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        vocab.refresh_from_db()
+        self.assertTrue(vocab.is_active)
+
+    @authenticate
+    def test_admin_cannot_delete_other_org_vocabulary(self):
+        """
+        Un admin ne peut pas supprimer le référentiel d'une autre organisation — 404
+        """
+        _org_with_admin(authenticate.user)
+        other_vocab = VocabularySetFactory(organisation=OrganisationFactory())
+
+        response = self.client.delete(
+            reverse("vocabulary_retrieve_view", kwargs={"pk": other_vocab.pk}), format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        other_vocab.refresh_from_db()
+        self.assertTrue(other_vocab.is_active)
+
 
 class TestVocabularySetDetail(APITestCase):
     def test_unauthenticated_cannot_access_detail(self):

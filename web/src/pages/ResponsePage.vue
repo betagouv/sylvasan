@@ -20,8 +20,7 @@ import { storeToRefs } from "pinia"
 import { useRootStore } from "../stores/root.ts"
 import MapField from "../components/MapField.vue"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
-import ConfirmDeleteModal from "../components/SurveyBuilder/ConfirmDeleteModal.vue"
-import { useToastStore } from "../stores/toast"
+import FooterDeleteButton from "../components/FooterDeleteButton.vue"
 import { useRouter } from "vue-router"
 import FollowUpsTable from "../components/ResponsePage/FollowUpsTable.vue"
 import ResponseFieldsSection from "../components/ResponsePage/ResponseFieldsSection.vue"
@@ -68,9 +67,6 @@ watch([response, isFetching], async ([val, fetching]) => {
   isReady.value = true
 })
 
-const confirmDeleteOpened = ref(false)
-const toast = useToastStore()
-
 const viewerOpen = ref(false)
 const viewerImages = ref<ImageItem[]>([])
 const viewerIndex = ref(0)
@@ -87,22 +83,7 @@ const respondantName = computed(() => {
   return `${respondant.firstName} ${respondant.lastName || ""}`
 })
 
-const {
-  execute: deleteResponse,
-  isFetching: isDeleting,
-  statusCode,
-} = useApiFetch(`/responses/${route.params.id}`, { immediate: false }).delete()
 
-const onConfirmDelete = async () => {
-  await deleteResponse()
-  confirmDeleteOpened.value = false
-  if (statusCode.value === 204) {
-    toast.show("La réponse a été supprimée.", "success")
-    router.push({ name: "/ResponseListPage" })
-  } else {
-    toast.show("Une erreur s'est produite.", "error")
-  }
-}
 </script>
 
 <template>
@@ -161,19 +142,12 @@ const onConfirmDelete = async () => {
         :follow-up-responses="response.followUpResponses"
       />
 
-      <div class="flex border border-gray-200 p-4 mb-4 items-center">
-        <div class="grow"></div>
-        <DsfrButton
-          label="Supprimer"
-          secondary
-          :icon="{
-            name: 'ri-delete-bin-line',
-            fill: '#c9191e',
-          }"
-          :disabled="isDeleting"
-          @click="confirmDeleteOpened = true"
-        />
-      </div>
+      <FooterDeleteButton
+        :url="`/responses/${route.params.id}`"
+        modal-title="Supprimer la réponse ?"
+        success-message="La réponse a été supprimée."
+        @deleted="router.push({ name: '/ResponseListPage' })"
+      />
     </div>
   </div>
 
@@ -182,11 +156,5 @@ const onConfirmDelete = async () => {
     :startIndex="viewerIndex"
     :opened="viewerOpen"
     @close="viewerOpen = false"
-  />
-  <ConfirmDeleteModal
-    :opened="confirmDeleteOpened"
-    title="Supprimer la réponse ?"
-    @confirm="onConfirmDelete"
-    @close="confirmDeleteOpened = false"
   />
 </template>

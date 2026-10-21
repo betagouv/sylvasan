@@ -11,17 +11,13 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { useRouter, useRoute } from "vue-router"
-import { useToastStore } from "../stores/toast"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
+import FooterDeleteButton from "../components/FooterDeleteButton.vue"
 import { useApiFetch } from "../utils/data-fetching"
 import type { VocabularyEntry } from "@shared-types/survey"
 
-const toast = useToastStore()
 const router = useRouter()
 const route = useRoute()
-
-console.log(toast)
-console.log(router)
 
 const { data: vocabularySet, isFetching } = useApiFetch(
   `/admin/vocabularies/${route.params.id}/`
@@ -59,6 +55,13 @@ const headers = [
       <h2 class="fr-h5">Entrées</h2>
       <DsfrTable :rows="rows" :headers="headers" />
     </div>
+
+    <FooterDeleteButton
+      :url="`/admin/vocabularies/${route.params.id}/`"
+      modal-title="Supprimer le référentiel ?"
+      success-message="Le référentiel a été supprimé."
+      @deleted="router.push({ name: '/VocabularySetPage' })"
+    />
   </div>
 </template>
 
