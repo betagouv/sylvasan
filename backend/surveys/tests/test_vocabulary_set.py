@@ -135,6 +135,85 @@ class TestVocabularySetList(APITestCase):
         self.assertIn("entries", vocab_data)
 
 
+class TestVocabularySetSearch(APITestCase):
+    def setUp(self):
+        self.user = None  # défini par @authenticate
+
+    @authenticate
+    def setUp_org(self):
+        return _org_with_admin(authenticate.user)
+
+    def _results(self, search):
+        return self.client.get(reverse("vocabulary_set_list"), {"search": search}, format="json").json()["results"]
+
+    @authenticate
+    def test_search_by_code_returns_matching_vocab(self):
+        """
+        La recherche par code retourne le référentiel correspondant
+        """
+        org = _org_with_admin(authenticate.user)
+        target = VocabularySetFactory(organisation=org, code="ESS2014", name="CODIFICATION DES ESSENCES")
+        VocabularySetFactory(organisation=org, code="AUTRE", name="AUTRE REFERENTIEL")
+
+        ids = [v["id"] for v in self._results("ESS2014")]
+
+        self.assertIn(target.id, ids)
+        self.assertEqual(len(ids), 1)
+
+    @authenticate
+    def test_search_by_name_returns_matching_vocab(self):
+        """
+        La recherche par nom retourne le référentiel correspondant
+        """
+        org = _org_with_admin(authenticate.user)
+        target = VocabularySetFactory(organisation=org, code="ESS2014", name="CODIFICATION DES ESSENCES")
+        VocabularySetFactory(organisation=org, code="AUTRE", name="AUTRE REFERENTIEL")
+
+        ids = [v["id"] for v in self._results("DES ESSENCES")]
+
+        self.assertIn(target.id, ids)
+        self.assertEqual(len(ids), 1)
+
+    @authenticate
+    def test_search_by_partial_name_returns_matching_vocab(self):
+        """
+        La recherche par sous-chaîne du nom retourne le bon référentiel
+        """
+        org = _org_with_admin(authenticate.user)
+        target = VocabularySetFactory(organisation=org, code="ESS2014", name="CODIFICATION DES ESSENCES")
+        VocabularySetFactory(organisation=org, code="ZZZ", name="AUTRE REFERENTIEL")
+
+        ids = [v["id"] for v in self._results("CODIFICATION")]
+
+        self.assertIn(target.id, ids)
+        self.assertEqual(len(ids), 1)
+
+    @authenticate
+    def test_search_with_no_match_returns_empty(self):
+        """
+        Une recherche sans correspondance retourne une liste vide
+        """
+        org = _org_with_admin(authenticate.user)
+        VocabularySetFactory(organisation=org, code="ESS2014", name="CODIFICATION DES ESSENCES")
+
+        ids = [v["id"] for v in self._results("INEXISTANT")]
+
+        self.assertEqual(ids, [])
+
+    @authenticate
+    def test_search_does_not_return_other_org_results(self):
+        """
+        La recherche ne retourne pas les référentiels d'organisations non administrées
+        """
+        org = _org_with_admin(authenticate.user)
+        VocabularySetFactory(organisation=org, code="ESS2014", name="CODIFICATION DES ESSENCES")
+        VocabularySetFactory(organisation=OrganisationFactory(), code="ESS2015", name="CODIFICATION 2015")
+
+        ids = [v["id"] for v in self._results("CODIFICATION")]
+
+        self.assertEqual(len(ids), 1)
+
+
 class TestVocabularySetRetrieveView(APITestCase):
     def test_unauthenticated_cannot_access(self):
         """

@@ -8,7 +8,8 @@
       "page": 1,
       "limit": 30,
       "organisation": "",
-      "triage": "code"
+      "triage": "code",
+      "recherche": ""
     }
   }
 }
@@ -16,7 +17,7 @@
 
 <script setup lang="ts">
 import { useApiFetch } from "../utils/data-fetching"
-import { computed, watch } from "vue"
+import { computed, watch, ref } from "vue"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
 import { useRouter, useRoute } from "vue-router"
 import type { Organisation } from "@shared-types/api"
@@ -35,6 +36,7 @@ const ordering = computed(() => route.query.triage as string)
 const organisationFilter = computed(
   () => (route.query.organisation as string) ?? ""
 )
+const searchTerm = ref(route.query.recherche || "")
 
 const filterParams = computed(() => {
   const params = new URLSearchParams()
@@ -48,6 +50,7 @@ const url = computed(() => {
   const params = new URLSearchParams(filterParams.value)
   params.set("limit", String(limit.value))
   params.set("offset", String(offset.value))
+  params.set("search", String(searchTerm.value))
   return `/admin/vocabularies/?${params.toString()}`
 })
 
@@ -81,6 +84,7 @@ const updatePage = (newPage: number) => updateQuery({ page: newPage + 1 })
 const updateOrdering = (value: string) => updateQuery({ triage: value })
 const updateOrganisation = (value: string) =>
   updateQuery({ organisation: value, page: 1 })
+const updateSearch = () => updateQuery({ recherche: String(searchTerm.value) })
 
 const hasActiveFilters = computed(() => !!organisationFilter.value)
 
@@ -120,7 +124,11 @@ const headers = [
   { text: "Organisation", headerAttrs: { id: "th-organisation" } },
 ]
 
-watch([page, limit, ordering, organisationFilter], fetchResults)
+const clearSearchIfEmpty = () => {
+  if (!searchTerm.value) updateSearch()
+}
+
+watch(() => route.query, fetchResults)
 </script>
 
 <template>
@@ -133,38 +141,47 @@ watch([page, limit, ordering, organisationFilter], fetchResults)
     />
     <div>
       <h1 class="fr-h4">Mes référentiels</h1>
-      <div class="filters border mb-2 rounded border-gray-300 p-4 flex gap-8">
-        <div>
-          <DsfrInputGroup>
-            <DsfrSelect
-              label="Organisation"
-              :model-value="organisationFilter"
-              :options="[
-                { value: '', text: 'Tous les référentiels' },
-                ...(data?.organisations ?? []).map((s) => ({
-                  value: String(s.id),
-                  text: s.name,
-                })),
-              ]"
-              class="text-sm!"
-              @update:modelValue="updateOrganisation"
-            />
-          </DsfrInputGroup>
+      <div class="filters border mb-2 rounded border-gray-300 p-4">
+        <div class="mb-6 max-w-lg">
+          <DsfrSearchBar
+            @search="updateSearch"
+            v-model="searchTerm"
+            @update:modelValue="clearSearchIfEmpty"
+          />
         </div>
+        <div class="flex gap-8">
+          <div>
+            <DsfrInputGroup>
+              <DsfrSelect
+                label="Organisation"
+                :model-value="organisationFilter"
+                :options="[
+                  { value: '', text: 'Tous les référentiels' },
+                  ...(data?.organisations ?? []).map((s) => ({
+                    value: String(s.id),
+                    text: s.name,
+                  })),
+                ]"
+                class="text-sm!"
+                @update:modelValue="updateOrganisation"
+              />
+            </DsfrInputGroup>
+          </div>
 
-        <PaginationSizeSelect
-          :modelValue="limit"
-          @update:modelValue="updateLimit"
-        />
-        <VocabularySetOrderingFilter
-          :model-value="ordering"
-          @update:modelValue="updateOrdering"
-        />
+          <PaginationSizeSelect
+            :modelValue="limit"
+            @update:modelValue="updateLimit"
+          />
+          <VocabularySetOrderingFilter
+            :model-value="ordering"
+            @update:modelValue="updateOrdering"
+          />
 
-        <div class="grow"></div>
-        <p v-if="data?.count" class="fr-text--sm text-stone-500 mb-0!">
-          {{ data.count }} référentiels au total
-        </p>
+          <div class="grow"></div>
+          <p v-if="data?.count" class="fr-text--sm text-stone-500 mb-0!">
+            {{ data.count }} référentiels au total
+          </p>
+        </div>
       </div>
       <div v-if="isFetching" class="flex justify-center my-20">
         <ProgressSpinner />

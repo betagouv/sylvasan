@@ -7,6 +7,7 @@ from django_filters import rest_framework as django_filters
 from organisations.models import Organisation
 from organisations.models.membership import MembershipType
 from organisations.serializers import OrganisationSerializer
+from rest_framework import filters
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveAPIView
 from rest_framework.pagination import LimitOffsetPagination
@@ -97,7 +98,12 @@ class VocabularySetListView(VocabularySetAdminMixin, ListCreateAPIView):
     filter_backends: ClassVar[list] = [
         django_filters.DjangoFilterBackend,
         OrderingFilter,
+        filters.UnaccentedSearchFilter,
     ]
+    search_fields = (
+        "code",
+        "name",
+    )
 
 
 class VocabularySetRetrieveView(VocabularySetAdminMixin, RetrieveAPIView):
