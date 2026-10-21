@@ -121,7 +121,7 @@ export interface Survey {
 }
 
 export interface VocabularyEntry {
-  id: number
+  id?: number
   code: string
   label: string
   position: number | null

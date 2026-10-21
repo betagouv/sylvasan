@@ -21,11 +21,13 @@ import EntryModificationModal from "../components/VocabularySetDetailPage/EntryM
 const router = useRouter()
 const route = useRoute()
 
+const vocabularySetId = route.params.id as string
+
 const {
   data: vocabularySet,
   isFetching,
   execute: refetchVocabularySet,
-} = useApiFetch(`/admin/vocabularies/${route.params.id}/`).json()
+} = useApiFetch(`/admin/vocabularies/${vocabularySetId}/`).json()
 
 const rows = computed(() =>
   (vocabularySet.value?.entries ?? []).map((entry: VocabularyEntry) => ({
@@ -36,7 +38,7 @@ const rows = computed(() =>
       {
         component: EntryActionButtons,
         entry: entry,
-        vocabularysetId: route.params.id,
+        vocabularysetId: vocabularySetId,
         onRefreshed: () => refetchVocabularySet(),
       },
     ],
@@ -84,13 +86,13 @@ const newEntry: VocabularyEntry = { id: 0, code: "", label: "", position: null }
     <EntryModificationModal
       :opened="addModalOpen"
       :entry="newEntry"
-      :vocabularyset-id="route.params.id"
+      :vocabularyset-id="vocabularySetId"
       @close="addModalOpen = false"
       @saved="refetchVocabularySet()"
     />
 
     <FooterDeleteButton
-      :url="`/admin/vocabularies/${route.params.id}/`"
+      :url="`/admin/vocabularies/${vocabularySetId}/`"
       modal-title="Supprimer le référentiel ?"
       :modal-body="`Cette action supprimera également toutes les ${vocabularySet?.entries?.length} entrées du référentiel « ${vocabularySet?.code} »`"
       success-message="Le référentiel a été supprimé."
