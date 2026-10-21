@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import * as z from "zod"
-import { ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import { ZodError } from "zod"
 import { useApiFetch } from "../../utils/data-fetching"
 import { useToastStore } from "../../stores/toast"
@@ -13,6 +13,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ close: []; saved: [] }>()
+
+const entryIsNew = computed(() => !props.entry.id)
 
 const toast = useToastStore()
 
@@ -57,8 +59,8 @@ const clearFieldError = (field: string) => {
 
 const {
   execute: executePatch,
-  isFetching: isSaving,
-  statusCode,
+  isFetching: isPatchSaving,
+  statusCode: patchStatusCode,
 } = useApiFetch(
   () =>
     `/admin/vocabularies/${props.vocabularysetId}/entries/${props.entry.id}/`,
@@ -66,6 +68,19 @@ const {
 )
   .patch(payload)
   .json()
+
+const {
+  execute: executeCreate,
+  isFetching: isCreateSaving,
+  statusCode: createStatusCode,
+} = useApiFetch(
+  () => `/admin/vocabularies/${props.vocabularysetId}/entries/`,
+  { immediate: false }
+)
+  .post(payload)
+  .json()
+
+const isSaving = computed(() => isPatchSaving.value || isCreateSaving.value)
 
 const onSave = async () => {
   formErrors.value = { formErrors: [], fieldErrors: {} }
@@ -75,13 +90,24 @@ const onSave = async () => {
     if (error instanceof ZodError) formErrors.value = z.flattenError(error)
     return
   }
-  await executePatch()
-  if (statusCode.value === 200) {
-    toast.show("L'entrée a été modifiée.", "success")
-    emit("saved")
-    emit("close")
+  if (entryIsNew.value) {
+    await executeCreate()
+    if (createStatusCode.value === 201) {
+      toast.show("L'entrée a été créée.", "success")
+      emit("saved")
+      emit("close")
+    } else {
+      toast.show("Une erreur s'est produite.", "error")
+    }
   } else {
-    toast.show("Une erreur s'est produite.", "error")
+    await executePatch()
+    if (patchStatusCode.value === 200) {
+      toast.show("L'entrée a été modifiée.", "success")
+      emit("saved")
+      emit("close")
+    } else {
+      toast.show("Une erreur s'est produite.", "error")
+    }
   }
 }
 </script>
@@ -89,7 +115,7 @@ const onSave = async () => {
 <template>
   <DsfrModal
     :opened="opened"
-    :title="`Modifier l'entrée « ${entry.code} »`"
+    :title="entryIsNew ? 'Nouvelle entrée' : `Modifier l'entrée « ${entry.code} »`"
     @close="emit('close')"
   >
     <form @submit.prevent="onSave">

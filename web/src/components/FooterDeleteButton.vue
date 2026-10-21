@@ -4,11 +4,15 @@ import { useApiFetch } from "../utils/data-fetching"
 import { useToastStore } from "../stores/toast"
 import ConfirmDeleteModal from "./SurveyBuilder/ConfirmDeleteModal.vue"
 
-const props = defineProps<{
-  url: string
-  modalTitle: string
-  successMessage: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    url: string
+    modalTitle: string
+    successMessage: string
+    modalBody?: string
+  }>(),
+  { modalBody: "" }
+)
 
 const emit = defineEmits<{ deleted: [] }>()
 
@@ -46,12 +50,13 @@ const onConfirmDelete = async () => {
       :disabled="isDeleting"
       @click="confirmDeleteOpened = true"
     />
+    <ConfirmDeleteModal
+      :opened="confirmDeleteOpened"
+      :title="modalTitle"
+      @confirm="onConfirmDelete"
+      @close="confirmDeleteOpened = false"
+    >
+      {{ modalBody }}
+    </ConfirmDeleteModal>
   </div>
-
-  <ConfirmDeleteModal
-    :opened="confirmDeleteOpened"
-    :title="modalTitle"
-    @confirm="onConfirmDelete"
-    @close="confirmDeleteOpened = false"
-  />
 </template>

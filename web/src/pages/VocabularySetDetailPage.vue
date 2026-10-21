@@ -9,13 +9,14 @@
 </route>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { useRouter, useRoute } from "vue-router"
 import ProgressSpinner from "../components/ProgressSpinner.vue"
 import FooterDeleteButton from "../components/FooterDeleteButton.vue"
 import { useApiFetch } from "../utils/data-fetching"
 import type { VocabularyEntry } from "@shared-types/survey"
 import EntryActionButtons from "../components/VocabularySetDetailPage/EntryActionButtons.vue"
+import EntryModificationModal from "../components/VocabularySetDetailPage/EntryModificationModal.vue"
 
 const router = useRouter()
 const route = useRoute()
@@ -48,6 +49,9 @@ const headers = [
   { text: "Position", headerAttrs: { id: "th-position" } },
   { text: "Actions", headerAttrs: { id: "th-actions" } },
 ]
+
+const addModalOpen = ref(false)
+const newEntry: VocabularyEntry = { id: 0, code: "", label: "", position: null }
 </script>
 
 <template>
@@ -65,13 +69,30 @@ const headers = [
     <div v-if="vocabularySet" class="mb-4">
       <h1 class="fr-h4">{{ vocabularySet.code }} - {{ vocabularySet.name }}</h1>
 
-      <h2 class="fr-h5">Entrées</h2>
+      <div class="flex">
+        <h2 class="fr-h5 mb-0! grow">Entrées</h2>
+        <DsfrButton
+          label="Ajouter une entrée"
+          size="md"
+          icon="ri-add-line"
+          @click="addModalOpen = true"
+        />
+      </div>
       <DsfrTable :rows="rows" :headers="headers" />
     </div>
+
+    <EntryModificationModal
+      :opened="addModalOpen"
+      :entry="newEntry"
+      :vocabularyset-id="route.params.id"
+      @close="addModalOpen = false"
+      @saved="refetchVocabularySet()"
+    />
 
     <FooterDeleteButton
       :url="`/admin/vocabularies/${route.params.id}/`"
       modal-title="Supprimer le référentiel ?"
+      :modal-body="`Cette action supprimera également toutes les ${vocabularySet?.entries?.length} entrées du référentiel « ${vocabularySet?.code} »`"
       success-message="Le référentiel a été supprimé."
       @deleted="router.push({ name: '/VocabularySetPage' })"
     />

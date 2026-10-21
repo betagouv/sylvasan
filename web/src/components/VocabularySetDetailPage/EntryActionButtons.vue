@@ -76,6 +76,9 @@ const editModalOpen = ref(false)
       title="Supprimer l'entrée ?"
       @confirm="onConfirmDelete"
       @close="deleteModalOpen = false"
-    />
+    >
+      Cette action concerne l'entrée
+      <span class="font-bold">{{ entry.code }} - {{ entry.label }}</span>
+    </ConfirmDeleteModal>
   </div>
 </template>
