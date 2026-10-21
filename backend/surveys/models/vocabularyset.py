@@ -1,6 +1,6 @@
 from django.db import models
 
-from common.behaviours import Historisable
+from common.behaviours import Deactivable, DeactivableQuerySet, Historisable
 from organisations.models import Organisation
 
 
@@ -8,10 +8,12 @@ class VocabularyCategory(models.TextChoices):
     FOREST = "forest", "Forêt"
 
 
-class VocabularySet(Historisable):
+class VocabularySet(Historisable, Deactivable):
     class Meta:
         verbose_name = "set de vocabulaire"
         unique_together = ("category", "code")
+
+    objects = DeactivableQuerySet.as_manager()
 
     organisation = models.ForeignKey(
         Organisation, related_name="vocabularies", on_delete=models.SET_NULL, null=True, blank=True
@@ -25,7 +27,6 @@ class VocabularySet(Historisable):
     )
     code = models.CharField()
     name = models.CharField("nom")
-    is_active = models.BooleanField("actif", default=True)
 
     def __str__(self):
         return f"{self.name} ({self.code})"
