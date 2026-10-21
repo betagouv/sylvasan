@@ -15,17 +15,30 @@ import ProgressSpinner from "../components/ProgressSpinner.vue"
 import FooterDeleteButton from "../components/FooterDeleteButton.vue"
 import { useApiFetch } from "../utils/data-fetching"
 import type { VocabularyEntry } from "@shared-types/survey"
+import EntryActionButtons from "../components/VocabularySetDetailPage/EntryActionButtons.vue"
 
 const router = useRouter()
 const route = useRoute()
 
-const { data: vocabularySet, isFetching } = useApiFetch(
-  `/admin/vocabularies/${route.params.id}/`
-).json()
+const {
+  data: vocabularySet,
+  isFetching,
+  execute: refetchVocabularySet,
+} = useApiFetch(`/admin/vocabularies/${route.params.id}/`).json()
 
 const rows = computed(() =>
   (vocabularySet.value?.entries ?? []).map((entry: VocabularyEntry) => ({
-    rowData: [entry.code, entry.label, entry.position, ""],
+    rowData: [
+      entry.code,
+      entry.label,
+      entry.position,
+      {
+        component: EntryActionButtons,
+        entry: entry,
+        vocabularysetId: route.params.id,
+        onRefreshed: () => refetchVocabularySet(),
+      },
+    ],
   }))
 )
 
@@ -46,10 +59,10 @@ const headers = [
         { text: `Référentiel « ${vocabularySet?.code || ''} »` },
       ]"
     />
-    <div v-if="isFetching" class="flex justify-center my-20">
+    <div v-if="isFetching && !vocabularySet" class="flex justify-center my-20">
       <ProgressSpinner />
     </div>
-    <div v-else-if="vocabularySet" class="mb-4">
+    <div v-if="vocabularySet" class="mb-4">
       <h1 class="fr-h4">{{ vocabularySet.code }} - {{ vocabularySet.name }}</h1>
 
       <h2 class="fr-h5">Entrées</h2>
