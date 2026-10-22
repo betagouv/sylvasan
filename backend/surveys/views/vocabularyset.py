@@ -9,6 +9,7 @@ from organisations.models import Organisation
 from organisations.models.membership import MembershipType
 from organisations.serializers import OrganisationSerializer
 from rest_framework import filters
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import (
     CreateAPIView,
@@ -108,10 +109,23 @@ class VocabularySetListView(VocabularySetAdminMixin, ListCreateAPIView):
         OrderingFilter,
         filters.UnaccentedSearchFilter,
     ]
+    filterset_class = VocabularySetFilterSet
     search_fields = (
         "code",
         "name",
     )
+
+    def perform_create(self, serializer):
+        """
+        Vérifie que l'utilisateur est admin de l'organisation cible avant de créer.
+        """
+        org = serializer.validated_data["organisation"]
+        admin_org_ids = self.request.user.memberships.filter(membership_type=MembershipType.ADMIN).values_list(
+            "organisation_id", flat=True
+        )
+        if org.id not in admin_org_ids:
+            raise PermissionDenied()
+        serializer.save()
 
 
 class VocabularySetRetrieveView(VocabularySetAdminMixin, RetrieveDestroyAPIView):

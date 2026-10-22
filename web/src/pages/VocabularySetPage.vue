@@ -25,6 +25,7 @@ import type { VocabularySet } from "@shared-types/survey"
 import PaginationSizeSelect from "../components/PaginationSizeSelect.vue"
 import VocabularySetOrderingFilter from "../components/VocabularySetOrderingFilter.vue"
 import VocabularyModal from "../components/SurveyBuilder/VocabularyModal.vue"
+import VocabularySetCreationModal from "../components/VocabularySetPage/VocabularySetCreationModal.vue"
 
 const router = useRouter()
 const route = useRoute()
@@ -129,6 +130,8 @@ const clearSearchIfEmpty = () => {
 }
 
 watch(() => route.query, fetchResults)
+
+const addModalOpen = ref(false)
 </script>
 
 <template>
@@ -140,7 +143,15 @@ watch(() => route.query, fetchResults)
       ]"
     />
     <div>
-      <h1 class="fr-h4">Mes référentiels</h1>
+      <div class="flex mb-4">
+        <h1 class="fr-h4 grow mb-0!">Mes référentiels</h1>
+        <DsfrButton
+          label="Ajouter une référentiel"
+          size="md"
+          icon="ri-add-line"
+          @click="addModalOpen = true"
+        />
+      </div>
       <div class="filters border mb-2 rounded border-gray-300 p-4">
         <div class="mb-6 max-w-lg">
           <DsfrSearchBar
@@ -217,6 +228,11 @@ watch(() => route.query, fetchResults)
         </template>
       </div>
     </div>
+
+    <VocabularySetCreationModal
+      :opened="addModalOpen"
+      @close="addModalOpen = false"
+    />
   </div>
 </template>
 

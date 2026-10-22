@@ -560,3 +560,86 @@ class TestMobileVocabularySetList(APITestCase):
         entry_codes = [e["code"] for e in vocab_data["entries"]]
         self.assertIn(active.code, entry_codes)
         self.assertEqual(len(entry_codes), 1)
+
+
+class TestVocabularySetCreate(APITestCase):
+    def test_unauthenticated_cannot_create(self):
+        """
+        Un utilisateur non authentifié reçoit une 401
+        """
+        org = OrganisationFactory()
+        response = self.client.post(
+            reverse("vocabulary_set_list"),
+            {"code": "TST", "name": "Test", "organisation": org.id},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @authenticate
+    def test_responder_cannot_create(self):
+        """
+        Un utilisateur avec uniquement un rôle RESPONDER reçoit une 403
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        response = self.client.post(
+            reverse("vocabulary_set_list"),
+            {"code": "TST", "name": "Test", "organisation": org.id},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_admin_can_create_vocabulary_set(self):
+        """
+        Un admin peut créer un référentiel dans son organisation — 201
+        """
+        org = _org_with_admin(authenticate.user)
+        response = self.client.post(
+            reverse("vocabulary_set_list"),
+            {"code": "NEW", "name": "Nouveau référentiel", "organisation": org.id},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        data = response.json()
+        self.assertEqual(data["code"], "NEW")
+        self.assertEqual(data["name"], "Nouveau référentiel")
+        self.assertEqual(data["organisationName"], org.name)
+
+    @authenticate
+    def test_created_vocabulary_set_belongs_to_organisation(self):
+        """
+        Le référentiel créé est bien rattaché à l'organisation choisie
+        """
+        from surveys.models import VocabularySet
+
+        org = _org_with_admin(authenticate.user)
+        self.client.post(
+            reverse("vocabulary_set_list"),
+            {"code": "CHK", "name": "Vérification", "organisation": org.id},
+            format="json",
+        )
+        self.assertTrue(VocabularySet.objects.filter(code="CHK", organisation=org).exists())
+
+    @authenticate
+    def test_admin_cannot_create_in_other_org(self):
+        """
+        Un admin ne peut pas créer un référentiel dans une organisation qu'il n'administre pas — 403
+        """
+        _org_with_admin(authenticate.user)
+        other_org = OrganisationFactory()
+        response = self.client.post(
+            reverse("vocabulary_set_list"),
+            {"code": "TST", "name": "Test", "organisation": other_org.id},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_missing_required_fields_returns_400(self):
+        """
+        Les champs obligatoires manquants renvoient une 400
+        """
+        _org_with_admin(authenticate.user)
+        response = self.client.post(reverse("vocabulary_set_list"), {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
