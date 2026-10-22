@@ -83,6 +83,7 @@ const onSubmit = async () => {
   if (statusCode.value === 201) {
     toast.show("Le référentiel a été créé.", "success")
     emit("close")
+    rootStore.refreshVocabularies()
     router.push({
       name: "/VocabularySetDetailPage",
       params: { id: data.value.id },

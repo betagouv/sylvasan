@@ -17,9 +17,11 @@ import { useApiFetch } from "../utils/data-fetching"
 import type { VocabularyEntry } from "@shared-types/survey"
 import EntryActionButtons from "../components/VocabularySetDetailPage/EntryActionButtons.vue"
 import EntryModificationModal from "../components/VocabularySetDetailPage/EntryModificationModal.vue"
+import { useRootStore } from "../stores/root"
 
 const router = useRouter()
 const route = useRoute()
+const rootStore = useRootStore()
 
 const vocabularySetId = route.params.id as string
 
@@ -96,7 +98,7 @@ const newEntry: VocabularyEntry = { id: 0, code: "", label: "", position: null }
       modal-title="Supprimer le référentiel ?"
       :modal-body="`Cette action supprimera également toutes les ${vocabularySet?.entries?.length} entrées du référentiel « ${vocabularySet?.code} »`"
       success-message="Le référentiel a été supprimé."
-      @deleted="router.push({ name: '/VocabularySetPage' })"
+      @deleted="rootStore.refreshVocabularies(); router.push({ name: '/VocabularySetPage' })"
     />
   </div>
 </template>

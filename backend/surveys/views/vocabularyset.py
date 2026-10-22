@@ -1,7 +1,7 @@
 from itertools import chain
 from typing import ClassVar
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
 
 from django_filters import rest_framework as django_filters
@@ -37,14 +37,22 @@ def _active_entries_prefetch():
 
 
 def _accessible_vocab_queryset(user):
-    """VocabularySets visibles par l'utilisateur selon les catégories de ses organisations."""
+    """
+    VocabularySets visibles par l'utilisateur :
+    - soit le référentiel appartient directement à une organisation dont l'utilisateur est membre,
+    - soit la catégorie du référentiel est accessible à l'une de ses organisations.
+    """
     org_ids = user.memberships.values_list("organisation_id", flat=True)
     category_arrays = Organisation.objects.filter(id__in=org_ids).values_list("vocabulary_categories", flat=True)
-    accessible = set(chain.from_iterable(cats or [] for cats in category_arrays))
-    return VocabularySet.objects.filter(
-        category__in=accessible,
-        is_active=True,
-    ).order_by("code")
+    accessible_categories = set(chain.from_iterable(cats or [] for cats in category_arrays))
+    return (
+        VocabularySet.objects.filter(
+            Q(organisation_id__in=org_ids) | Q(category__in=accessible_categories),
+            is_active=True,
+        )
+        .distinct()
+        .order_by("code")
+    )
 
 
 class VocabularySetPagination(LimitOffsetPagination):

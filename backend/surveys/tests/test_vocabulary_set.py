@@ -398,6 +398,33 @@ class TestVocabularySetDetail(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @authenticate
+    def test_member_can_access_own_org_vocabulary_without_category(self):
+        """
+        Un membre peut accéder à un référentiel de son organisation même si sa catégorie est vide
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        vocab = VocabularySetFactory(organisation=org, category="")
+
+        response = self.client.get(reverse("vocabulary_set_detail", kwargs={"code": vocab.code}), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()["code"], vocab.code)
+
+    @authenticate
+    def test_member_cannot_access_other_org_vocabulary_without_category(self):
+        """
+        Un membre ne peut pas accéder à un référentiel d'une autre organisation sans catégorie — 404
+        """
+        org = OrganisationFactory()
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+        other_vocab = VocabularySetFactory(organisation=OrganisationFactory(), category="")
+
+        response = self.client.get(reverse("vocabulary_set_detail", kwargs={"code": other_vocab.code}), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
     def test_response_shape(self):
         """
         Le détail contient id, code, name et entries avec code, label, position

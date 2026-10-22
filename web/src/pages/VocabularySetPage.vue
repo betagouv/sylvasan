@@ -146,7 +146,7 @@ const addModalOpen = ref(false)
       <div class="flex mb-4">
         <h1 class="fr-h4 grow mb-0!">Mes référentiels</h1>
         <DsfrButton
-          label="Ajouter une référentiel"
+          label="Ajouter un référentiel"
           size="md"
           icon="ri-add-line"
           @click="addModalOpen = true"
