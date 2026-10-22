@@ -53,7 +53,10 @@ class VocabularySetPagination(LimitOffsetPagination):
 
     # TODO: extract this (identical to SurveyPagination in backend/surveys/views/survey.py) into
     # a different util.
-    organisations: ClassVar[list] = []
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.organisations: list = []
 
     def paginate_queryset(self, queryset, request, view=None):
         org_ids = queryset.values_list("organisation_id", flat=True).distinct().order_by()

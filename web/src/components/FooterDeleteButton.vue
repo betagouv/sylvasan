@@ -23,7 +23,7 @@ const {
   execute: executeDelete,
   isFetching: isDeleting,
   statusCode,
-} = useApiFetch(props.url, { immediate: false }).delete()
+} = useApiFetch(() => props.url, { immediate: false }).delete()
 
 const onConfirmDelete = async () => {
   await executeDelete()
