@@ -19,14 +19,27 @@ export const useRootStore = defineStore("root", () => {
     vocabularies.value = userData?.vocabularies ?? []
   }
 
+  const { data: meData, execute: executeFetchMe } = useApiFetch("/auth/me/", {
+    immediate: false,
+  }).json()
+
   const fetchLoggedUser = async () => {
-    const { data } = await useApiFetch("/auth/me/").json()
-    setLoggedUser(data.value)
+    await executeFetchMe()
+    setLoggedUser(meData.value)
+  }
+
+  // NOTE: Ce n'est pas optimal d'appeller /me juste pour rafraîchir les vocabulaires.
+  // À terme, un endpoint dédié pourrait être utilisé
+  const refreshVocabularies = async () => {
+    await executeFetchMe()
+    if (meData.value?.vocabularies) vocabularies.value = meData.value.vocabularies
   }
 
   const fetchVocabularyDetail = async (code: string) => {
     if (vocabularyDetails.value[code]) return
-    const { data, response } = await useApiFetch(`/vocabularies/${code}/`).json()
+    const { data, response } = await useApiFetch(
+      `/vocabularies/${code}/`
+    ).json()
     if (response.value?.ok) vocabularyDetails.value[code] = data.value
   }
 
@@ -42,6 +55,7 @@ export const useRootStore = defineStore("root", () => {
     vocabularies,
     vocabularyDetails,
     fetchVocabularyDetail,
+    refreshVocabularies,
     initialDataLoaded,
     fetchInitialData,
   }

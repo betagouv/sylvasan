@@ -1,13 +1,31 @@
 from itertools import chain
+from typing import ClassVar
 
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
+from django.shortcuts import get_object_or_404
 
+from django_filters import rest_framework as django_filters
 from organisations.models import Organisation
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from organisations.models.membership import MembershipType
+from organisations.serializers import OrganisationSerializer
+from rest_framework import filters
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.filters import OrderingFilter
+from rest_framework.generics import (
+    CreateAPIView,
+    ListAPIView,
+    ListCreateAPIView,
+    RetrieveAPIView,
+    RetrieveDestroyAPIView,
+    RetrieveUpdateDestroyAPIView,
+)
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response as DRFResponse
+from users.permissions import HasAdminRole
 
 from surveys.models import VocabularyEntry, VocabularySet
-from surveys.serializers import VocabularySetDisplaySerializer, VocabularySetSerializer
+from surveys.serializers import VocabularyEntrySerializer, VocabularySetSerializer
 from surveys.views.survey import _responder_survey_queryset
 
 
@@ -19,24 +37,163 @@ def _active_entries_prefetch():
 
 
 def _accessible_vocab_queryset(user):
-    """VocabularySets visibles par l'utilisateur selon les catégories de ses organisations."""
+    """
+    VocabularySets visibles par l'utilisateur :
+    - soit le référentiel appartient directement à une organisation dont l'utilisateur est membre,
+    - soit la catégorie du référentiel est accessible à l'une de ses organisations.
+    """
     org_ids = user.memberships.values_list("organisation_id", flat=True)
     category_arrays = Organisation.objects.filter(id__in=org_ids).values_list("vocabulary_categories", flat=True)
-    accessible = set(chain.from_iterable(cats or [] for cats in category_arrays))
-    return VocabularySet.objects.filter(
-        category__in=accessible,
-        is_active=True,
-    ).order_by("code")
+    accessible_categories = set(chain.from_iterable(cats or [] for cats in category_arrays))
+    return (
+        VocabularySet.objects.filter(
+            Q(organisation_id__in=org_ids) | Q(category__in=accessible_categories),
+            is_active=True,
+        )
+        .distinct()
+        .order_by("code")
+    )
 
 
-class VocabularySetListView(ListAPIView):
-    """Liste des référentiels accessibles — code et nom uniquement, sans les entrées."""
+class VocabularySetPagination(LimitOffsetPagination):
+    default_limit = 30
+    max_limit = 500
 
-    serializer_class = VocabularySetDisplaySerializer
-    permission_classes = (IsAuthenticated,)
+    # TODO: extract this (identical to SurveyPagination in backend/surveys/views/survey.py) into
+    # a different util.
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.organisations: list = []
+
+    def paginate_queryset(self, queryset, request, view=None):
+        org_ids = queryset.values_list("organisation_id", flat=True).distinct().order_by()
+        self.organisations = Organisation.objects.filter(id__in=org_ids)
+        return super().paginate_queryset(queryset, request, view)
+
+    def get_paginated_response(self, data):
+        return DRFResponse(
+            {
+                "count": self.count,
+                "next": self.get_next_link(),
+                "previous": self.get_previous_link(),
+                "results": data,
+                "organisations": OrganisationSerializer(self.organisations, many=True).data,
+            }
+        )
+
+
+class VocabularySetAdminMixin:
+    serializer_class = VocabularySetSerializer
+    permission_classes = (HasAdminRole,)
 
     def get_queryset(self):
-        return _accessible_vocab_queryset(self.request.user)
+        """
+        Cible les référentiels des organisations pour lequelles l'utilisateur a un
+        rôle admin.
+        """
+
+        admin_org_ids = self.request.user.memberships.filter(membership_type=MembershipType.ADMIN).values_list(
+            "organisation_id", flat=True
+        )
+        return (
+            VocabularySet.objects.filter(organisation_id__in=admin_org_ids, is_active=True)
+            .prefetch_related(_active_entries_prefetch())
+            .order_by("code")
+        )
+
+
+class VocabularySetFilterSet(django_filters.FilterSet):
+    organisation = django_filters.NumberFilter(field_name="organisation_id")
+
+    class Meta:
+        model = VocabularySet
+        fields: ClassVar[list] = []
+
+
+class VocabularySetListView(VocabularySetAdminMixin, ListCreateAPIView):
+    """Vue utilisée par les admins pour la gestion de référentiels"""
+
+    pagination_class = VocabularySetPagination
+    filter_backends: ClassVar[list] = [
+        django_filters.DjangoFilterBackend,
+        OrderingFilter,
+        filters.UnaccentedSearchFilter,
+    ]
+    filterset_class = VocabularySetFilterSet
+    search_fields = (
+        "code",
+        "name",
+    )
+
+    def perform_create(self, serializer):
+        """
+        Vérifie que l'utilisateur est admin de l'organisation cible avant de créer.
+        """
+        org = serializer.validated_data["organisation"]
+        admin_org_ids = self.request.user.memberships.filter(membership_type=MembershipType.ADMIN).values_list(
+            "organisation_id", flat=True
+        )
+        if org.id not in admin_org_ids:
+            raise PermissionDenied()
+        serializer.save()
+
+
+class VocabularySetRetrieveView(VocabularySetAdminMixin, RetrieveDestroyAPIView):
+    """Vue pour les admins : Détail d'un référentiel avec toutes ses entrées actives."""
+
+    def perform_destroy(self, obj):
+        obj.deactivate()
+
+
+class VocabularyEntryAdminView(RetrieveUpdateDestroyAPIView):
+    """Vue pour les admins : Permet de modifier ou supprimer une entrée."""
+
+    permission_classes = (HasAdminRole,)
+    serializer_class = VocabularyEntrySerializer
+
+    def get_queryset(self):
+        """
+        Limite l'accès aux entrées actives du référentiel indiqué dans l'URL,
+        à condition que ce référentiel appartienne à une organisation administrée par l'utilisateur.
+        """
+        admin_org_ids = self.request.user.memberships.filter(membership_type=MembershipType.ADMIN).values_list(
+            "organisation_id", flat=True
+        )
+        return VocabularyEntry.objects.filter(
+            vocabulary_set_id=self.kwargs["vocabularyset_pk"],
+            vocabulary_set__organisation_id__in=admin_org_ids,
+            vocabulary_set__is_active=True,
+            is_active=True,
+        )
+
+    def perform_destroy(self, instance):
+        instance.deactivate()
+
+
+class VocabularyEntryAdminCreateView(CreateAPIView):
+    """Vue pour les admins : Création d'une entrée dans un référentiel."""
+
+    permission_classes = (HasAdminRole,)
+    serializer_class = VocabularyEntrySerializer
+
+    def get_queryset(self):
+        admin_org_ids = self.request.user.memberships.filter(membership_type=MembershipType.ADMIN).values_list(
+            "organisation_id", flat=True
+        )
+        return VocabularySet.objects.filter(
+            id=self.kwargs["vocabularyset_pk"],
+            organisation_id__in=admin_org_ids,
+            is_active=True,
+        )
+
+    def perform_create(self, serializer):
+        """
+        Vérifie que le référentiel cible appartient à une organisation administrée
+        par l'utilisateur, puis crée l'entrée.
+        """
+        vocabulary_set = get_object_or_404(self.get_queryset(), pk=self.kwargs["vocabularyset_pk"])
+        serializer.save(vocabulary_set=vocabulary_set)
 
 
 class VocabularySetDetailView(RetrieveAPIView):

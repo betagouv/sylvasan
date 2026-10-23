@@ -121,6 +121,7 @@ export interface Survey {
 }
 
 export interface VocabularyEntry {
+  id?: number
   code: string
   label: string
   position: number | null
@@ -131,6 +132,7 @@ export interface VocabularySet {
   code: string
   name: string
   entries?: VocabularyEntry[]
+  organisationName?: string | null
 }
 
 export interface MapValue {

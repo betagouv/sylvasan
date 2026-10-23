@@ -143,6 +143,20 @@ declare module 'vue-router/auto-routes' {
       Record<never, never>,
       | never
     >,
+    '/VocabularySetPage': RouteRecordInfo<
+      '/VocabularySetPage',
+      '/referentiels',
+      Record<never, never>,
+      Record<never, never>,
+      | never
+    >,
+    '/VocabularySetDetailPage': RouteRecordInfo<
+      '/VocabularySetDetailPage',
+      '/referentiels/:id',
+      { id: ParamValue<true> },
+      { id: ParamValue<false> },
+      | never
+    >,
     '/ResponseListPage': RouteRecordInfo<
       '/ResponseListPage',
       '/reponses',
@@ -314,6 +328,22 @@ declare module 'vue-router/auto-routes' {
     'src/pages/NotFoundPage.vue': {
       routes:
         | '/NotFoundPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/VocabularySetPage.vue': {
+      routes:
+        | '/VocabularySetPage'
+      views:
+        | never
+      pathParamNames:
+        | never
+    }
+    'src/pages/VocabularySetDetailPage.vue': {
+      routes:
+        | '/VocabularySetDetailPage'
       views:
         | never
       pathParamNames:

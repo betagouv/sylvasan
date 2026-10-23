@@ -2,17 +2,28 @@
 import { ref } from "vue"
 import type { VocabularySet } from "@shared-types/survey"
 
-const props = defineProps<{
-  vocabulary: VocabularySet
-}>()
+const props = withDefaults(
+  defineProps<{
+    vocabulary: VocabularySet
+    showCount?: boolean
+    icon?: string
+  }>(),
+  {
+    showCount: false,
+    icon: "ri-information-line",
+  }
+)
 
 const opened = ref(false)
 </script>
 
 <template>
   <div>
+    <span v-if="showCount" class="font-medium fr-text--md mr-2!">{{
+      vocabulary.entries?.length
+    }}</span>
     <DsfrButton
-      icon="ri-information-line"
+      :icon="icon"
       icon-only
       tertiary
       size="sm"
