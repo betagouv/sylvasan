@@ -8,20 +8,19 @@ vi.mock("../../src/utils/data-fetching", () => {
   return {
     useApiFetch: (url: string) => {
       if (url === "/auth/me/") {
+        const data = { value: null as any }
         return {
-          json: async () => ({
-            data: {
-              value: {
-                firstName: "Lena",
-                lastName: "Cordier",
-              },
+          json: () => ({
+            data,
+            execute: async () => {
+              data.value = { firstName: "Lena", lastName: "Cordier" }
             },
           }),
         }
       }
 
       return {
-        json: async () => ({ data: { value: null } }),
+        json: () => ({ data: { value: null }, execute: async () => {} }),
       }
     },
   }
