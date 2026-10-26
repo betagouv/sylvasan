@@ -8,6 +8,7 @@ from organisations.models import Organisation, Pole
 from surveys.surveytype import SurveyType
 
 from .campaign import Campaign
+from .placettegroup import PlacetteGroup
 
 
 class Survey(TimeStampable, Deactivable, Historisable):
@@ -36,14 +37,20 @@ class Survey(TimeStampable, Deactivable, Historisable):
     survey_type = models.CharField(choices=SurveyType, default=SurveyType.SELF_CONTAINED)
 
     campaign = models.ForeignKey(Campaign, verbose_name="campagne", on_delete=models.SET_NULL, null=True, blank=True)
+    placette_group = models.ForeignKey(
+        PlacetteGroup,
+        verbose_name="groupe de placettes",
+        related_name="surveys",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return self.title
 
     def clean(self):
-        if self.campaign:
-            if self.organisation != self.campaign.organisation or self.pole != self.campaign.pole:
-                raise ValidationError("La campagne doit appartenir à la même organisation/pôle que l'enquête.")
-        if self.pole and self.organisation:
-            if self.pole.organisation != self.organisation:
-                raise ValidationError("Le pôle doit appartenir à l'organisation de l'enquête.")
+        if self.campaign and (self.organisation != self.campaign.organisation or self.pole != self.campaign.pole):
+            raise ValidationError("La campagne doit appartenir à la même organisation/pôle que l'enquête.")
+        if self.pole and self.organisation and self.pole.organisation != self.organisation:
+            raise ValidationError("Le pôle doit appartenir à l'organisation de l'enquête.")
