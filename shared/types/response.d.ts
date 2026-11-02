@@ -53,6 +53,31 @@ export interface GeoFollowUp {
   respondant: UserDisplay | null
 }
 
+export interface PlacetteObservation {
+  id: number
+  creationDate: string
+  surveyTitle: string | null
+  respondant: UserDisplay | null
+}
+
+// Correspond à PlacetteGeoSerializer
+export interface PlacetteGeo {
+  id: number
+  lat: number
+  lon: number
+  label: string
+  groupId: number
+  groupName: string
+  characteristics: Record<string, unknown>
+  responses: PlacetteObservation[]
+}
+
+// Correspond à CombinedGeoAPIView
+export interface CombinedGeo {
+  responses: ResponseGeo[]
+  placettes: PlacetteGeo[]
+}
+
 // Correspond à GeoResponseSerializer
 export interface ResponseGeo {
   id: number

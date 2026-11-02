@@ -117,6 +117,7 @@ export interface Survey {
   title: string
   jsonSchema: SurveySchema
   surveyType: string
+  placetteGroupId: number | null
   followUps: SurveyFollowUp[]
 }
 

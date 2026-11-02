@@ -3,7 +3,7 @@ import type { Ref, ShallowRef } from "vue"
 import * as maplibregl from "maplibre-gl"
 import { useApiFetch } from "../utils/data-fetching"
 import { useAuthStore } from "../stores/auth"
-import type { GeoFollowUp, ResponseGeo } from "@shared-types/response"
+import type { CombinedGeo, GeoFollowUp, PlacetteGeo, ResponseGeo } from "@shared-types/response"
 import type { PinData } from "./useMapPins"
 
 export interface GeoFilters {
@@ -46,12 +46,27 @@ const CLUSTER_RADIUS = 50
 const COLOR_OWN = "#000091" // --blue-france-sun-113
 const COLOR_OTHER = "#7ab1e8" // bleu clair pour les réponses des collègues
 
+export interface PlacetteData {
+  placetteId: number
+  lat: number
+  lon: number
+  label: string
+  groupId: number
+  groupName: string
+  characteristics: Record<string, unknown>
+  responses: import("@shared-types/response").PlacetteObservation[]
+}
+
 const SOURCE_ID = "geo-pins"
 const LAYER_CLUSTERS = "geo-pins-clusters"
 const LAYER_CLUSTER_COUNT = "geo-pins-cluster-count"
 const LAYER_UNCLUSTERED = "geo-pins-unclustered"
 const IMAGE_PIN_OWN = "pin-own"
 const IMAGE_PIN_OTHER = "pin-other"
+
+const SOURCE_PLACETTES = "geo-placettes"
+const LAYER_PLACETTES = "geo-placettes-circles"
+const COLOR_PLACETTE = "#18753C" // vert DSFR
 
 function makePinSvg(color: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="27" height="41" viewBox="0 0 27 41">
@@ -144,6 +159,7 @@ export function useGeoPins(
 ) {
   const authStore = useAuthStore()
   const selectedPin = ref<PinData | null>(null)
+  const selectedPlacette = ref<PlacetteData | null>(null)
   const showSearchHere = ref(false)
   const loading = ref(false)
 
@@ -161,6 +177,11 @@ export function useGeoPins(
       cluster: true,
       clusterMaxZoom: CLUSTER_MAX_ZOOM,
       clusterRadius: CLUSTER_RADIUS,
+    })
+
+    mapInstance.addSource(SOURCE_PLACETTES, {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
     })
 
     // Le cercle du clustering (celui avec le numéro à l'intérieur)
@@ -211,6 +232,19 @@ export function useGeoPins(
         "icon-ignore-placement": true,
       },
     })
+
+    // Cercles pour les placettes
+    mapInstance.addLayer({
+      id: LAYER_PLACETTES,
+      type: "circle",
+      source: SOURCE_PLACETTES,
+      paint: {
+        "circle-radius": 8,
+        "circle-color": COLOR_PLACETTE,
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#ffffff",
+      },
+    })
   }
 
   const setupLayers = async (mapInstance: maplibregl.Map) => {
@@ -240,15 +274,42 @@ export function useGeoPins(
         selectedPin.value?.responseId === pin.responseId ? null : pin
     })
 
+    // Click sur une placette
+    mapInstance.on("click", LAYER_PLACETTES, (e) => {
+      const feature = e.features?.[0]
+      if (!feature?.properties) return
+      const p = feature.properties as Record<string, unknown>
+      const placette: PlacetteData = {
+        placetteId: p.placetteId as number,
+        lat: p.lat as number,
+        lon: p.lon as number,
+        label: p.label as string,
+        groupId: p.groupId as number,
+        groupName: p.groupName as string,
+        characteristics: p.characteristics
+          ? JSON.parse(p.characteristics as string)
+          : {},
+        responses: p.responses
+          ? JSON.parse(p.responses as string)
+          : [],
+      }
+      selectedPlacette.value =
+        selectedPlacette.value?.placetteId === placette.placetteId ? null : placette
+      selectedPin.value = null
+    })
+
     // Click dans un endroit vide sur la carte
     mapInstance.on("click", (e) => {
       const hits = mapInstance.queryRenderedFeatures(e.point, {
-        layers: [LAYER_CLUSTERS, LAYER_UNCLUSTERED],
+        layers: [LAYER_CLUSTERS, LAYER_UNCLUSTERED, LAYER_PLACETTES],
       })
-      if (hits.length === 0) selectedPin.value = null
+      if (hits.length === 0) {
+        selectedPin.value = null
+        selectedPlacette.value = null
+      }
     })
 
-    for (const layer of [LAYER_CLUSTERS, LAYER_UNCLUSTERED]) {
+    for (const layer of [LAYER_CLUSTERS, LAYER_UNCLUSTERED, LAYER_PLACETTES]) {
       mapInstance.on("mouseenter", layer, () => {
         mapInstance.getCanvas().style.cursor = "pointer"
       })
@@ -267,6 +328,30 @@ export function useGeoPins(
     source.setData({
       type: "FeatureCollection",
       features: pins.map((pin) => pinToFeature(pin, currentUserId)),
+    })
+  }
+
+  const updatePlacettesSource = (mapInstance: maplibregl.Map, placettes: PlacetteGeo[]) => {
+    const source = mapInstance.getSource(SOURCE_PLACETTES) as
+      | maplibregl.GeoJSONSource
+      | undefined
+    if (!source) return
+    source.setData({
+      type: "FeatureCollection",
+      features: placettes.map((p) => ({
+        type: "Feature" as const,
+        geometry: { type: "Point" as const, coordinates: [p.lon, p.lat] as [number, number] },
+        properties: {
+          placetteId: p.id,
+          lat: p.lat,
+          lon: p.lon,
+          label: p.label,
+          groupId: p.groupId,
+          groupName: p.groupName,
+          characteristics: JSON.stringify(p.characteristics),
+          responses: JSON.stringify(p.responses),
+        },
+      })),
     })
   }
 
@@ -296,15 +381,16 @@ export function useGeoPins(
       ...filtersToParams(filters.value),
     })
     const { data, error } = await useApiFetch(
-      `/mobile/responses/geo/?${params}`
-    ).json<ResponseGeo[]>()
+      `/mobile/geo/?${params}`
+    ).json<CombinedGeo>()
 
     loading.value = false
     showSearchHere.value = false
 
     if (error.value || !data.value || !mapRef.value) return
 
-    updateSource(mapRef.value, data.value.map(toPin))
+    updateSource(mapRef.value, data.value.responses.map(toPin))
+    updatePlacettesSource(mapRef.value, data.value.placettes)
 
     if (pendingFetch) fetchPins()
   }
@@ -339,5 +425,5 @@ export function useGeoPins(
     }
   })
 
-  return { selectedPin, showSearchHere, loading, fetchPins, reattachLayers: setupSourceAndLayers }
+  return { selectedPin, selectedPlacette, showSearchHere, loading, fetchPins, reattachLayers: setupSourceAndLayers }
 }

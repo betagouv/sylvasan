@@ -29,6 +29,7 @@ import { useGeoPins, DEFAULT_GEO_FILTERS } from "../composables/useGeoPins"
 import type { GeoFilters } from "../composables/useGeoPins"
 import { useMapStyle, IGN_SATELLITE_STYLE } from "../composables/useMapStyle"
 import type { MapStyleKey } from "../composables/useMapStyle"
+import PlacettePinCard from "../components/PlacettePinCard.vue"
 import ResponsePinCard from "../components/ResponsePinCard.vue"
 import GeoFiltersPanel from "../components/GeoFiltersPanel.vue"
 import MapStyleToggle from "../components/MapStyleToggle.vue"
@@ -63,7 +64,7 @@ let appStateListener: PluginListenerHandle | null = null
 let isMounted = false
 let isPageActive = false
 
-const { selectedPin, showSearchHere, loading, fetchPins, reattachLayers } =
+const { selectedPin, selectedPlacette, showSearchHere, loading, fetchPins, reattachLayers } =
   useGeoPins(mapRef, activeFilters)
 
 const destroyMap = () => {
@@ -300,6 +301,14 @@ onBeforeUnmount(() => {
             v-if="selectedPin"
             :pin="selectedPin"
             @close="selectedPin = null"
+          />
+        </Transition>
+
+        <Transition name="slide-up">
+          <PlacettePinCard
+            v-if="selectedPlacette"
+            :placette="selectedPlacette"
+            @close="selectedPlacette = null"
           />
         </Transition>
 
