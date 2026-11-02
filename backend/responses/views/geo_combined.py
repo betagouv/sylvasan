@@ -9,6 +9,7 @@ from rest_framework.views import APIView
 from surveys.models import Placette
 
 from responses.models import Response
+from responses.models import Response as ResponseModel
 from responses.serializers.geo_combined import PlacetteGeoSerializer
 from responses.serializers.response_geo import GeoResponseSerializer
 from responses.utils import parse_date, parse_ids, validate_bbox
@@ -113,6 +114,8 @@ class CombinedGeoAPIView(APIView):
                     group__pole__isnull=True,
                 )
 
+        obs_qs = ResponseModel.objects.active().select_related("survey", "respondant").order_by("-creation_date")
+
         qs = (
             Placette.objects.active()
             .filter(query)
@@ -125,6 +128,7 @@ class CombinedGeoAPIView(APIView):
                 lon__lte=east,
             )
             .select_related("group")
+            .prefetch_related(Prefetch("responses", queryset=obs_qs))
         )
 
         placette_groups_param = params.get("placette_groups", "").strip()

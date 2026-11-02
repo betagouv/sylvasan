@@ -65,7 +65,7 @@ class Response(TimeStampable, Historisable, Deactivable):
 
     placette = models.ForeignKey(
         Placette,
-        related_name="observations",
+        related_name="responses",
         verbose_name="placette",
         on_delete=models.SET_NULL,
         null=True,
