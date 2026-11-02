@@ -11,6 +11,7 @@ import MapsPage from "../pages/MapsPage/index.vue"
 import SettingsPage from "../pages/SettingsPage.vue"
 import MapDownloadPage from "../pages/MapDownloadPage.vue"
 import MapPreviewPage from "../pages/MapPreviewPage.vue"
+import PlacetteInfoPage from "../pages/PlacetteInfoPage.vue"
 import ResponseSummaryPage from "../pages/ResponseSummaryPage.vue"
 
 const routes: Array<RouteRecordRaw> = [
@@ -73,6 +74,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/observations/:responseId",
     name: "ResponseSummaryPage",
     component: ResponseSummaryPage,
+  },
+  {
+    path: "/placettes/:placetteId",
+    name: "PlacetteInfoPage",
+    component: PlacetteInfoPage,
   },
 ]
 

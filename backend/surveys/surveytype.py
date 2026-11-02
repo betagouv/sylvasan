@@ -6,3 +6,4 @@ from django.db import models
 # organisation_specific
 class SurveyType(models.TextChoices):
     SELF_CONTAINED = "self-contained", "Enquête générale"
+    PLACETTE = "placette", "Enquête placette"

@@ -63,5 +63,6 @@ class FullSurveySerializer(serializers.ModelSerializer):
             "survey_type",
             "campaign",
             "created_by",  # TODO : ça devrait être peuplé automatiquement
+            "placette_group_id",
         )
         read_only_fields = ("id",)

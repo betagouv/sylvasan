@@ -11,6 +11,7 @@ urlpatterns = [
     path("api/responses/images/<int:org_id>/", views.ResponseImagesListView.as_view(), name="response_images_list"),
     path("api/mobile/responses/", views.ResponseFullListAPIView.as_view(), name="response_responder_retrieve"),
     path("api/mobile/responses/geo/", views.ResponseGeoListAPIView.as_view(), name="response_geo_list"),
+    path("api/mobile/geo/", views.CombinedGeoAPIView.as_view(), name="combined_geo"),
     path("api/responses/<int:pk>", views.ResponseRetrieveDestroyAPIView.as_view(), name="response_retrieve_destroy"),
 ]
 

@@ -7,6 +7,7 @@ from django.db import models
 
 from common.behaviours import Deactivable, DeactivableQuerySet, Historisable, TimeStampable
 from surveys.models import Survey, SurveyFollowUp
+from surveys.models.placette import Placette
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,15 @@ class Response(TimeStampable, Historisable, Deactivable):
     # Pour des informations supplémentaires nécessaires dans des enquêtes plus complexes. Par
     # example, on pourrait avoir ici les arbres assignés à une personne
     context = models.JSONField(null=True, blank=True)
+
+    placette = models.ForeignKey(
+        Placette,
+        related_name="responses",
+        verbose_name="placette",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
     geolocation_point = PointField(null=True, blank=True, verbose_name="Localisation")
 
