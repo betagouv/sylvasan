@@ -49,6 +49,8 @@ class ResponseSerializer(serializers.ModelSerializer):
             "id",
             "client_id",
             "survey",
+            "placette",
+            "placette_survey",
             "respondant",
             "data",
             "context",
@@ -56,9 +58,19 @@ class ResponseSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "status", "respondant")
 
+    def validate(self, data):
+        placette = data.get("placette")
+        placette_survey = data.get("placette_survey")
+        if placette_survey and not placette:
+            raise serializers.ValidationError({"placette": "La placette est obligatoire pour une session placette."})
+        if placette and placette_survey and not placette.surveys.filter(id=placette_survey.id).exists():
+            raise serializers.ValidationError({"placette": "La placette doit appartenir au protocole de la session."})
+        return data
+
     def create(self, validated_data):
         data = validated_data.get("data", {})
-        schema = validated_data["survey"].json_schema or {}
+        survey = validated_data.get("survey")
+        schema = (survey.json_schema if survey else None) or {}
 
         with transaction.atomic():
             response = Response.objects.create(**validated_data)

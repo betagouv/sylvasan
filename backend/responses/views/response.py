@@ -26,6 +26,7 @@ from surveys.serializers import SurveyDisplaySerializer
 from responses.models import Response, ResponseImage
 from responses.permissions import (
     CanCreateFollowUpResponse,
+    CanCreatePlacetteResponse,
     CanCreateResponse,
     CanDeleteResponse,
     IsOrganisationAdminOrHasApiKey,
@@ -125,8 +126,10 @@ class ResponseQuerySetMixin:
                     )
                 )
             else:
-                query |= Q(survey__organisation_id=membership.organisation_id) | Q(
-                    survey_follow_up__organisation_id=membership.organisation_id
+                query |= (
+                    Q(survey__organisation_id=membership.organisation_id)
+                    | Q(survey_follow_up__organisation_id=membership.organisation_id)
+                    | Q(placette_survey__organisation_id=membership.organisation_id)
                 )
 
         return (
@@ -160,6 +163,8 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
         if self.request.method == "POST":
             if self.request.data.get("survey_follow_up"):
                 return [IsAuthenticated(), CanCreateFollowUpResponse()]
+            if self.request.data.get("placette_survey"):
+                return [IsAuthenticated(), CanCreatePlacetteResponse()]
             return [IsAuthenticated(), CanCreateResponse()]
         return [IsAuthenticated()]
 

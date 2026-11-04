@@ -1,17 +1,15 @@
-import datetime
-import math
 from typing import ClassVar
 
 from django.contrib.gis.geos import Polygon
 from django.db.models import Prefetch, Q
 
 from organisations.models import Membership
-from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 
 from responses.models import Response
 from responses.serializers.response_geo import GeoResponseSerializer
+from responses.utils import parse_date, parse_ids, validate_bbox
 
 GEO_RESPONSE_LIMIT = 200
 
@@ -46,21 +44,7 @@ class ResponseGeoListAPIView(ListAPIView):
         user = self.request.user
         params = self.request.query_params
 
-        try:
-            south = float(params["south"])
-            west = float(params["west"])
-            north = float(params["north"])
-            east = float(params["east"])
-        except (KeyError, ValueError):
-            raise ValidationError(
-                "Les paramètres south, west, north et east sont obligatoires et doivent être des nombres."
-            )
-
-        if not all(math.isfinite(v) for v in (south, west, north, east)):
-            raise ValidationError("Les paramètres south, west, north et east doivent être des nombres finis.")
-
-        if south >= north:
-            raise ValidationError("south doit être strictement inférieur à north.")
+        south, west, north, east = validate_bbox(params)
 
         bbox = Polygon.from_bbox((west, south, east, north))
         bbox.srid = 4326
@@ -99,30 +83,16 @@ class ResponseGeoListAPIView(ListAPIView):
         # Filtre par identifiants d'enquêtes
         surveys_param = params.get("surveys", "").strip()
         if surveys_param:
-            try:
-                survey_ids = [int(s.strip()) for s in surveys_param.split(",") if s.strip()]
-            except ValueError:
-                raise ValidationError(
-                    "Le paramètre surveys doit contenir des identifiants numériques séparés par des virgules."
-                )
-            qs = qs.filter(survey_id__in=survey_ids)
+            qs = qs.filter(survey_id__in=parse_ids(surveys_param, "surveys"))
 
         # Filtre par date de création (after / before, dates incluses)
         after_param = params.get("after", "").strip()
         if after_param:
-            try:
-                after_date = datetime.date.fromisoformat(after_param)
-            except ValueError:
-                raise ValidationError("Le paramètre after doit être une date au format YYYY-MM-DD.")
-            qs = qs.filter(creation_date__date__gte=after_date)
+            qs = qs.filter(creation_date__date__gte=parse_date(after_param, "after"))
 
         before_param = params.get("before", "").strip()
         if before_param:
-            try:
-                before_date = datetime.date.fromisoformat(before_param)
-            except ValueError:
-                raise ValidationError("Le paramètre before doit être une date au format YYYY-MM-DD.")
-            qs = qs.filter(creation_date__date__lte=before_date)
+            qs = qs.filter(creation_date__date__lte=parse_date(before_param, "before"))
 
         # Filtre « mes observations uniquement »
         if params.get("only_mine", "").lower() == "true":

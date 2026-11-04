@@ -41,9 +41,7 @@ class Survey(TimeStampable, Deactivable, Historisable):
         return self.title
 
     def clean(self):
-        if self.campaign:
-            if self.organisation != self.campaign.organisation or self.pole != self.campaign.pole:
-                raise ValidationError("La campagne doit appartenir à la même organisation/pôle que l'enquête.")
-        if self.pole and self.organisation:
-            if self.pole.organisation != self.organisation:
-                raise ValidationError("Le pôle doit appartenir à l'organisation de l'enquête.")
+        if self.campaign and (self.organisation != self.campaign.organisation or self.pole != self.campaign.pole):
+            raise ValidationError("La campagne doit appartenir à la même organisation/pôle que l'enquête.")
+        if self.pole and self.organisation and self.pole.organisation != self.organisation:
+            raise ValidationError("Le pôle doit appartenir à l'organisation de l'enquête.")
