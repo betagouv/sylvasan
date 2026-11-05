@@ -127,8 +127,12 @@ class ResponseQuerySetMixin:
                         )
                         & respondant_in_pole
                     )
-                    | Q(
-                        placette_survey__organisation_id=membership.organisation_id, placette_survey__pole__isnull=True
+                    | (
+                        Q(
+                            placette_survey__organisation_id=membership.organisation_id,
+                            placette_survey__pole__isnull=True,
+                        )
+                        & respondant_in_pole
                     )
                 )
             else:
