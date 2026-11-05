@@ -256,6 +256,23 @@ class TestCombinedGeoPlacettes(APITestCase):
         self.assertEqual(response.data["placettes"][0]["id"], p_a.id)
 
     @authenticate
+    def test_filtre_placette_surveys_protocole_autre_org_invisible(self):
+        """Un protocole d'une autre organisation ne peut pas être utilisé pour découvrir
+        des placettes via le filtre placette_surveys=, même si la placette appartient aussi
+        à un protocole accessible (fuite via JOIN M2M indépendant)."""
+        org = OrganisationFactory()
+        autre_org = OrganisationFactory()
+        survey_own = PlacetteSurveyFactory(organisation=org, is_published=True)
+        survey_other = PlacetteSurveyFactory(organisation=autre_org, is_published=True)
+        # La placette appartient aux deux protocoles
+        PlacetteFactory(surveys=[survey_own, survey_other], lat=48.85, lon=2.35)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(GEO_URL, {**BBOX_PARIS, "placette_surveys": str(survey_other.id)})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["placettes"], [])
+
+    @authenticate
     def test_filtre_placette_surveys_non_numerique_retourne_400(self):
         """placette_surveys=abc retourne une 400."""
         MembershipFactory(user=authenticate.user, organisation=OrganisationFactory())

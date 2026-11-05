@@ -138,6 +138,23 @@ class CombinedGeoAPIView(APIView):
 
         placette_surveys_param = params.get("placette_surveys", "").strip()
         if placette_surveys_param:
-            qs = qs.filter(surveys__id__in=parse_ids(placette_surveys_param, "placette_surveys"))
+            ids = set(parse_ids(placette_surveys_param, "placette_surveys"))
+            # On ne garde que les IDs accessibles à l'utilisateur pour éviter qu'un JOIN M2M
+            # indépendant permette de découvrir qu'une placette appartient à un protocole
+            # d'une autre organisation (fuite d'information inter-org).
+            accessible_q = Q()
+            for m in memberships:
+                if m.pole_id is None:
+                    accessible_q |= Q(organisation_id=m.organisation_id)
+                else:
+                    accessible_q |= Q(pole_id=m.pole_id) | Q(organisation_id=m.organisation_id, pole__isnull=True)
+            accessible_ids = set(
+                PlacetteSurvey.objects.filter(accessible_q, is_active=True, is_published=True, id__in=ids).values_list(
+                    "id", flat=True
+                )
+            )
+            if not accessible_ids:
+                return Placette.objects.none()
+            qs = qs.filter(surveys__id__in=accessible_ids)
 
         return qs[:GEO_PLACETTE_LIMIT]

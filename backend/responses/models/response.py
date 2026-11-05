@@ -138,7 +138,8 @@ class Response(TimeStampable, Historisable, Deactivable):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.survey or self.survey_follow_up} – {self.get_status_display()}"
+        source = self.survey or self.survey_follow_up or self.placette_survey
+        return f"{source} – {self.get_status_display()}"
 
     def clean(self):
         has_survey = bool(self.survey_id)

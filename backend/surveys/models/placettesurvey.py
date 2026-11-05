@@ -4,13 +4,19 @@ from common.behaviours import Deactivable, DeactivableQuerySet, TimeStampable
 from organisations.models import Organisation, Pole
 
 
-def _level_to_fields(level, children_by_parent):
+def _level_to_fields(level, children_by_parent, visited=None):
+    if visited is None:
+        visited = set()
+    # Cycle détecté dans la hiérarchie PlacetteLevel : on arrête la récursion.
+    if level.id in visited:
+        return []
+    visited = visited | {level.id}
     fields = []
     if level.json_schema:
         fields.extend(level.json_schema.get("fields", []))
     for child in children_by_parent.get(level.id, []):
         child_fields = [{"id": "node_id", "type": "string", "label": "ID"}]
-        child_fields.extend(_level_to_fields(child, children_by_parent))
+        child_fields.extend(_level_to_fields(child, children_by_parent, visited))
         fields.append(
             {
                 "id": child.key or str(child.id),

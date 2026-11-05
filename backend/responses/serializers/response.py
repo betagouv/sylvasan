@@ -59,6 +59,12 @@ class ResponseSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "status", "respondant")
 
     def validate(self, data):
+        if data.get("survey") and data.get("placette_survey"):
+            raise serializers.ValidationError(
+                {
+                    "placette_survey": "Une réponse ne peut pas appartenir à la fois à une enquête et à un protocole placette."
+                }
+            )
         placette = data.get("placette")
         placette_survey = data.get("placette_survey")
         if placette_survey and not placette:
