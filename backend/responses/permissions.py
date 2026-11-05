@@ -88,7 +88,7 @@ class CanCreatePlacetteResponse(permissions.BasePermission):
     def has_permission(self, request, view):
         survey_id = request.data.get("placette_survey")
         try:
-            survey = PlacetteSurvey.objects.get(pk=survey_id)
+            survey = PlacetteSurvey.objects.active().filter(is_published=True).get(pk=survey_id)
         except (PlacetteSurvey.DoesNotExist, ValueError, TypeError):
             return False
         return _has_responder_permission(request, survey.organisation, survey.pole)

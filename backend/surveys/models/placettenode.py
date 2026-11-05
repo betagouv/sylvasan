@@ -28,6 +28,12 @@ class PlacetteNode(TimeStampable, Deactivable):
     lon = models.FloatField("longitude", null=True, blank=True)
 
     def clean(self):
+        if (
+            self.level_id
+            and self.placette_id
+            and not self.placette.surveys.filter(pk=self.level.placette_survey_id).exists()
+        ):
+            raise ValidationError("Le niveau de ce nœud appartient à un protocole non assigné à cette placette.")
         if self.parent_id:
             if self.level.parent_level_id is None:
                 raise ValidationError("Un nœud de niveau racine ne peut pas avoir de nœud parent.")

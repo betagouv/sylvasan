@@ -6,7 +6,7 @@ from organisations.models import Membership
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response as DRFResponse
 from rest_framework.views import APIView
-from surveys.models import Placette
+from surveys.models import Placette, PlacetteSurvey
 
 from responses.models import Response
 from responses.serializers.geo_combined import PlacetteGeoSerializer
@@ -103,28 +103,36 @@ class CombinedGeoAPIView(APIView):
         if not memberships:
             return Placette.objects.none()
 
+        # Toutes les conditions d'accès ET de publication dans un seul Q par membership,
+        # afin d'éviter des JOINs indépendants sur la table M2M qui pourraient satisfaire
+        # des conditions via des protocoles différents (faux positifs).
         query = Q()
         for m in memberships:
+            base = {"surveys__is_active": True, "surveys__is_published": True}
             if m.pole_id is None:
-                query |= Q(surveys__organisation_id=m.organisation_id)
+                query |= Q(surveys__organisation_id=m.organisation_id, **base)
             else:
-                query |= Q(surveys__pole_id=m.pole_id) | Q(
+                query |= Q(surveys__pole_id=m.pole_id, **base) | Q(
                     surveys__organisation_id=m.organisation_id,
                     surveys__pole__isnull=True,
+                    **base,
                 )
+
+        org_ids = {m.organisation_id for m in memberships}
+        surveys_prefetch = Prefetch(
+            "surveys",
+            queryset=PlacetteSurvey.objects.filter(
+                organisation_id__in=org_ids,
+                is_active=True,
+                is_published=True,
+            ),
+        )
 
         qs = (
             Placette.objects.active()
             .filter(query)
-            .filter(
-                surveys__is_active=True,
-                surveys__is_published=True,
-                lat__gte=south,
-                lat__lte=north,
-                lon__gte=west,
-                lon__lte=east,
-            )
-            .prefetch_related("surveys")
+            .filter(lat__gte=south, lat__lte=north, lon__gte=west, lon__lte=east)
+            .prefetch_related(surveys_prefetch)
             .distinct()
         )
 

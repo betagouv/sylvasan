@@ -8,7 +8,7 @@ from surveys.models import Placette, PlacetteLevel, PlacetteNode, PlacetteSurvey
 class PlacetteLevelInline(admin.TabularInline):
     model = PlacetteLevel
     extra = 0
-    fields = ("name", "parent_level", "order", "has_coordinates", "min_instances", "max_instances", "is_active")
+    fields = ("name", "parent_level", "order", "min_instances", "max_instances", "is_active")
     show_change_link = True
 
 
@@ -21,15 +21,23 @@ class PlacetteNodeInline(admin.TabularInline):
 
 @admin.register(PlacetteLevel)
 class PlacetteLevelAdmin(admin.ModelAdmin):
-    list_display = ("name", "placette_survey", "parent_level", "order", "has_coordinates", "activity_icon")
-    list_filter = ("is_active", "placette_survey", "has_coordinates")
+    list_display = (
+        "name",
+        "placette_survey",
+        "parent_level",
+        "order",
+        "activity_icon",
+    )
+    list_filter = (
+        "is_active",
+        "placette_survey",
+    )
     search_fields = ("name",)
     fields = (
         "placette_survey",
         "parent_level",
         "name",
         "order",
-        "has_coordinates",
         "min_instances",
         "max_instances",
         "json_schema",

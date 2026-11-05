@@ -75,3 +75,16 @@ class TestPlacetteNodeClean(TestCase):
         node = PlacetteNode(placette=self.placette, level=self.grandchild_level, parent=root_node)
         with self.assertRaises(ValidationError):
             node.clean()
+
+    def test_noeud_niveau_protocole_non_assigne_leve_erreur(self):
+        """Un nœud dont le niveau appartient à un protocole non assigné à la placette est invalide."""
+        placette_sans_autre_protocole = PlacetteFactory(surveys=[self.survey])
+        node = PlacetteNode(placette=placette_sans_autre_protocole, level=self.other_root_level, parent=None)
+        with self.assertRaises(ValidationError):
+            node.clean()
+
+    def test_noeud_niveau_protocole_assigne_valide(self):
+        """Un nœud dont le niveau appartient à un protocole assigné à la placette est valide."""
+        placette_multi = PlacetteFactory(surveys=[self.survey, self.other_survey])
+        node = PlacetteNode(placette=placette_multi, level=self.other_root_level, parent=None)
+        node.clean()

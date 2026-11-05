@@ -4,13 +4,13 @@ from common.behaviours import Deactivable, DeactivableQuerySet, TimeStampable
 from organisations.models import Organisation, Pole
 
 
-def _level_to_fields(level):
+def _level_to_fields(level, children_by_parent):
     fields = []
     if level.json_schema:
         fields.extend(level.json_schema.get("fields", []))
-    for child in level.children.filter(is_active=True).order_by("order"):
+    for child in children_by_parent.get(level.id, []):
         child_fields = [{"id": "node_id", "type": "string", "label": "ID"}]
-        child_fields.extend(_level_to_fields(child))
+        child_fields.extend(_level_to_fields(child, children_by_parent))
         fields.append(
             {
                 "id": child.key or str(child.id),
@@ -57,12 +57,17 @@ class PlacetteSurvey(TimeStampable, Deactivable):
     @property
     def response_data_schema(self):
         """Génère un SurveySchema compatible à partir de la hiérarchie de niveaux,
-        utilisé pour l'affichage en lecture seule des sessions placettes."""
+        utilisé pour l'affichage en lecture seule des sessions placettes.
+        Charge tous les niveaux en une seule requête pour éviter les N+1."""
+        children_by_parent: dict = {}
+        for level in self.levels.filter(is_active=True).order_by("order"):
+            children_by_parent.setdefault(level.parent_level_id, []).append(level)
+
         all_fields = []
         if self.json_schema:
             all_fields.extend(self.json_schema.get("fields", []))
-        for root_level in self.levels.filter(parent_level=None, is_active=True).order_by("order"):
-            all_fields.extend(_level_to_fields(root_level))
+        for root_level in children_by_parent.get(None, []):
+            all_fields.extend(_level_to_fields(root_level, children_by_parent))
         return {"version": "1.0", "fields": all_fields}
 
     def __str__(self):

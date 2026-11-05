@@ -34,7 +34,6 @@ class PlacetteLevel(TimeStampable, Deactivable):
     # à la place de l'identifiant entier, qui change d'un environnement à l'autre.
     key = models.SlugField("clé", max_length=50, null=True, blank=True)
     json_schema = models.JSONField("schéma JSON", null=True, blank=True)
-    has_coordinates = models.BooleanField("a des coordonnées", default=False)
     min_instances = models.PositiveIntegerField("nombre min d'instances", null=True, blank=True)
     max_instances = models.PositiveIntegerField("nombre max d'instances", null=True, blank=True)
     order = models.PositiveIntegerField("ordre", default=0)

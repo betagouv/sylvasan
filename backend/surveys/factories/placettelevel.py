@@ -12,7 +12,6 @@ class PlacetteLevelFactory(factory.django.DjangoModelFactory):
     parent_level = None
     name = factory.Faker("word")
     json_schema = None
-    has_coordinates = False
     min_instances = None
     max_instances = None
     order = factory.Sequence(lambda n: n)

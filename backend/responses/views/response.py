@@ -113,6 +113,7 @@ class ResponseQuerySetMixin:
                 query |= (
                     Q(survey__pole_id=membership.pole_id)
                     | Q(survey_follow_up__pole_id=membership.pole_id)
+                    | Q(placette_survey__pole_id=membership.pole_id)
                     | (
                         Q(survey__organisation_id=membership.organisation_id, survey__pole__isnull=True)
                         & respondant_in_pole
@@ -123,6 +124,9 @@ class ResponseQuerySetMixin:
                             survey_follow_up__pole__isnull=True,
                         )
                         & respondant_in_pole
+                    )
+                    | Q(
+                        placette_survey__organisation_id=membership.organisation_id, placette_survey__pole__isnull=True
                     )
                 )
             else:
