@@ -34,7 +34,9 @@ class PlacetteNode(TimeStampable, Deactivable):
             and not self.placette.surveys.filter(pk=self.level.placette_survey_id).exists()
         ):
             raise ValidationError("Le niveau de ce nœud appartient à un protocole non assigné à cette placette.")
-        if self.parent_id:
+        if self.parent_id and self.level_id:
+            if self.placette_id and self.parent.placette_id != self.placette_id:
+                raise ValidationError("Le nœud parent doit appartenir à la même placette.")
             if self.level.parent_level_id is None:
                 raise ValidationError("Un nœud de niveau racine ne peut pas avoir de nœud parent.")
             if self.level.parent_level_id != self.parent.level_id:
