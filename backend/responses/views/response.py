@@ -88,6 +88,8 @@ class ResponseFilterSet(django_filters.FilterSet):
         # Quand le paramètre est absent, on exclut les suivis par défaut
         if "include_follow_ups" not in self.data:
             queryset = queryset.filter(survey_follow_up__isnull=True)
+        # À retirer une fois que l'interface web saura afficher les sessions placettes.
+        queryset = queryset.filter(placette_survey__isnull=True)
         return super().filter_queryset(queryset)
 
 
@@ -244,6 +246,8 @@ class ResponseFullListAPIView(ListAPIView):
         return (
             Response.objects.active()
             .filter(respondant=user)
+            # À retirer une fois que l'application mobile saura synchroniser les sessions placettes.
+            .filter(placette_survey__isnull=True)
             .select_related("survey", "survey__organisation", "survey__pole", "survey_follow_up")
             .prefetch_related("images")
         )
