@@ -20,6 +20,7 @@ class SurveyDisplaySerializer(serializers.ModelSerializer):
             "title",
             "campaign_title",
             "creation_date",
+            "is_published",
         )
         read_only_fields = fields
 
@@ -32,6 +33,7 @@ class SurveySerializer(serializers.ModelSerializer):
             "organisation",
             "pole",
             "title",
+            "is_published",
             "json_schema",
             "survey_type",
             "campaign",
@@ -59,6 +61,7 @@ class FullSurveySerializer(serializers.ModelSerializer):
             "follow_ups",
             "pole",
             "title",
+            "is_published",
             "json_schema",
             "survey_type",
             "campaign",

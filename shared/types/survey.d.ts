@@ -118,6 +118,7 @@ export interface Survey {
   jsonSchema: SurveySchema
   surveyType: string
   followUps: SurveyFollowUp[]
+  isPublished?: boolean
 }
 
 export interface VocabularyEntry {

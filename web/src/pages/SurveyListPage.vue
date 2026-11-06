@@ -34,11 +34,11 @@ const page = computed(() => parseInt(route.query.page as string))
 const offset = computed(() => (page.value - 1) * limit.value)
 const createdAfter = computed(() => (route.query.created_after as string) ?? "")
 const createdBefore = computed(
-  () => (route.query.created_before as string) ?? ""
+  () => (route.query.created_before as string) ?? "",
 )
 const ordering = computed(() => route.query.triage as string)
 const organisationFilter = computed(
-  () => (route.query.organisation as string) ?? ""
+  () => (route.query.organisation as string) ?? "",
 )
 
 const filterParams = computed(() => {
@@ -74,7 +74,7 @@ const fetchSearchResults = async () => {
 }
 
 const totalPages = computed(() =>
-  data.value ? Math.ceil(data.value.count / limit.value) : 0
+  data.value ? Math.ceil(data.value.count / limit.value) : 0,
 )
 
 const pages = computed(() =>
@@ -82,7 +82,7 @@ const pages = computed(() =>
     label: String(i + 1),
     title: `Page ${i + 1}`,
     href: `${route.path}?page=${i + 1}`,
-  }))
+  })),
 )
 
 const rows = computed(() =>
@@ -101,8 +101,15 @@ const rows = computed(() =>
         day: "numeric",
         month: "long",
       }),
+
+      survey.isPublished === false
+        ? {
+            component: "v-icon",
+            icon: "ri-eye-off-line",
+          }
+        : "",
     ],
-  }))
+  })),
 )
 
 const headers = [
@@ -111,6 +118,7 @@ const headers = [
   { text: "Organisation", headerAttrs: { id: "th-organisation" } },
   { text: "Pole", headerAttrs: { id: "th-pole" } },
   { text: "Date de création", headerAttrs: { id: "th-creation-date" } },
+  "",
 ]
 
 const updateQuery = (newQuery: Record<string, string | number>) =>
@@ -128,12 +136,13 @@ const updateOrganisation = (value: string) =>
   updateQuery({ organisation: value, page: 1 })
 
 const hasActiveFilters = computed(
-  () => !!createdAfter.value || !!createdBefore.value || !!organisationFilter.value
+  () =>
+    !!createdAfter.value || !!createdBefore.value || !!organisationFilter.value,
 )
 
 watch(
   [page, limit, createdAfter, createdBefore, ordering, organisationFilter],
-  fetchSearchResults
+  fetchSearchResults,
 )
 </script>
 

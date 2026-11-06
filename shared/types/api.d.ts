@@ -44,6 +44,7 @@ type SurveyDisplay = {
   poleName: string | null
   campaignTitle: string | null
   creationDate: string
+  isPublished?: boolean
 }
 
 type UserDisplay = {

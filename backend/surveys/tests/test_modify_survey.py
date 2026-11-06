@@ -285,3 +285,74 @@ class TestModifySurveyBehavior(APITestCase):
         )
         self.survey.refresh_from_db()
         self.assertEqual(self.survey.created_by, original_creator)
+
+    @authenticate
+    def test_admin_peut_depublier_une_enquete(self):
+        """
+        Un ADMIN de l'organisation peut dépublier une enquête via PATCH is_published=False.
+        """
+        self._make_admin(authenticate.user)
+        response = self.client.patch(
+            reverse("survey_retrieve_update_destroy", kwargs={"pk": self.survey.pk}),
+            data={"is_published": False},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.survey.refresh_from_db()
+        self.assertFalse(self.survey.is_published)
+
+    @authenticate
+    def test_admin_peut_republier_une_enquete(self):
+        """
+        Un ADMIN de l'organisation peut republier une enquête dépubliée via PATCH is_published=True.
+        """
+        self._make_admin(authenticate.user)
+        self.survey.is_published = False
+        self.survey.save()
+        response = self.client.patch(
+            reverse("survey_retrieve_update_destroy", kwargs={"pk": self.survey.pk}),
+            data={"is_published": True},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.survey.refresh_from_db()
+        self.assertTrue(self.survey.is_published)
+
+    @authenticate
+    def test_responder_ne_peut_pas_modifier_is_published(self):
+        """
+        Un RESPONDER reçoit un 403 en tentant de modifier is_published via PATCH.
+        """
+        MembershipFactory(
+            user=authenticate.user,
+            organisation=self.survey.organisation,
+            membership_type=MembershipType.RESPONDER,
+        )
+        response = self.client.patch(
+            reverse("survey_retrieve_update_destroy", kwargs={"pk": self.survey.pk}),
+            data={"is_published": False},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.survey.refresh_from_db()
+        self.assertTrue(self.survey.is_published)
+
+    @authenticate
+    def test_admin_autre_org_ne_peut_pas_modifier_is_published(self):
+        """
+        Un ADMIN d'une autre organisation reçoit un 404 en tentant de modifier is_published.
+        """
+        other_org = OrganisationFactory()
+        MembershipFactory(
+            user=authenticate.user,
+            organisation=other_org,
+            membership_type=MembershipType.ADMIN,
+        )
+        response = self.client.patch(
+            reverse("survey_retrieve_update_destroy", kwargs={"pk": self.survey.pk}),
+            data={"is_published": False},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.survey.refresh_from_db()
+        self.assertTrue(self.survey.is_published)

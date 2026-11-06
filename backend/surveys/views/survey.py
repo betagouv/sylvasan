@@ -53,6 +53,14 @@ class SurveyFilterSet(django_filters.FilterSet):
 
 class SurveyQuerySetMixin:
     def get_queryset(self):
+        # NOTE : Ce queryset est utilisé par l'interface web (admin). Il ne filtre pas sur
+        # is_published (pour l'instant), les ADMIN voient aussi les enquêtes dépubliées. Les
+        # RESPONDER purs n'utilisent pas cet endpoint, ils passent plutot par SurveyResponderListAPIView
+        # qui, elle, filtre sur is_published=True. Si un utilisateur avait à la fois un rôle ADMIN
+        # et un rôle RESPONDER sur des organisations différentes, les enquêtes dépubliées de ses
+        # organisations RESPONDER resteraient visibles ici. Ce cas n'existe pas aujourd'hui dans
+        # l'interface web, mais si cela change il faudra scinder les branches OR du filtre pour
+        # appliquer is_published=True uniquement aux branches issues des adhésions RESPONDER.
         user = self.request.user
 
         admin_org_ids = Membership.objects.filter(
@@ -121,6 +129,7 @@ def _responder_survey_queryset(user):
 
     return (
         Survey.objects.active()
+        .filter(is_published=True)
         .filter(
             Q(organisation_id__in=org_ids, pole__isnull=True)
             | Q(pole_id__in=pole_ids)
