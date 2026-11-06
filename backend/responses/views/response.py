@@ -26,6 +26,7 @@ from surveys.serializers import SurveyDisplaySerializer
 from responses.models import Response, ResponseImage
 from responses.permissions import (
     CanCreateFollowUpResponse,
+    CanCreatePlacetteResponse,
     CanCreateResponse,
     CanDeleteResponse,
     IsOrganisationAdminOrHasApiKey,
@@ -87,6 +88,8 @@ class ResponseFilterSet(django_filters.FilterSet):
         # Quand le paramètre est absent, on exclut les suivis par défaut
         if "include_follow_ups" not in self.data:
             queryset = queryset.filter(survey_follow_up__isnull=True)
+        # À retirer une fois que l'interface web saura afficher les sessions placettes.
+        queryset = queryset.filter(placette_survey__isnull=True)
         return super().filter_queryset(queryset)
 
 
@@ -112,6 +115,7 @@ class ResponseQuerySetMixin:
                 query |= (
                     Q(survey__pole_id=membership.pole_id)
                     | Q(survey_follow_up__pole_id=membership.pole_id)
+                    | Q(placette_survey__pole_id=membership.pole_id)
                     | (
                         Q(survey__organisation_id=membership.organisation_id, survey__pole__isnull=True)
                         & respondant_in_pole
@@ -123,10 +127,19 @@ class ResponseQuerySetMixin:
                         )
                         & respondant_in_pole
                     )
+                    | (
+                        Q(
+                            placette_survey__organisation_id=membership.organisation_id,
+                            placette_survey__pole__isnull=True,
+                        )
+                        & respondant_in_pole
+                    )
                 )
             else:
-                query |= Q(survey__organisation_id=membership.organisation_id) | Q(
-                    survey_follow_up__organisation_id=membership.organisation_id
+                query |= (
+                    Q(survey__organisation_id=membership.organisation_id)
+                    | Q(survey_follow_up__organisation_id=membership.organisation_id)
+                    | Q(placette_survey__organisation_id=membership.organisation_id)
                 )
 
         return (
@@ -160,6 +173,8 @@ class ResponseListCreateAPIView(ResponseQuerySetMixin, ListCreateAPIView):
         if self.request.method == "POST":
             if self.request.data.get("survey_follow_up"):
                 return [IsAuthenticated(), CanCreateFollowUpResponse()]
+            if self.request.data.get("placette_survey"):
+                return [IsAuthenticated(), CanCreatePlacetteResponse()]
             return [IsAuthenticated(), CanCreateResponse()]
         return [IsAuthenticated()]
 
@@ -235,6 +250,8 @@ class ResponseFullListAPIView(ListAPIView):
         return (
             Response.objects.active()
             .filter(respondant=user)
+            # À retirer une fois que l'application mobile saura synchroniser les sessions placettes.
+            .filter(placette_survey__isnull=True)
             .select_related("survey", "survey__organisation", "survey__pole", "survey_follow_up")
             .prefetch_related("images")
         )

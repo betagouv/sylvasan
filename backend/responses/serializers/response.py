@@ -49,6 +49,8 @@ class ResponseSerializer(serializers.ModelSerializer):
             "id",
             "client_id",
             "survey",
+            "placette",
+            "placette_survey",
             "respondant",
             "data",
             "context",
@@ -56,12 +58,34 @@ class ResponseSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id", "status", "respondant")
 
+    def validate(self, data):
+        if data.get("survey") and data.get("placette_survey"):
+            raise serializers.ValidationError(
+                {
+                    "placette_survey": "Une réponse ne peut pas appartenir à la fois à une enquête et à un protocole placette."
+                }
+            )
+        placette = data.get("placette")
+        placette_survey = data.get("placette_survey")
+        if placette_survey and not placette:
+            raise serializers.ValidationError({"placette": "La placette est obligatoire pour une session placette."})
+        if placette and not placette_survey:
+            raise serializers.ValidationError(
+                {"placette_survey": "Le protocole placette est obligatoire si une placette est fournie."}
+            )
+        if placette and placette_survey and not placette.surveys.filter(id=placette_survey.id).exists():
+            raise serializers.ValidationError({"placette": "La placette doit appartenir au protocole de la session."})
+        return data
+
     def create(self, validated_data):
         data = validated_data.get("data", {})
-        schema = validated_data["survey"].json_schema or {}
+        survey = validated_data.get("survey")
+        schema = (survey.json_schema if survey else None) or {}
 
         with transaction.atomic():
             response = Response.objects.create(**validated_data)
+            if not schema and response.placette_schema_snapshot:
+                schema = response.placette_schema_snapshot
             ResponseSerializer._create_images_from_data(response, data, schema)
 
         return response
@@ -201,7 +225,12 @@ def _resolve_images(data, fields, images_by_id, image_serializer_class):
 
 def _enrich_image_fields(ret, instance, image_serializer_class):
     source = instance.survey or instance.survey_follow_up
-    schema = (source.json_schema if source else None) or {}
+    if source:
+        schema = source.json_schema or {}
+    elif instance.placette_schema_snapshot:
+        schema = instance.placette_schema_snapshot
+    else:
+        schema = {}
     fields = schema.get("fields", [])
     if not fields:
         return ret

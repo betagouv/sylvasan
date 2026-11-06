@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 
 from common.behaviours import Deactivable, DeactivableQuerySet, Historisable, TimeStampable
-from surveys.models import Survey, SurveyFollowUp
+from surveys.models import Placette, PlacetteSurvey, Survey, SurveyFollowUp
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,26 @@ class Response(TimeStampable, Historisable, Deactivable):
     # example, on pourrait avoir ici les arbres assignés à une personne
     context = models.JSONField(null=True, blank=True)
 
+    placette = models.ForeignKey(
+        Placette,
+        related_name="responses",
+        verbose_name="placette",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    placette_survey = models.ForeignKey(
+        PlacetteSurvey,
+        related_name="responses",
+        verbose_name="protocole placette",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    # Instantané du schéma au moment de la création. Protège l'affichage des anciennes
+    # réponses si PlacetteLevel.json_schema est modifié ultérieurement.
+    placette_schema_snapshot = models.JSONField("instantané du schéma placette", null=True, blank=True)
+
     geolocation_point = PointField(null=True, blank=True, verbose_name="Localisation")
 
     def _populate_geolocation(self):
@@ -111,16 +131,30 @@ class Response(TimeStampable, Historisable, Deactivable):
             self._populate_geolocation()
             if update_fields is not None and "geolocation_point" not in update_fields:
                 kwargs["update_fields"] = list(update_fields) + ["geolocation_point"]
+        if self.placette_survey_id and self.placette_schema_snapshot is None:
+            self.placette_schema_snapshot = self.placette_survey.response_data_schema
+            if update_fields is not None and "placette_schema_snapshot" not in update_fields:
+                kwargs["update_fields"] = list(kwargs["update_fields"]) + ["placette_schema_snapshot"]
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.survey or self.survey_follow_up} – {self.get_status_display()}"
+        source = self.survey or self.survey_follow_up or self.placette_survey
+        return f"{source} – {self.get_status_display()}"
 
     def clean(self):
-        if bool(self.survey) and bool(self.survey_follow_up):
+        has_survey = bool(self.survey_id)
+        has_follow_up = bool(self.survey_follow_up_id)
+        has_placette_survey = bool(self.placette_survey_id)
+        if has_survey and has_follow_up:
             raise ValidationError("Une réponse doit avoir soit une enquête, soit un suivi, pas les deux.")
-        if self.survey_follow_up and not self.parent_response:
+        if has_survey and has_placette_survey:
+            raise ValidationError("Une réponse ne peut pas avoir à la fois une enquête et un protocole placette.")
+        if has_follow_up and has_placette_survey:
+            raise ValidationError("Une réponse ne peut pas avoir à la fois un suivi et un protocole placette.")
+        if has_follow_up and not self.parent_response:
             raise ValidationError("Une réponse de suivi doit référencer une réponse parente.")
+        if has_placette_survey and not self.placette_id:
+            raise ValidationError("La placette est obligatoire pour une réponse de session placette.")
 
 
 class ResponseImage(TimeStampable):

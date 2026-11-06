@@ -1,6 +1,6 @@
 from organisations.models import ApiKey, Membership, MembershipType
 from rest_framework import permissions
-from surveys.models import Survey, SurveyFollowUp
+from surveys.models import PlacetteSurvey, Survey, SurveyFollowUp
 from surveys.permissions import CanDeleteSurvey
 
 
@@ -82,6 +82,18 @@ class CanCreateFollowUpResponse(permissions.BasePermission):
         return _has_responder_permission(request, follow_up.organisation, follow_up.pole)
 
 
+class CanCreatePlacetteResponse(permissions.BasePermission):
+    message = "Vous n'avez pas l'autorisation pour créer une session placette"
+
+    def has_permission(self, request, view):
+        survey_id = request.data.get("placette_survey")
+        try:
+            survey = PlacetteSurvey.objects.active().filter(is_published=True).get(pk=survey_id)
+        except (PlacetteSurvey.DoesNotExist, ValueError, TypeError):
+            return False
+        return _has_responder_permission(request, survey.organisation, survey.pole)
+
+
 class CanDeleteResponse(permissions.BasePermission):
     """
     Seuls les utilisateur·ices avec le rôle ADMIN dans l'organisation de l'enquête
@@ -91,7 +103,12 @@ class CanDeleteResponse(permissions.BasePermission):
     message = "Vous n'avez pas l'autorisation pour supprimer cette réponse"
 
     def has_object_permission(self, request, view, obj):
-        source = obj.survey_follow_up if obj.survey_follow_up_id else obj.survey
+        if obj.placette_survey_id:
+            source = obj.placette_survey
+        elif obj.survey_follow_up_id:
+            source = obj.survey_follow_up
+        else:
+            source = obj.survey
         if source is None:
             return False
         if CanDeleteSurvey().has_object_permission(request, view, source):
