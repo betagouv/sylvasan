@@ -304,3 +304,39 @@ class TestListSurvey(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json()["organisations"], [])
+
+    @authenticate
+    def test_enquete_non_publiee_invisible_pour_responder_mobile(self):
+        """
+        Une enquête dépubliée (is_published=False) n'apparaît pas dans l'endpoint mobile
+        des RESPONDER, mais l'enquête publiée reste visible.
+        """
+        org = OrganisationFactory()
+        survey_publiee = SurveyFactory(organisation=org, pole=None, is_published=True)
+        SurveyFactory(organisation=org, pole=None, is_published=False)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.RESPONDER)
+
+        response = self.client.get(reverse("survey_responder_retrieve"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()]
+        self.assertIn(survey_publiee.id, ids)
+        self.assertEqual(len(ids), 1)
+
+    @authenticate
+    def test_enquete_non_publiee_visible_pour_admin_web(self):
+        """
+        Une enquête dépubliée (is_published=False) reste visible dans l'endpoint web
+        pour les ADMIN — ils doivent pouvoir la retrouver pour la republier.
+        """
+        org = OrganisationFactory()
+        survey_publiee = SurveyFactory(organisation=org, is_published=True)
+        survey_non_publiee = SurveyFactory(organisation=org, is_published=False)
+        MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
+
+        response = self.client.get(reverse("survey_list_create"), format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ids = [s["id"] for s in response.json()["results"]]
+        self.assertIn(survey_publiee.id, ids)
+        self.assertIn(survey_non_publiee.id, ids)
