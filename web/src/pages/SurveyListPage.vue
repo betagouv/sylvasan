@@ -102,12 +102,12 @@ const rows = computed(() =>
         month: "long",
       }),
 
-      survey.isPublished
-        ? ""
-        : {
+      survey.isPublished === false
+        ? {
             component: "v-icon",
             icon: "ri-eye-off-line",
-          },
+          }
+        : "",
     ],
   })),
 )

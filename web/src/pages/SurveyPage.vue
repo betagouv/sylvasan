@@ -40,6 +40,15 @@ const {
   statusCode,
 } = useApiFetch(`/surveys/${route.params.id}`, { immediate: false }).delete()
 
+const togglePublishedPayload = ref<{ isPublished: boolean } | undefined>()
+const {
+  execute: executeTogglePublished,
+  statusCode: togglePublishedStatusCode,
+} = useApiFetch(
+  () => `/surveys/${survey.value?.id}`,
+  { immediate: false },
+).patch(togglePublishedPayload)
+
 const followUpToDelete = ref<{ id: number; title: string } | null>(null)
 const confirmDeleteFollowUpOpened = ref(false)
 
@@ -81,10 +90,9 @@ const onConfirmDelete = async () => {
 }
 
 const togglePublished = async (isPublished: boolean) => {
-  const { statusCode } = await useApiFetch(`/surveys/${survey.value.id}`).patch(
-    { isPublished },
-  )
-  if (statusCode.value === 200) {
+  togglePublishedPayload.value = { isPublished }
+  await executeTogglePublished()
+  if (togglePublishedStatusCode.value === 200) {
     survey.value = { ...survey.value, isPublished }
     toast.show(
       `L'enquête a bien été ${isPublished ? "activée" : "désactivée"}.`,
