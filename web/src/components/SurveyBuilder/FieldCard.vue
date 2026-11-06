@@ -20,13 +20,13 @@ const rootStore = useRootStore()
 const widgetData = computed(() =>
   field.ui?.widget
     ? (typeWidgetMapping[field.ui.widget] as WidgetData)
-    : undefined
+    : undefined,
 )
 const icon = computed(() => widgetData.value?.icon)
 const label = computed(() => widgetData.value?.label)
 
 const resolvedVocabulary = computed(() =>
-  field.vocabulary ? rootStore.vocabularyDetails[field.vocabulary] : undefined
+  field.vocabulary ? rootStore.vocabularyDetails[field.vocabulary] : undefined,
 )
 
 watch(
@@ -34,7 +34,7 @@ watch(
   (vocabulary) => {
     if (vocabulary) rootStore.fetchVocabularyDetail(vocabulary)
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const { field, fieldIds, allFieldIds } = defineProps<{
@@ -42,10 +42,12 @@ const { field, fieldIds, allFieldIds } = defineProps<{
   depth?: number
   fieldIds?: string[]
   allFieldIds?: string[]
+  isSubfield?: boolean
 }>()
 const emit = defineEmits([
   "delete",
   "edit",
+  "duplicate",
   "editSubField",
   "moveUp",
   "moveDown",
@@ -86,7 +88,7 @@ const confirmFieldDeletion = () => {
 <template>
   <div>
     <div
-      class="rounded bg-white border border-slate-50 px-2 py-4 flex gap-2 max-w-[100%]"
+      class="rounded bg-white border border-slate-50 px-2 py-3 flex gap-2 max-w-[100%]"
     >
       <div class="flex flex-col gap-2 items-center justify-center">
         <DsfrButton
@@ -295,6 +297,7 @@ const confirmFieldDeletion = () => {
                 :depth="(depth ?? 0) + 1"
                 :field-ids="field.fields?.map((f) => f.id) ?? []"
                 :all-field-ids="allFieldIds"
+                :is-subfield="true"
                 @delete="emit('removeSubField', subField.id)"
                 @move-up="emit('moveSubFieldUp', subField.id)"
                 @move-down="emit('moveSubFieldDown', subField.id)"
@@ -344,14 +347,27 @@ const confirmFieldDeletion = () => {
           @click="editModalOpened = true"
           secondary
           icon-only
-          label="Modifier le champ"
+          label="Modifier"
+          size="sm"
         />
 
         <DsfrButton
-          icon="ri-delete-bin-line"
+          icon="ri-file-copy-line"
+          secondary
+          icon-only
+          label="Dupliquer"
+          @click="emit('duplicate')"
+          size="sm"
+          v-if="!isSubfield"
+        />
+
+        <DsfrButton
+          :icon="{ name: 'ri-delete-bin-line', fill: '#c9191e' }"
           @click="confirmDeleteOpened = true"
           secondary
           icon-only
+          size="sm"
+          label="Supprimer"
         />
       </div>
     </div>
