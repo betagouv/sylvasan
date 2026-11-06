@@ -121,6 +121,7 @@ def _responder_survey_queryset(user):
 
     return (
         Survey.objects.active()
+        .filter(is_published=True)
         .filter(
             Q(organisation_id__in=org_ids, pole__isnull=True)
             | Q(pole_id__in=pole_ids)

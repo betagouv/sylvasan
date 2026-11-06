@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from django.contrib import admin
 
 from simple_history.admin import SimpleHistoryAdmin
@@ -14,5 +16,5 @@ class SurveyFollowUpInline(admin.TabularInline):
 
 @admin.register(Survey)
 class SurveyAdmin(SimpleHistoryAdmin):
-    list_display = ("title", "organisation", "pole", "created_by", "creation_date", "activity_icon")
-    inlines = [SurveyFollowUpInline]
+    list_display = ("title", "organisation", "pole", "created_by", "creation_date", "activity_icon", "is_published")
+    inlines: ClassVar = [SurveyFollowUpInline]

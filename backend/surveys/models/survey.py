@@ -16,6 +16,8 @@ class Survey(TimeStampable, Deactivable, Historisable):
 
     objects = DeactivableQuerySet.as_manager()
 
+    is_published = models.BooleanField(default=True, verbose_name="Publiée ?")
+
     organisation = models.ForeignKey(
         Organisation, related_name="surveys", on_delete=models.SET_NULL, null=True, blank=True
     )

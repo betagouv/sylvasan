@@ -22,13 +22,13 @@ const router = useRouter()
 const toast = useToastStore()
 
 const { data: survey, isFetching } = useApiFetch(
-  `/surveys/${route.params.id}`
+  `/surveys/${route.params.id}`,
 ).json()
 
 const sortedFollowUps = computed(() =>
   [...(survey.value?.followUps ?? [])].sort((a, b) =>
-    a.title.localeCompare(b.title, "fr")
-  )
+    a.title.localeCompare(b.title, "fr"),
+  ),
 )
 
 const activeAccordion = ref<number>()
@@ -47,7 +47,7 @@ const { execute: executeDeleteFollowUp, statusCode: deleteFollowUpStatusCode } =
   useApiFetch(
     () =>
       `/surveys/${route.params.id}/follow-ups/${followUpToDelete.value?.id}`,
-    { immediate: false }
+    { immediate: false },
   ).delete()
 
 const onDeleteFollowUp = (followUp: { id: number; title: string }) => {
@@ -60,7 +60,7 @@ const onConfirmDeleteFollowUp = async () => {
   confirmDeleteFollowUpOpened.value = false
   if (deleteFollowUpStatusCode.value === 204) {
     survey.value.followUps = survey.value.followUps.filter(
-      (f: { id: number }) => f.id !== followUpToDelete.value?.id
+      (f: { id: number }) => f.id !== followUpToDelete.value?.id,
     )
     toast.show("Le suivi a été supprimé.", "success")
     followUpToDelete.value = null
@@ -75,6 +75,21 @@ const onConfirmDelete = async () => {
   if (statusCode.value === 204) {
     toast.show("L'enquête a été supprimée.", "success")
     router.push({ name: "/SurveyListPage" })
+  } else {
+    toast.show("Une erreur s'est produite.", "error")
+  }
+}
+
+const togglePublished = async (isPublished: boolean) => {
+  const { statusCode } = await useApiFetch(`/surveys/${survey.value.id}`).patch(
+    { isPublished },
+  )
+  if (statusCode.value === 200) {
+    survey.value = { ...survey.value, isPublished }
+    toast.show(
+      `L'enquête a bien été ${isPublished ? "activée" : "désactivée"}.`,
+      "success",
+    )
   } else {
     toast.show("Une erreur s'est produite.", "error")
   }
@@ -121,6 +136,35 @@ const onConfirmDelete = async () => {
             })
           "
         />
+      </div>
+
+      <div class="rounded bg-slate-100 border p-2 mb-4 border-slate-300">
+        <div v-if="survey.isPublished" class="flex gap-2 items-center">
+          <v-icon icon="ri-check-line" />
+          <p class="mb-0! grow">
+            L'enquête est visible et peut recevoir des réponses
+          </p>
+          <DsfrButton
+            label="Désactiver l'enquête"
+            size="sm"
+            tertiary
+            icon="ri-eye-off-line"
+            @click="togglePublished(false)"
+          />
+        </div>
+        <div v-else class="flex gap-2 items-center">
+          <v-icon icon="ri-eye-off-line" />
+          <p class="mb-0! grow">
+            L'enquête n'est pas visible et ne peut pas recevoir des réponses
+          </p>
+          <DsfrButton
+            label="Activer l'enquête"
+            size="sm"
+            tertiary
+            icon="ri-check-line"
+            @click="togglePublished(true)"
+          />
+        </div>
       </div>
 
       <div>
