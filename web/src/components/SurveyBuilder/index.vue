@@ -200,16 +200,33 @@ const removeField = async (fieldId: string) => {
 
 const duplicateField = async (fieldId: string) => {
   const sourceField = schema.value.fields.find((f) => f.id === fieldId)
-  const suffix = Math.floor(Math.random() * 9000 + 1000)
-  const duplicateFieldId = `dupl-${sourceField?.id || "field"}_${suffix}`
-  const duplicateFieldLabel = `(Dupliqué) ${sourceField?.label || "field"}`
+  if (!sourceField) return
+  const suffix = Date.now().toString(36)
+  const duplicateFieldId = `dupl-${sourceField.id}_${suffix}`
+  const duplicateFieldLabel = `(Dupliqué) ${sourceField.label || "field"}`
   const cloned = JSON.parse(JSON.stringify(sourceField)) as SurveyField
-  const remapIds = (f: SurveyField): SurveyField => ({
-    ...f,
-    id: `${f.id}_${suffix}`,
-    fields: f.fields?.map(remapIds),
-  })
-  const duplicateField = {
+
+  // Construit la correspondance ancien ID → nouvel ID pour tous les sous-champs,
+  // afin de mettre à jour les références dans les conditions de visibilité.
+  const buildIdMap = (fields: SurveyField[]): Map<string, string> => {
+    const map = new Map<string, string>()
+    for (const f of fields) {
+      map.set(f.id, `${f.id}_${suffix}`)
+      if (f.fields) buildIdMap(f.fields).forEach((v, k) => map.set(k, v))
+    }
+    return map
+  }
+  const idMap = cloned.fields ? buildIdMap(cloned.fields) : new Map<string, string>()
+
+  const remapIds = (f: SurveyField): SurveyField => {
+    let updated: SurveyField = { ...f, id: `${f.id}_${suffix}`, fields: f.fields?.map(remapIds) }
+    idMap.forEach((newId, oldId) => {
+      updated = { ...updated, condition: renameConditionField(updated.condition, oldId, newId) }
+    })
+    return updated
+  }
+
+  const newField = {
     ...cloned,
     id: duplicateFieldId,
     label: duplicateFieldLabel,
@@ -217,7 +234,7 @@ const duplicateField = async (fieldId: string) => {
   }
   schema.value = {
     ...schema.value,
-    fields: [...schema.value.fields, duplicateField],
+    fields: [...schema.value.fields, newField],
     pages: schema.value.pages?.map((p) => {
       const idx = p.fields.indexOf(fieldId)
       if (idx === -1) return p
