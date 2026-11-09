@@ -30,7 +30,7 @@ pycparser==3.11
 PyJWT==2.15.1
 python-dateutil==2.9.0.post0
 requests==2.34.2
-ruff==0.16.9
+ruff==0.17.3
 s3transfer==0.19.3
 sentry-sdk==2.72.0
 six==1.17.0
