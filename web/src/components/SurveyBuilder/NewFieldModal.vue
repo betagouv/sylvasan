@@ -199,6 +199,11 @@ const saveField = () => {
   try {
     validator.value.parse(payload.value)
     const emitValue = { ...payload.value }
+    if (emitValue.validation) {
+      emitValue.validation = Object.fromEntries(
+        Object.entries(emitValue.validation).filter(([, v]) => v !== ""),
+      ) as typeof emitValue.validation
+    }
     if (isEditMode.value) {
       emit("edit", emitValue)
     } else {
