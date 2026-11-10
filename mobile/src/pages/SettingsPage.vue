@@ -9,7 +9,8 @@ import {
   IonIcon,
   alertController,
 } from "@ionic/vue"
-import { computed, ref, onUnmounted } from "vue"
+import { computed, ref, onMounted, onUnmounted } from "vue"
+import { App as CapacitorApp } from "@capacitor/app"
 import { useRouter } from "vue-router"
 import { useAuthStore } from "../stores/auth"
 import { useSyncStore } from "../stores/sync"
@@ -72,6 +73,16 @@ const logout = async () => {
   })
   await alert.present()
 }
+
+const appVersion = ref("")
+onMounted(async () => {
+  try {
+    const info = await CapacitorApp.getInfo()
+    appVersion.value = info.version
+  } catch {
+    console.log("getInfo() n'est pas disponible en mode navigateur")
+  }
+})
 </script>
 
 <template>
@@ -173,5 +184,9 @@ const logout = async () => {
         </div>
       </section>
     </ion-content>
+
+    <div class="bg-slate-100 p-2 fr-text--sm" v-if="appVersion">
+      Version {{ appVersion }}
+    </div>
   </ion-page>
 </template>
