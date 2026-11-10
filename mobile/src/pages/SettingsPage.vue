@@ -183,10 +183,9 @@ onMounted(async () => {
           </div>
         </div>
       </section>
+      <div class="bg-slate-100 p-2 fr-text--sm" v-if="appVersion">
+        Version {{ appVersion }}
+      </div>
     </ion-content>
-
-    <div class="bg-slate-100 p-2 fr-text--sm" v-if="appVersion">
-      Version {{ appVersion }}
-    </div>
   </ion-page>
 </template>
