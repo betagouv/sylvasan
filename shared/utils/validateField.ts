@@ -60,10 +60,10 @@ export function validateField(
   if (widget === "array" || widget === "checkboxes" || widget === "image") {
     const arr = Array.isArray(value) ? value : []
 
-    if (v?.minItems !== undefined && v.minItems !== "" && arr.length < Number(v.minItems))
+    if (v?.minItems && arr.length < v.minItems)
       return `Au moins ${v.minItems} élément(s) requis`
 
-    if (v?.maxItems !== undefined && v.maxItems !== "" && arr.length > Number(v.maxItems))
+    if (v?.maxItems && arr.length > v.maxItems)
       return `Au plus ${v.maxItems} élément(s) autorisés`
   }
 
