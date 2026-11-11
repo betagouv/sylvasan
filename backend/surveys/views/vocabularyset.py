@@ -1,3 +1,5 @@
+import csv
+import io
 from itertools import chain
 from typing import ClassVar
 
@@ -13,6 +15,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import (
     CreateAPIView,
+    GenericAPIView,
     ListAPIView,
     ListCreateAPIView,
     RetrieveAPIView,
@@ -194,6 +197,93 @@ class VocabularyEntryAdminCreateView(CreateAPIView):
         """
         vocabulary_set = get_object_or_404(self.get_queryset(), pk=self.kwargs["vocabularyset_pk"])
         serializer.save(vocabulary_set=vocabulary_set)
+
+
+class VocabularyEntryBulkImportView(GenericAPIView):
+    """Vue pour les admins : Import CSV d'entrées dans un référentiel."""
+
+    permission_classes = (HasAdminRole,)
+    serializer_class = VocabularyEntrySerializer
+
+    def _get_vocabulary_set(self):
+        admin_org_ids = self.request.user.memberships.filter(membership_type=MembershipType.ADMIN).values_list(
+            "organisation_id", flat=True
+        )
+        return get_object_or_404(
+            VocabularySet,
+            pk=self.kwargs["vocabularyset_pk"],
+            organisation_id__in=admin_org_ids,
+            is_active=True,
+        )
+
+    def post(self, request, *args, **kwargs):
+        vocabulary_set = self._get_vocabulary_set()
+
+        csv_file = request.FILES.get("file")
+        if not csv_file:
+            return DRFResponse({"detail": "Fichier CSV manquant."}, status=400)
+
+        # djangorestframework-camel-case convertit dryRun -> dry_run
+        dry_run = request.data.get("dry_run", True)
+        if isinstance(dry_run, str):
+            dry_run = dry_run.lower() not in ("false", "0")
+
+        try:
+            content = csv_file.read().decode("utf-8")
+        except UnicodeDecodeError:
+            return DRFResponse({"detail": "Le fichier doit être encodé en UTF-8."}, status=400)
+
+        try:
+            reader = csv.reader(io.StringIO(content))
+            rows = [row for row in reader if any(cell.strip() for cell in row)]
+        except csv.Error:
+            return DRFResponse({"detail": "Impossible de lire le fichier CSV."}, status=400)
+
+        if not rows:
+            return DRFResponse({"detail": "Le fichier CSV est vide."}, status=400)
+
+        col_counts = {len(row) for row in rows}
+        if min(col_counts) < 2:
+            return DRFResponse(
+                {"detail": "Le fichier CSV doit contenir au moins 2 colonnes (code, libellé)."},
+                status=400,
+            )
+        if max(col_counts) > 3:
+            return DRFResponse(
+                {"detail": "Le fichier CSV ne doit pas contenir plus de 3 colonnes (code, libellé, position)."},
+                status=400,
+            )
+
+        parsed = []
+        for i, row in enumerate(rows, start=1):
+            code = row[0].strip()
+            label = row[1].strip()
+            position = None
+            if len(row) == 3 and row[2].strip():
+                try:
+                    position = int(row[2].strip())
+                except ValueError:
+                    return DRFResponse(
+                        {"detail": f"La position à la ligne {i} doit être un nombre entier."},
+                        status=400,
+                    )
+            parsed.append({"code": code, "label": label, "position": position})
+
+        if dry_run:
+            simulated = [VocabularyEntry(vocabulary_set=vocabulary_set, **e) for e in parsed]
+            serializer = self.get_serializer(simulated, many=True)
+            return DRFResponse(serializer.data)
+
+        to_save = [VocabularyEntry(vocabulary_set=vocabulary_set, is_active=True, **e) for e in parsed]
+        result = VocabularyEntry.objects.bulk_create(
+            to_save,
+            update_conflicts=True,
+            update_fields=["label", "position", "is_active"],
+            unique_fields=["vocabulary_set", "code"],
+        )
+
+        serializer = self.get_serializer(result, many=True)
+        return DRFResponse(serializer.data, status=201)
 
 
 class VocabularySetDetailView(RetrieveAPIView):

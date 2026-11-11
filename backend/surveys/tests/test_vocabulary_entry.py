@@ -1,3 +1,5 @@
+import io
+
 from django.urls import reverse
 
 from common.utils import authenticate
@@ -358,3 +360,217 @@ class TestVocabularyEntryAdminCreateView(APITestCase):
         response = self.client.post(_create_url(vocab.pk), {}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+def _bulk_import_url(vocabularyset_pk):
+    return reverse("vocabulary_entry_bulk_import", kwargs={"vocabularyset_pk": vocabularyset_pk})
+
+
+def _csv(content: str):
+    """Construit un fichier CSV UTF-8 simulé à partir d'une chaîne."""
+    f = io.BytesIO(content.encode("utf-8"))
+    f.name = "entries.csv"
+    return f
+
+
+class TestBulkImport(APITestCase):
+    def test_unauthenticated_gets_401(self):
+        """
+        Un utilisateur non authentifié reçoit une 401
+        """
+        vocab = VocabularySetFactory(organisation=OrganisationFactory())
+        response = self.client.post(_bulk_import_url(vocab.pk), {"file": _csv("a,b"), "dry_run": "true"})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    @authenticate
+    def test_responder_gets_403(self):
+        """
+        Un RESPONDER reçoit une 403
+        """
+        org = _org_with_responder(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(_bulk_import_url(vocab.pk), {"file": _csv("a,b"), "dry_run": "true"})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    @authenticate
+    def test_admin_of_other_org_gets_404(self):
+        """
+        Un admin d'une autre organisation reçoit une 404
+        """
+        _org_with_admin(authenticate.user)
+        other_vocab = VocabularySetFactory(organisation=OrganisationFactory())
+        response = self.client.post(_bulk_import_url(other_vocab.pk), {"file": _csv("a,b"), "dry_run": "true"})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_inactive_vocabularyset_gets_404(self):
+        """
+        Un référentiel inactif renvoie une 404
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org, is_active=False)
+        response = self.client.post(_bulk_import_url(vocab.pk), {"file": _csv("a,b"), "dry_run": "true"})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    @authenticate
+    def test_missing_file_returns_400(self):
+        """
+        L'absence de fichier renvoie une 400
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(_bulk_import_url(vocab.pk), {"dry_run": "true"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
+    def test_bad_encoding_returns_400(self):
+        """
+        Un fichier non encodé en UTF-8 renvoie une 400
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        f = io.BytesIO("code,libellé\na,Éléphant".encode("latin-1"))
+        f.name = "entries.csv"
+        response = self.client.post(_bulk_import_url(vocab.pk), {"file": f, "dry_run": "true"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
+    def test_empty_csv_returns_400(self):
+        """
+        Un fichier CSV vide (ou ne contenant que des lignes vides) renvoie une 400
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(_bulk_import_url(vocab.pk), {"file": _csv("\n\n"), "dry_run": "true"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
+    def test_too_few_columns_returns_400(self):
+        """
+        Un CSV avec moins de 2 colonnes renvoie une 400
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(
+            _bulk_import_url(vocab.pk), {"file": _csv("code_seulement\na\n"), "dry_run": "true"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
+    def test_too_many_columns_returns_400(self):
+        """
+        Un CSV avec plus de 3 colonnes renvoie une 400
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(_bulk_import_url(vocab.pk), {"file": _csv("a,b,c,d\n"), "dry_run": "true"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
+    def test_invalid_position_returns_400(self):
+        """
+        Une valeur non entière dans la colonne position renvoie une 400
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01,Alpha,pas-un-nombre\n"), "dry_run": "true"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # --- Mode simulation (dry run) ---
+
+    @authenticate
+    def test_dry_run_returns_200_and_does_not_create(self):
+        """
+        En mode dry_run, la réponse est 200 et aucune entrée n'est créée en base
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01,Alpha\nB02,Beta\n"), "dry_run": "true"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(VocabularyEntry.objects.filter(vocabulary_set=vocab).exists())
+
+    @authenticate
+    def test_dry_run_response_contains_expected_entries(self):
+        """
+        Le dry run retourne les entrées du CSV avec leur code, label et position
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01,Alpha,1\nB02,Beta,2\n"), "dry_run": "true"},
+        )
+        data = response.json()
+        self.assertEqual(len(data), 2)
+        self.assertEqual(data[0]["code"], "A01")
+        self.assertEqual(data[0]["label"], "Alpha")
+        self.assertEqual(data[0]["position"], 1)
+        self.assertEqual(data[1]["code"], "B02")
+
+    @authenticate
+    def test_import_creates_entries_and_returns_201(self):
+        """
+        Un import réel crée les entrées en base et renvoie une 201
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01,Alpha\nB02,Beta\n"), "dry_run": "false"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(VocabularyEntry.objects.filter(vocabulary_set=vocab).count(), 2)
+
+    @authenticate
+    def test_import_stores_position(self):
+        """
+        La position est correctement enregistrée depuis la 3e colonne
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01,Alpha,5\n"), "dry_run": "false"},
+        )
+        entry = VocabularyEntry.objects.get(vocabulary_set=vocab, code="A01")
+        self.assertEqual(entry.position, 5)
+
+    @authenticate
+    def test_import_upserts_existing_entry(self):
+        """
+        Une entrée existante (même code) est mise à jour plutôt que dupliquée
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        VocabularyEntryFactory(vocabulary_set=vocab, code="A01", label="Ancien label")
+
+        self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01,Nouveau label\n"), "dry_run": "false"},
+        )
+
+        self.assertEqual(VocabularyEntry.objects.filter(vocabulary_set=vocab, code="A01").count(), 1)
+        self.assertEqual(VocabularyEntry.objects.get(vocabulary_set=vocab, code="A01").label, "Nouveau label")
+
+    @authenticate
+    def test_import_reactivates_inactive_entry(self):
+        """
+        Une entrée préalablement désactivée est réactivée lors de l'import
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        VocabularyEntryFactory(vocabulary_set=vocab, code="A01", is_active=False)
+
+        self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01,Alpha\n"), "dry_run": "false"},
+        )
+
+        entry = VocabularyEntry.objects.get(vocabulary_set=vocab, code="A01")
+        self.assertTrue(entry.is_active)
