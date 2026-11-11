@@ -233,8 +233,14 @@ class VocabularyEntryBulkImportView(GenericAPIView):
         except UnicodeDecodeError:
             return DRFResponse({"detail": "Le fichier doit être encodé en UTF-8."}, status=400)
 
+        # Détection automatique du séparateur (virgule, point-virgule, tabulation…)
         try:
-            reader = csv.reader(io.StringIO(content))
+            dialect = csv.Sniffer().sniff(content.split("\n")[0])
+        except csv.Error:
+            dialect = csv.excel  # fallback : virgule
+
+        try:
+            reader = csv.reader(io.StringIO(content), dialect)
             rows = [row for row in reader if any(cell.strip() for cell in row)]
         except csv.Error:
             return DRFResponse({"detail": "Impossible de lire le fichier CSV."}, status=400)

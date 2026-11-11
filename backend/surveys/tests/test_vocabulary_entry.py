@@ -574,3 +574,18 @@ class TestBulkImport(APITestCase):
 
         entry = VocabularyEntry.objects.get(vocabulary_set=vocab, code="A01")
         self.assertTrue(entry.is_active)
+
+    @authenticate
+    def test_import_semicolon_delimited_csv(self):
+        """
+        Un CSV séparé par des points-virgules est correctement importé
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01;Alpha;1\nB02;Beta;2\n"), "dry_run": "false"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(VocabularyEntry.objects.filter(vocabulary_set=vocab).count(), 2)
+        self.assertEqual(VocabularyEntry.objects.get(vocabulary_set=vocab, code="A01").label, "Alpha")
