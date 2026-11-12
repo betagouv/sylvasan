@@ -238,7 +238,7 @@ class VocabularyEntryBulkImportView(GenericAPIView):
             dry_run = dry_run.lower() not in ("false", "0")
 
         try:
-            content = csv_file.read().decode("utf-8")
+            content = csv_file.read().decode("utf-8-sig")
         except UnicodeDecodeError:
             return DRFResponse({"detail": "Le fichier doit être encodé en UTF-8."}, status=400)
 
@@ -273,6 +273,9 @@ class VocabularyEntryBulkImportView(GenericAPIView):
         for i, row in enumerate(rows, start=1):
             code = row[0].strip()
             label = row[1].strip()
+            # Ignorer les lignes avec un code ou un libellé vide
+            if not code or not label:
+                continue
             position = None
             if len(row) == 3 and row[2].strip():
                 try:
@@ -283,6 +286,9 @@ class VocabularyEntryBulkImportView(GenericAPIView):
                         status=400,
                     )
             parsed.append({"code": code, "label": label, "position": position})
+
+        # Dédoublonnage par code : en cas de doublon, la dernière occurrence prime
+        parsed = list({e["code"]: e for e in parsed}.values())
 
         if dry_run:
             simulated = [VocabularyEntry(vocabulary_set=vocabulary_set, **e) for e in parsed]

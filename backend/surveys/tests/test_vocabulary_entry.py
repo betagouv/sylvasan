@@ -604,3 +604,34 @@ class TestBulkImport(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(VocabularyEntry.objects.filter(vocabulary_set=vocab).count(), 2)
         self.assertEqual(VocabularyEntry.objects.get(vocabulary_set=vocab, code="A01").label, "Alpha")
+
+    @authenticate
+    def test_import_skips_rows_with_blank_code_or_label(self):
+        """
+        Les lignes avec un code ou un libellé vide sont ignorées silencieusement
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        # Ligne 1 : code vide, ligne 2 : valide, ligne 3 : libellé vide
+        response = self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv(",Alpha\nA01,Beta\nB02,\n"), "dry_run": "false"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(VocabularyEntry.objects.filter(vocabulary_set=vocab).count(), 1)
+        self.assertEqual(VocabularyEntry.objects.get(vocabulary_set=vocab).code, "A01")
+
+    @authenticate
+    def test_import_deduplicates_by_code_last_wins(self):
+        """
+        En cas de code dupliqué dans le CSV, la dernière occurrence prime et il n'y a qu'une entrée en base
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01,Premier\nA01,Dernier\n"), "dry_run": "false"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(VocabularyEntry.objects.filter(vocabulary_set=vocab, code="A01").count(), 1)
+        self.assertEqual(VocabularyEntry.objects.get(vocabulary_set=vocab, code="A01").label, "Dernier")
