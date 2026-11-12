@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import * as z from "zod"
-import { ref, computed } from "vue"
-import { ZodError } from "zod"
+import { ref, watch } from "vue"
 import { useApiFetch } from "../../utils/data-fetching"
 import { useToastStore } from "../../stores/toast"
 import type { VocabularyEntry } from "@shared-types/survey"
 import ProgressSpinner from "../ProgressSpinner.vue"
-import { DsfrTable } from "@gouvminint/vue-dsfr"
 
 const props = defineProps<{
   opened: boolean
@@ -21,6 +18,18 @@ const toast = useToastStore()
 const fileInput = ref<HTMLInputElement | null>(null)
 
 const openFilePicker = () => fileInput.value?.click()
+
+const resetState = () => {
+  csvFile.value = null
+  apiError.value = null
+  dryRunEntries.value = []
+  if (fileInput.value) fileInput.value.value = ""
+}
+
+watch(
+  () => props.opened,
+  (isOpen) => { if (!isOpen) resetState() },
+)
 
 const dryRunBody = ref(new FormData())
 
