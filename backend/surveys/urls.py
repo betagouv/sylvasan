@@ -32,6 +32,11 @@ urlpatterns = [
         name="vocabulary_entry_admin_create_view",
     ),
     path(
+        "api/admin/vocabularies/<int:vocabularyset_pk>/bulk-import/",
+        views.VocabularyEntryBulkImportView.as_view(),
+        name="vocabulary_entry_bulk_import",
+    ),
+    path(
         "api/admin/vocabularies/<int:vocabularyset_pk>/entries/<int:pk>/",
         views.VocabularyEntryAdminView.as_view(),
         name="vocabulary_entry_admin_view",

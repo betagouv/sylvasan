@@ -17,6 +17,7 @@ import { useApiFetch } from "../utils/data-fetching"
 import type { VocabularyEntry } from "@shared-types/survey"
 import EntryActionButtons from "../components/VocabularySetDetailPage/EntryActionButtons.vue"
 import EntryModificationModal from "../components/VocabularySetDetailPage/EntryModificationModal.vue"
+import CsvImportModal from "../components/VocabularySetDetailPage/CsvImportModal.vue"
 import { useRootStore } from "../stores/root"
 
 const router = useRouter()
@@ -44,7 +45,7 @@ const rows = computed(() =>
         onRefreshed: () => refetchVocabularySet(),
       },
     ],
-  }))
+  })),
 )
 
 const headers = [
@@ -55,7 +56,12 @@ const headers = [
 ]
 
 const addModalOpen = ref(false)
+const importModalOpen = ref(false)
 const newEntry: VocabularyEntry = { id: 0, code: "", label: "", position: null }
+const onFooterDelete = () => {
+  rootStore.refreshVocabularies()
+  router.push({ name: "/VocabularySetPage" })
+}
 </script>
 
 <template>
@@ -73,8 +79,16 @@ const newEntry: VocabularyEntry = { id: 0, code: "", label: "", position: null }
     <div v-if="vocabularySet" class="mb-4">
       <h1 class="fr-h4">{{ vocabularySet.code }} - {{ vocabularySet.name }}</h1>
 
-      <div class="flex">
+      <div class="flex gap-2">
         <h2 class="fr-h5 mb-0! grow">Entrées</h2>
+
+        <DsfrButton
+          label="Importer un CSV"
+          size="md"
+          icon="ri-attachment-fill"
+          @click="importModalOpen = true"
+          secondary
+        />
         <DsfrButton
           label="Ajouter une entrée"
           size="md"
@@ -93,12 +107,19 @@ const newEntry: VocabularyEntry = { id: 0, code: "", label: "", position: null }
       @saved="refetchVocabularySet()"
     />
 
+    <CsvImportModal
+      :opened="importModalOpen"
+      :vocabularyset-id="vocabularySetId"
+      @close="importModalOpen = false"
+      @saved="refetchVocabularySet()"
+    />
+
     <FooterDeleteButton
       :url="`/admin/vocabularies/${vocabularySetId}/`"
       modal-title="Supprimer le référentiel ?"
       :modal-body="`Cette action supprimera également toutes les ${vocabularySet?.entries?.length} entrées du référentiel « ${vocabularySet?.code} »`"
       success-message="Le référentiel a été supprimé."
-      @deleted="rootStore.refreshVocabularies(); router.push({ name: '/VocabularySetPage' })"
+      @deleted="onFooterDelete"
     />
   </div>
 </template>

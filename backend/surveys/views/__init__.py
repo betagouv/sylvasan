@@ -4,6 +4,7 @@ from .vocabularyset import (
     MobileVocabularySetListView,
     VocabularyEntryAdminCreateView,
     VocabularyEntryAdminView,
+    VocabularyEntryBulkImportView,
     VocabularySetDetailView,
     VocabularySetListView,
     VocabularySetRetrieveView,
