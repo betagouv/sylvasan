@@ -37,14 +37,23 @@ const {
   .post(dryRunBody)
   .json()
 
+const CSV_MAX_SIZE = 2 * 1024 * 1024 // 2 Mo
+
 const onFileChange = async (event: Event) => {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
 
-  csvFile.value = file
+  csvFile.value = null
   apiError.value = null
   dryRunEntries.value = []
+
+  if (file.size > CSV_MAX_SIZE) {
+    apiError.value = "Le fichier ne doit pas dépasser 2 Mo."
+    return
+  }
+
+  csvFile.value = file
 
   const formData = new FormData()
   formData.append("file", file)

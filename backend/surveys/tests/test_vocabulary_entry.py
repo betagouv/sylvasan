@@ -1,5 +1,6 @@
 import io
 
+from django.test import override_settings
 from django.urls import reverse
 
 from common.utils import authenticate
@@ -420,6 +421,20 @@ class TestBulkImport(APITestCase):
         org = _org_with_admin(authenticate.user)
         vocab = VocabularySetFactory(organisation=org)
         response = self.client.post(_bulk_import_url(vocab.pk), {"dry_run": "true"})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    @authenticate
+    @override_settings(CSV_ENTRIES_MAX_SIZE=10)
+    def test_file_too_large_returns_400(self):
+        """
+        Un fichier dépassant la taille maximale autorisée renvoie une 400
+        """
+        org = _org_with_admin(authenticate.user)
+        vocab = VocabularySetFactory(organisation=org)
+        response = self.client.post(
+            _bulk_import_url(vocab.pk),
+            {"file": _csv("A01,Alpha\nB02,Beta\n"), "dry_run": "true"},
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @authenticate

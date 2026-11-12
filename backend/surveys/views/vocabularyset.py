@@ -3,6 +3,7 @@ import io
 from itertools import chain
 from typing import ClassVar
 
+from django.conf import settings
 from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
 
@@ -222,6 +223,14 @@ class VocabularyEntryBulkImportView(GenericAPIView):
         csv_file = request.FILES.get("file")
         if not csv_file:
             return DRFResponse({"detail": "Fichier CSV manquant."}, status=400)
+
+        max_size = getattr(settings, "CSV_ENTRIES_MAX_SIZE", 2 * 1024 * 1024)
+        if csv_file.size > max_size:
+            max_mb = max_size / (1024 * 1024)
+            return DRFResponse(
+                {"detail": f"Le fichier ne doit pas dépasser {max_mb:.0f} Mo."},
+                status=400,
+            )
 
         # djangorestframework-camel-case convertit dryRun -> dry_run
         dry_run = request.data.get("dry_run", True)
