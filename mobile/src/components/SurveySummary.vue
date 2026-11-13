@@ -7,7 +7,7 @@ import SummaryImage from "./SummaryImage.vue"
 import SummarySubFields from "./SummarySubFields.vue"
 import { formatDate } from "../composables/offlineMapMetadata"
 import { resolveFieldValue, evaluateCondition } from "@shared-utils/survey"
-import { validateResponse, validateField } from "@shared-utils/validateField"
+import { validateResponse } from "@shared-utils/validateField"
 import { useVocabulariesStore } from "../stores/vocabularies"
 import { DsfrButton } from "@gouvminint/vue-dsfr"
 
@@ -38,7 +38,8 @@ const isArrayField = (fieldId: string): boolean =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.ui?.widget === "array"
 
 const isObjectField = (fieldId: string): boolean =>
-  survey.jsonSchema.fields.find((f) => f.id === fieldId)?.ui?.widget === "object"
+  survey.jsonSchema.fields.find((f) => f.id === fieldId)?.ui?.widget ===
+  "object"
 
 const isImageField = (fieldId: string): boolean =>
   survey.jsonSchema.fields.find((f) => f.id === fieldId)?.ui?.widget === "image"
@@ -51,12 +52,12 @@ const getObjectValue = (fieldId: string): Record<string, unknown> =>
 
 const visibleFields = computed(() =>
   survey.jsonSchema.fields.filter(
-    (f) => !f.condition || evaluateCondition(f.condition, resolvedData.value)
-  )
+    (f) => !f.condition || evaluateCondition(f.condition, resolvedData.value),
+  ),
 )
 
 const visibleFieldIds = computed(
-  () => new Set(visibleFields.value.map((f) => f.id))
+  () => new Set(visibleFields.value.map((f) => f.id)),
 )
 
 const validationErrors = computed(() =>
@@ -64,18 +65,10 @@ const validationErrors = computed(() =>
     ? validateResponse(
         survey.jsonSchema.fields,
         resolvedData.value,
-        visibleFieldIds.value
+        visibleFieldIds.value,
       )
-    : {}
+    : {},
 )
-
-const getSubFieldError = (
-  subField: SurveyField,
-  value: unknown
-): string | null => {
-  if (!showValidation.value) return null
-  return validateField(subField, value ?? null)
-}
 
 // Liste de sections — une par page si le schéma a des pages, sinon une seule section plate.
 // Chaque section avec `pageNumber` est une vraie page (en-tête affiché).
@@ -172,7 +165,10 @@ const sections = computed(() => {
                   {{ (resolvedData[field.id] as unknown[]).length }} entrée(s) :
                 </p>
                 <div
-                  v-for="(item, idx) in (resolvedData[field.id] as Record<string, unknown>[])"
+                  v-for="(item, idx) in resolvedData[field.id] as Record<
+                    string,
+                    unknown
+                  >[]"
                   :key="`${field.id}-${idx}`"
                   class="border border-slate-200 rounded p-3 mb-2 bg-slate-50"
                 >
@@ -194,7 +190,9 @@ const sections = computed(() => {
                   !Array.isArray(resolvedData[field.id])
                 "
               >
-                <div class="border border-slate-200 rounded p-3 mb-2 bg-slate-50">
+                <div
+                  class="border border-slate-200 rounded p-3 mb-2 bg-slate-50"
+                >
                   <SummarySubFields
                     :item="getObjectValue(field.id)"
                     :sub-fields="getSubFields(field.id)"
@@ -219,7 +217,7 @@ const sections = computed(() => {
                 </p>
                 <SummaryImage
                   v-else
-                  :images="(resolvedData[field.id] as ImageItem[])"
+                  :images="resolvedData[field.id] as ImageItem[]"
                 />
               </template>
 
