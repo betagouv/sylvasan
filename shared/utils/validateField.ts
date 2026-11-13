@@ -110,13 +110,37 @@ export function validateResponse(
                 }
               }
             }
+          } else if (subField.fields && isPlainObject(item[subField.id])) {
+            // Sous-champ objet imbriqué dans un tableau
+            const subItem = item[subField.id] as Record<string, unknown>
+            for (const subSubField of subField.fields) {
+              const subSubError = validateField(subSubField, subItem[subSubField.id] ?? null)
+              if (subSubError) {
+                const key = `${field.id}.${subField.id}.${subSubField.id}`
+                if (!errors[key]) errors[key] = subSubError
+              }
+            }
           }
+        }
+      }
+    } else if (field.fields && isPlainObject(data[field.id])) {
+      // Champ objet : valider les sous-champs contre l'objet unique
+      const item = data[field.id] as Record<string, unknown>
+      for (const subField of field.fields) {
+        const subError = validateField(subField, item[subField.id] ?? null)
+        if (subError) {
+          const key = `${field.id}.${subField.id}`
+          if (!errors[key]) errors[key] = subError
         }
       }
     }
   }
 
   return errors
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
 }
 
 function isEmpty(value: unknown): boolean {
