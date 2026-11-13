@@ -46,7 +46,6 @@ watch(
     })
     if (needsUpdate) modelValue.value = result
   },
-  { immediate: true },
 )
 </script>
 

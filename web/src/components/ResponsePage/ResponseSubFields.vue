@@ -62,8 +62,9 @@ const resolveValue = (subField: SurveyField, value: unknown): string =>
     <template
       v-else-if="
         subField.ui?.widget === 'object' &&
-        item[subField.id] !== null &&
-        typeof item[subField.id] === 'object'
+        item[subField.id] != null &&
+        typeof item[subField.id] === 'object' &&
+        !Array.isArray(item[subField.id])
       "
     >
       <div class="border border-slate-200 rounded p-2 mb-1 bg-white">

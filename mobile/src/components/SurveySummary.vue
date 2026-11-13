@@ -189,8 +189,9 @@ const sections = computed(() => {
               <template
                 v-else-if="
                   isObjectField(field.id) &&
-                  resolvedData[field.id] !== null &&
-                  typeof resolvedData[field.id] === 'object'
+                  resolvedData[field.id] != null &&
+                  typeof resolvedData[field.id] === 'object' &&
+                  !Array.isArray(resolvedData[field.id])
                 "
               >
                 <div class="border border-slate-200 rounded p-3 mb-2 bg-slate-50">

@@ -106,8 +106,9 @@ const getObjectValue = (fieldId: string): Record<string, unknown> =>
       <template
         v-else-if="
           isObjectField(entry[0]) &&
-          entry[1] !== null &&
-          typeof entry[1] === 'object'
+          entry[1] != null &&
+          typeof entry[1] === 'object' &&
+          !Array.isArray(entry[1])
         "
       >
         <div class="border border-slate-200 rounded p-3 bg-slate-50">
