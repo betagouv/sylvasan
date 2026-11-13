@@ -269,16 +269,30 @@ const confirmFieldDeletion = () => {
         </div>
 
         <!-- Champ Liste d'objets -->
-        <div v-if="field.ui?.widget === 'array' && (depth ?? 0) < 2">
-          <div class="flex gap-2 mb-1" v-if="field.ui?.addLabel">
+        <div
+          v-if="
+            (field.ui?.widget === 'array' || field.ui?.widget === 'object') &&
+            (depth ?? 0) < 2
+          "
+        >
+          <div
+            class="flex gap-2 mb-1"
+            v-if="field.ui?.widget === 'array' && field.ui?.addLabel"
+          >
             <div class="text-gray-500 text-medium">Titre du bouton d'ajout</div>
             <div>{{ field.ui.addLabel }}</div>
           </div>
-          <div class="flex gap-2 mb-1" v-if="field.validation?.minItems">
+          <div
+            class="flex gap-2 mb-1"
+            v-if="field.ui?.widget === 'array' && field.validation?.minItems"
+          >
             <div class="text-gray-500 text-medium">No. min d'éléments</div>
             <div>{{ field.validation.minItems }}</div>
           </div>
-          <div class="flex gap-2 mb-1" v-if="field.validation?.maxItems">
+          <div
+            class="flex gap-2 mb-1"
+            v-if="field.ui?.widget === 'array' && field.validation?.maxItems"
+          >
             <div class="text-gray-500 text-medium">No. max d'éléments</div>
             <div>{{ field.validation.maxItems }}</div>
           </div>
@@ -332,7 +346,7 @@ const confirmFieldDeletion = () => {
 
           <NewFieldModal
             :opened="subFieldModalOpened"
-            :exclude-widgets="(depth ?? 0) >= 1 ? ['array'] : []"
+            :exclude-widgets="(depth ?? 0) >= 1 ? ['array', 'object'] : []"
             :field-ids="field.fields?.map((f) => f.id) ?? []"
             :all-field-ids="allFieldIds"
             @add="handleAddSubField"

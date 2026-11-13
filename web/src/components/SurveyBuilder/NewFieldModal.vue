@@ -38,7 +38,7 @@ const getDefaultPayload = () =>
 
 const makeEmptyPayload = (
   type: FieldType = "string",
-  widget: FieldWidget = "input"
+  widget: FieldWidget = "input",
 ): SurveyField => ({
   type: type,
   label: "",
@@ -68,11 +68,11 @@ const vocabularySelectOptions = computed(() =>
   rootStore.vocabularies?.map((v) => ({
     text: `${v.code} — ${v.name}`,
     value: v.code,
-  }))
+  })),
 )
 
 const useVocabularyAutocomplete = computed(
-  () => (vocabularySelectOptions.value?.length ?? 0) > 20
+  () => (vocabularySelectOptions.value?.length ?? 0) > 20,
 )
 
 const vocabularyAutocompleteEntries = computed(
@@ -81,7 +81,7 @@ const vocabularyAutocompleteEntries = computed(
       code: v.code,
       label: `${v.code} — ${v.name}`,
       position: null,
-    })) ?? []
+    })) ?? [],
 )
 
 const vocabularyCodeModel = computed({
@@ -92,7 +92,7 @@ const vocabularyCodeModel = computed({
 const resolvedVocabulary = computed(() =>
   selectedVocabularyCode.value
     ? rootStore.vocabularyDetails[selectedVocabularyCode.value]
-    : undefined
+    : undefined,
 )
 
 const validator = computed(() =>
@@ -151,17 +151,20 @@ const validator = computed(() =>
           })
         }
       }
-    })
+    }),
 )
 const formErrors = ref<any>()
 
 const typeOptions = computed(() =>
   Object.entries(typeWidgetMapping)
-    .filter(([widget]) => !(props.excludeWidgets ?? []).includes(widget as FieldWidget))
+    .filter(
+      ([widget]) =>
+        !(props.excludeWidgets ?? []).includes(widget as FieldWidget),
+    )
     .map((x) => ({
       text: x[1].label,
       value: x[0],
-    }))
+    })),
 )
 
 const assignWidgetAndType = (option: FieldWidget) => {
@@ -232,7 +235,7 @@ const addOption = (option: DsfrSelectOption) => {
 const removeOption = (option: DsfrSelectOption) => {
   if (!payload.value.ui?.choices) return
   payload.value.ui.choices = payload.value.ui?.choices.filter(
-    (x: DsfrSelectOption) => x !== option
+    (x: DsfrSelectOption) => x !== option,
   )
 }
 
@@ -260,7 +263,7 @@ watch(
       await nextTick()
       conditionSegment.value?.reset()
     }
-  }
+  },
 )
 
 const autoFillId = () => {
@@ -692,7 +695,9 @@ const updateCondition = (c: Condition | undefined) => {
           hint="La valeur par défaut serait celle de la journée où la réponse est remplie"
           name="today-default"
           :model-value="payload.default === 'today'"
-          @update:modelValue="(val: boolean) => payload.default = val ? 'today' : undefined "
+          @update:modelValue="
+            (val: boolean) => (payload.default = val ? 'today' : undefined)
+          "
         />
       </div>
     </div>
@@ -767,6 +772,13 @@ const updateCondition = (c: Condition | undefined) => {
           />
         </DsfrInputGroup>
       </div>
+    </div>
+
+    <div v-else-if="payload.ui?.widget === 'object'">
+      <DsfrHighlight
+        class="ml-0!"
+        text="Vous pourrez ajouter des champs a l'intérieur de l'objet par la suite"
+      />
     </div>
 
     <!-- Pas encore gérés -->
