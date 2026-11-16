@@ -6,3 +6,4 @@ from organisations.models import Pole
 @admin.register(Pole)
 class PoleAdmin(admin.ModelAdmin):
     list_display = ("name", "organisation", "dsf_code")
+    search_fields = ("name", "organisation__name")

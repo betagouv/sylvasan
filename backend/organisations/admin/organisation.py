@@ -22,4 +22,5 @@ class OrganisationAdminForm(forms.ModelForm):
 @admin.register(Organisation)
 class OrganisationAdmin(admin.ModelAdmin):
     list_display = ("name",)
+    search_fields = ("name",)
     form = OrganisationAdminForm
