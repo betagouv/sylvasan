@@ -323,6 +323,53 @@ class TestAssignMembership(APITestCase):
         self.assertIsNone(admin_m.pole)
         self.assertIsNone(responder_m.pole)
 
+    def test_both_national_and_scoped_responder_creates_both_memberships(self):
+        """
+        Quand SYLV-EDIT-T et SYLV-EDIT_ECH-T sont tous les deux présents et que le pôle existe,
+        deux adhésions RESPONDER distinctes sont créées : une nationale et une pôle-scopée.
+        """
+        pole = PoleFactory.create(organisation=self.org, dsf_code="ECH001")
+        _assign_membership(self.user, self.org, "ECH001", ["SYLV-EDIT-T", "SYLV-EDIT_ECH-T"])
+        memberships = Membership.objects.filter(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER
+        )
+        self.assertEqual(memberships.count(), 2)
+        self.assertTrue(memberships.filter(pole__isnull=True).exists())
+        self.assertTrue(memberships.filter(pole=pole).exists())
+
+    def test_both_national_and_scoped_admin_creates_both_memberships(self):
+        """
+        Quand SYLV-CREECAMPNAT-T et SYLV-CREECAMPECH-T sont tous les deux présents et que le pôle existe,
+        deux adhésions ADMIN distinctes sont créées : une nationale et une pôle-scopée.
+        """
+        pole = PoleFactory.create(organisation=self.org, dsf_code="ECH001")
+        _assign_membership(self.user, self.org, "ECH001", ["SYLV-CREECAMPNAT-T", "SYLV-CREECAMPECH-T"])
+        memberships = Membership.objects.filter(
+            user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN
+        )
+        self.assertEqual(memberships.count(), 2)
+        self.assertTrue(memberships.filter(pole__isnull=True).exists())
+        self.assertTrue(memberships.filter(pole=pole).exists())
+
+    def test_losing_scoped_code_removes_scoped_membership_keeps_national(self):
+        """
+        Quand un utilisateur avait les deux codes et perd le code pôle-scopé,
+        l'adhésion pôle-scopée est supprimée et l'adhésion nationale est conservée.
+        """
+        pole = PoleFactory.create(organisation=self.org, dsf_code="ECH001")
+        MembershipFactory.create(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER, pole=None
+        )
+        MembershipFactory.create(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER, pole=pole
+        )
+        _assign_membership(self.user, self.org, "ECH001", ["SYLV-EDIT-T"])
+        memberships = Membership.objects.filter(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER
+        )
+        self.assertEqual(memberships.count(), 1)
+        self.assertIsNone(memberships.first().pole)
+
     def test_stale_role_removed(self):
         MembershipFactory.create(user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN)
         _assign_membership(self.user, self.org, "", ["SYLV-EDIT-T"])

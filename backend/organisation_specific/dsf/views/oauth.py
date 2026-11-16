@@ -257,13 +257,16 @@ def _assign_membership(user: User, organisation: Organisation, echelon: str, cod
 
     roles_to_assign = []
 
-    if codes & {"SYLV-CREECAMPNAT-T", "SYLV-CREECAMPECH-T"}:
-        pole_scoped = "SYLV-CREECAMPNAT-T" not in codes
-        roles_to_assign.append((MembershipType.ADMIN, pole_scoped))
+    # Chaque code génère une entrée indépendante : national et pôle-scopé peuvent coexister
+    if "SYLV-CREECAMPNAT-T" in codes:
+        roles_to_assign.append((MembershipType.ADMIN, False))
+    if "SYLV-CREECAMPECH-T" in codes:
+        roles_to_assign.append((MembershipType.ADMIN, True))
 
-    if codes & {"SYLV-EDIT-T", "SYLV-EDIT_ECH-T"}:
-        pole_scoped = "SYLV-EDIT-T" not in codes
-        roles_to_assign.append((MembershipType.RESPONDER, pole_scoped))
+    if "SYLV-EDIT-T" in codes:
+        roles_to_assign.append((MembershipType.RESPONDER, False))
+    if "SYLV-EDIT_ECH-T" in codes:
+        roles_to_assign.append((MembershipType.RESPONDER, True))
 
     logger.info(
         "Assigning memberships — user_id=%s username=%s echelon=%s codes_da=%s roles_to_assign=%s",
@@ -326,10 +329,17 @@ def _assign_membership(user: User, organisation: Organisation, echelon: str, cod
     )
     deleted_total += deleted
 
-    # Supprimer les memberships du bon type mais avec un pôle devenu obsolète
-    for membership_type, pole_id in active_keys:
+    # Pour chaque type actif, supprimer les adhésions dont le pôle n'est plus dans les clés actives.
+    # Un type peut avoir à la fois une adhésion nationale (pole=None) et une pôle-scopée simultanément.
+    for membership_type in {k[0] for k in active_keys}:
+        active_pole_ids = {k[1] for k in active_keys if k[0] == membership_type}
+        real_pole_ids = {pid for pid in active_pole_ids if pid is not None}
         qs = Membership.objects.filter(user=user, organisation=organisation, membership_type=membership_type)
-        deleted, _ = (qs.filter(pole__isnull=False) if pole_id is None else qs.exclude(pole_id=pole_id)).delete()
+        if None in active_pole_ids:
+            qs = qs.exclude(pole__isnull=True)
+        if real_pole_ids:
+            qs = qs.exclude(pole_id__in=real_pole_ids)
+        deleted, _ = qs.delete()
         deleted_total += deleted
 
     if deleted_total:
