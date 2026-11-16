@@ -320,6 +320,16 @@ def _assign_membership(user: User, organisation: Organisation, echelon: str, cod
         )
         active_keys.add((membership_type, assigned_pole.id if assigned_pole else None))
 
+    # Si aucun rôle n'a pu être attribué (ex. : pôle introuvable pour tous les codes scopés),
+    # on conserve les adhésions existantes plutôt que de les supprimer accidentellement.
+    if not active_keys:
+        logger.warning(
+            "Aucun rôle attribué pour user_id=%s username=%s (pôle introuvable ?) — adhésions existantes conservées.",
+            user.id,
+            user.username,
+        )
+        return
+
     # Supprimer les memberships dont le type n'est plus actif
     deleted_total = 0
     deleted, _ = (
@@ -329,10 +339,14 @@ def _assign_membership(user: User, organisation: Organisation, echelon: str, cod
     )
     deleted_total += deleted
 
+    # Pré-calcul : pôles actifs (y compris None pour le national) regroupés par type
+    active_poles_by_type: dict = {}
+    for role_type, pole_id in active_keys:
+        active_poles_by_type.setdefault(role_type, set()).add(pole_id)
+
     # Pour chaque type actif, supprimer les adhésions dont le pôle n'est plus dans les clés actives.
     # Un type peut avoir à la fois une adhésion nationale (pole=None) et une pôle-scopée simultanément.
-    for membership_type in {k[0] for k in active_keys}:
-        active_pole_ids = {k[1] for k in active_keys if k[0] == membership_type}
+    for membership_type, active_pole_ids in active_poles_by_type.items():
         real_pole_ids = {pid for pid in active_pole_ids if pid is not None}
         qs = Membership.objects.filter(user=user, organisation=organisation, membership_type=membership_type)
         if None in active_pole_ids:

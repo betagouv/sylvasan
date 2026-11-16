@@ -304,6 +304,17 @@ class TestAssignMembership(APITestCase):
         _assign_membership(self.user, self.org, "ECH001", ["SYLV-CREECAMPECH-T"])
         self.assertEqual(Membership.objects.filter(user=self.user, organisation=self.org).count(), 0)
 
+    def test_all_scoped_roles_skipped_preserves_existing_memberships(self):
+        """
+        Quand tous les codes sont scopés et que le pôle est introuvable (ex. : lag de sync),
+        les adhésions existantes ne doivent pas être supprimées.
+        """
+        existing = MembershipFactory.create(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER, pole=None
+        )
+        _assign_membership(self.user, self.org, "ECH_INEXISTANT", ["SYLV-EDIT_ECH-T"])
+        self.assertTrue(Membership.objects.filter(pk=existing.pk).exists())
+
     def test_all_roles_with_nonexistent_echelon_creates_national_memberships(self):
         """
         Quand tous les codes sont présents et que l'échelon ne correspond à aucun pôle,
@@ -351,6 +362,18 @@ class TestAssignMembership(APITestCase):
         self.assertTrue(memberships.filter(pole__isnull=True).exists())
         self.assertTrue(memberships.filter(pole=pole).exists())
 
+    def test_both_codes_with_missing_pole_creates_only_national_membership(self):
+        """
+        Quand les codes national et pôle-scopé sont présents mais que le pôle est introuvable,
+        seule l'adhésion nationale est créée et le rôle pôle-scopé est ignoré avec un avertissement.
+        """
+        _assign_membership(self.user, self.org, "ECH_INEXISTANT", ["SYLV-EDIT-T", "SYLV-EDIT_ECH-T"])
+        memberships = Membership.objects.filter(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER
+        )
+        self.assertEqual(memberships.count(), 1)
+        self.assertIsNone(memberships.first().pole)
+
     def test_losing_scoped_code_removes_scoped_membership_keeps_national(self):
         """
         Quand un utilisateur avait les deux codes et perd le code pôle-scopé,
@@ -369,6 +392,25 @@ class TestAssignMembership(APITestCase):
         )
         self.assertEqual(memberships.count(), 1)
         self.assertIsNone(memberships.first().pole)
+
+    def test_losing_national_code_removes_national_membership_keeps_scoped(self):
+        """
+        Quand un utilisateur avait les deux codes et perd le code national,
+        l'adhésion nationale est supprimée et l'adhésion pôle-scopée est conservée.
+        """
+        pole = PoleFactory.create(organisation=self.org, dsf_code="ECH001")
+        MembershipFactory.create(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER, pole=None
+        )
+        MembershipFactory.create(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER, pole=pole
+        )
+        _assign_membership(self.user, self.org, "ECH001", ["SYLV-EDIT_ECH-T"])
+        memberships = Membership.objects.filter(
+            user=self.user, organisation=self.org, membership_type=MembershipType.RESPONDER
+        )
+        self.assertEqual(memberships.count(), 1)
+        self.assertEqual(memberships.first().pole, pole)
 
     def test_stale_role_removed(self):
         MembershipFactory.create(user=self.user, organisation=self.org, membership_type=MembershipType.ADMIN)
