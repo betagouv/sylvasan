@@ -123,7 +123,8 @@
                 "array",
                 "autocomplete",
                 "map",
-                "image"
+                "image",
+                "object"
               ],
               "type": "string"
             }

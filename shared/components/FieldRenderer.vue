@@ -10,6 +10,7 @@ import type {
   LocalImageItem,
 } from "@shared-types/survey"
 import ArrayField from "./ArrayField.vue"
+import ObjectField from "./ObjectField.vue"
 import AutocompleteField from "./AutocompleteField.vue"
 import ImagesField from "./ImagesField.vue"
 import { validateField } from "@shared-utils/validateField"
@@ -41,6 +42,13 @@ const arrayModelValue = computed({
   },
 })
 
+const objectModelValue = computed({
+  get: () => (modelValue.value as Record<string, unknown> | undefined) ?? {},
+  set: (val: Record<string, unknown>) => {
+    modelValue.value = val
+  },
+})
+
 const imagesModelValue = computed({
   get: () => (modelValue.value as ImageItem[] | undefined) ?? [],
   set: (val: ImageItem[]) => {
@@ -51,13 +59,13 @@ const imagesModelValue = computed({
 const resolvedVocab = computed(() =>
   props.field.vocabulary
     ? props.vocabularies?.find((v) => v.code === props.field.vocabulary)
-    : undefined
+    : undefined,
 )
 
 const selectOptions = computed(() =>
   resolvedVocab.value && resolvedVocab.value.entries
     ? resolvedVocab.value.entries.map((e) => ({ text: e.label, value: e.code }))
-    : props.field.ui?.choices
+    : props.field.ui?.choices,
 )
 
 const radioOptions = computed(() =>
@@ -66,7 +74,7 @@ const radioOptions = computed(() =>
         label: e.label,
         value: e.code,
       }))
-    : props.field.ui?.choices
+    : props.field.ui?.choices,
 )
 
 const autocompleteEntries = computed((): VocabularyEntry[] => {
@@ -110,7 +118,7 @@ const onFocusOut = (e: FocusEvent) => {
 const errorMessage = computed(() =>
   touched.value && !props.disabled
     ? validateField(props.field, modelValue.value)
-    : null
+    : null,
 )
 
 const defaultValue = getDefaultValue(props.field)
@@ -162,8 +170,8 @@ if (
           field.validation?.numberType === 'integer'
             ? 1
             : field.validation?.numberType === 'float'
-            ? 'any'
-            : undefined
+              ? 'any'
+              : undefined
         "
         :is-invalid="!!errorMessage"
       />
@@ -243,6 +251,19 @@ if (
       v-else-if="field.ui?.widget === 'array'"
       :field="field"
       v-model="arrayModelValue"
+      :disabled="disabled"
+      :force-validate="forceValidate"
+      :vocabularies="props.vocabularies"
+      :map-component="mapComponent"
+      :resolve-image-path="resolveImagePath"
+      :captureImage="captureImage"
+      @busy-change="(val) => emit('busyChange', val)"
+    />
+
+    <ObjectField
+      v-else-if="field.ui?.widget === 'object'"
+      :field="field"
+      v-model="objectModelValue"
       :disabled="disabled"
       :force-validate="forceValidate"
       :vocabularies="props.vocabularies"

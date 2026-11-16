@@ -72,7 +72,7 @@ export interface SurveyField {
   condition?: Condition
   validation?: FieldValidation
   ui?: FieldUI
-  fields?: SurveyField[] // Pour le type array
+  fields?: SurveyField[] // Pour les types array et object
 }
 
 export type FieldWidget =
@@ -87,6 +87,7 @@ export type FieldWidget =
   | "autocomplete"
   | "map"
   | "image"
+  | "object"
 
 export interface SurveyPage {
   id: string
