@@ -282,6 +282,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=7),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
     "ROTATE_REFRESH_TOKENS": True,
+    "UPDATE_LAST_LOGIN": True,
 }
 
 SESSION_COOKIE_AGE = 31536000

@@ -120,6 +120,15 @@ class TestDsfOAuthAppCallback(APITestCase):
         self.assertEqual(updated.id, original_id)
         self.assertEqual(updated.external_id, "CO12345")
 
+    def test_app_callback_sets_last_login(self):
+        fetch_patch, parse_patch = _mock_oauth()
+        with fetch_patch, parse_patch:
+            response = self.client.post(reverse(self.URL), {"code": "c", "nonce": "n"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user = User.objects.get(external_id="CO12345")
+        self.assertIsNotNone(user.last_login)
+
     def test_assigns_membership_on_login(self):
         OrganisationFactory.create(name="DSF")
         fetch_patch, parse_patch = _mock_oauth()
