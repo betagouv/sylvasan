@@ -27,7 +27,7 @@ class UserAdmin(UserAdmin):
         "username",
     )
     show_facets = admin.ShowFacets.NEVER
-    readonly_fields = ("dsf_last_claims",)
+    readonly_fields = ("dsf_last_claims", "last_login")
 
     fieldsets = (
         (
@@ -37,6 +37,7 @@ class UserAdmin(UserAdmin):
                     "username",
                     "password",
                     "is_active",
+                    "last_login",
                 )
             },
         ),

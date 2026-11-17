@@ -3,7 +3,7 @@ import secrets
 from typing import ClassVar
 
 from django.conf import settings
-from django.contrib.auth import login
+from django.contrib.auth import login, update_last_login
 from django.shortcuts import redirect
 
 from authlib.integrations.django_client import OAuth
@@ -85,6 +85,7 @@ class DsfOAuthAppCallbackView(APIView):
             echelon,
         )
 
+        update_last_login(None, user)
         refresh = RefreshToken.for_user(user)
         return Response(
             {
