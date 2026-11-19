@@ -14,7 +14,7 @@
     "@gouvfr/dsfr-chart": "^2.1.1",
     "@gouvminint/vue-dsfr": "^8.21.0",
     "@sentry/vue": "^11.11.0",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.5",
     "@vue/devtools-api": "^8.2.1",
     "@vueuse/core": "^15.0.0",
     "@vueuse/integrations": "^15.0.0",
@@ -34,7 +34,7 @@
     "@vue/tsconfig": "^0.9.1",
     "jsdom": "^31.0.0",
     "typescript": "~6.0.3",
-    "vite": "^8.3.5",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0",
     "vue-tsc": "^3.3.14"
   }
