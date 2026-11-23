@@ -28,7 +28,7 @@ pipdeptree==4.2.13
 psycopg2==2.9.13
 pycparser==3.12
 PyJWT==2.15.1
-python-dateutil==2.9.0.post0
+python-dateutil==4.0.0
 requests==2.34.2
 ruff==0.17.4
 s3transfer==0.19.3
