@@ -194,6 +194,7 @@ class Command(BaseCommand):
                     AND l.mode = m.mode
                     AND l.langue = 'FR'
                 WHERE m.unite = %s
+                AND (m.classe IS NULL OR m.classe >= 0)
                 ORDER BY m.position NULLS LAST, m.mode
                 """,
                 [unite],
@@ -268,11 +269,12 @@ class Command(BaseCommand):
                 is_active=True,
             ).update(is_active=False)
 
-            self.stdout.write(
-                self.style.WARNING(
-                    f"{deactivated_count} entrée(s) désactivée(s) (absentes de metadsf) : {', '.join(sorted(removed_codes))}"
+            if deactivated_count:
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"{deactivated_count} entrée(s) désactivée(s) (absentes de metadsf) : {', '.join(sorted(removed_codes))}"
+                    )
                 )
-            )
 
         self.stdout.write(
             self.style.SUCCESS(

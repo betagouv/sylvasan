@@ -164,6 +164,39 @@ class SyncDsfVocabulariesApiTest(TestCase):
 
         self.assertFalse(VocabularySet.objects.filter(code="CM").exists())
 
+    @patch("organisation_specific.dsf.sync_vocabularies_api.requests.get")
+    def test_filters_out_negative_classe_entries(self, mock_get):
+        """
+        Les modes avec classe < 0 (hors-territoire, obsolètes) ne génèrent aucune VocabularyEntry.
+        """
+        modes_with_negative = MODES_RESPONSE + [
+            {
+                "unite": "0/1",
+                "mode": "---",
+                "position": 0,
+                "classe": -1,
+                "valeurint": None,
+                "etendue": None,
+                "hls": None,
+                "rgb": None,
+                "cmyk": None,
+                "libelle": "HORS TERRITOIRE",
+                "definition": "HORS TERRITOIRE INVENTORIE",
+            },
+        ]
+        mock_get.side_effect = [
+            _make_response(json_data=UNITES_RESPONSE),
+            _make_response(json_data={"count": len(modes_with_negative)}),
+            _make_response(json_data=modes_with_negative),
+        ]
+
+        result = sync_dsf_vocabularies_from_api()
+
+        # Seules les 2 entrées avec classe >= 0 doivent être créées
+        self.assertEqual(result["entries_created"], 2)
+        vocab = VocabularySet.objects.get(organisation=self.dsf_org, code="0/1")
+        self.assertFalse(vocab.entries.filter(code="---").exists())
+
     # ------------------------------------------------------------------
     # Mise à jour et désactivation
     # ------------------------------------------------------------------
