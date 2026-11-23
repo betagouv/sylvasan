@@ -186,7 +186,7 @@ class SyncDsfVocabulariesApiTest(TestCase):
         ]
         mock_get.side_effect = [
             _make_response(json_data=UNITES_RESPONSE),
-            _make_response(json_data=MODES_COUNT_RESPONSE),
+            _make_response(json_data={"count": len(modes_with_negative)}),
             _make_response(json_data=modes_with_negative),
         ]
 
