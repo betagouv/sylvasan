@@ -194,6 +194,7 @@ class Command(BaseCommand):
                     AND l.mode = m.mode
                     AND l.langue = 'FR'
                 WHERE m.unite = %s
+                AND (m.classe IS NULL OR m.classe >= 0)
                 ORDER BY m.position NULLS LAST, m.mode
                 """,
                 [unite],

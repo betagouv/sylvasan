@@ -208,10 +208,14 @@ def sync_dsf_vocabularies_from_api(
     )
 
     # Regroupement des modes par unité, en ne conservant que les unités NOMINAL non blacklistées
+    # Les entrées avec classe < 0 sont exclues (entrées hors-territoire ou obsolètes)
     modes_by_unite: dict[str, list[dict]] = {code: [] for code in nominal_unites}
     for m in modes_data:
         unite_code = m.get("unite", "")
         if unite_code in modes_by_unite:
+            classe = m.get("classe")
+            if classe is not None and classe < 0:
+                continue
             modes_by_unite[unite_code].append(m)
 
     # ------------------------------------------------------------------ #
