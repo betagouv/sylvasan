@@ -8,4 +8,5 @@ VocabularyEntry._meta.verbose_name_plural = "entrées des référentiels"
 
 @admin.register(VocabularyEntry)
 class VocabularyEntryAdmin(admin.ModelAdmin):
-    list_display = ("code", "label", "vocabulary_set", "position")
+    list_display = ("code", "label", "vocabulary_set", "position", "is_active")
+    search_fields = ("code", "label")
