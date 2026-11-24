@@ -103,49 +103,35 @@ class CombinedGeoAPIView(APIView):
         if not memberships:
             return Placette.objects.none()
 
-        # Toutes les conditions d'accès ET de publication dans un seul Q par membership,
-        # afin d'éviter des JOINs indépendants sur la table M2M qui pourraient satisfaire
-        # des conditions via des protocoles différents (faux positifs).
         query = Q()
         for m in memberships:
-            base = {"surveys__is_active": True, "surveys__is_published": True}
+            base = {"survey__is_active": True, "survey__is_published": True}
             if m.pole_id is None:
-                query |= Q(surveys__organisation_id=m.organisation_id, **base)
+                query |= Q(survey__organisation_id=m.organisation_id, **base)
             else:
-                query |= Q(surveys__pole_id=m.pole_id, **base) | Q(
-                    surveys__organisation_id=m.organisation_id,
-                    surveys__pole__isnull=True,
+                query |= Q(survey__pole_id=m.pole_id, **base) | Q(
+                    survey__organisation_id=m.organisation_id,
+                    survey__pole__isnull=True,
                     **base,
                 )
-
-        # Q d'accès aux protocoles (pôle-aware), réutilisé pour le prefetch et le filtre.
-        accessible_q = Q()
-        for m in memberships:
-            if m.pole_id is None:
-                accessible_q |= Q(organisation_id=m.organisation_id)
-            else:
-                accessible_q |= Q(pole_id=m.pole_id) | Q(organisation_id=m.organisation_id, pole__isnull=True)
-
-        surveys_prefetch = Prefetch(
-            "surveys",
-            queryset=PlacetteSurvey.objects.filter(accessible_q, is_active=True, is_published=True),
-        )
 
         qs = (
             Placette.objects.active()
             .filter(query)
             .filter(lat__gte=south, lat__lte=north, lon__gte=west, lon__lte=east)
-            .prefetch_related(surveys_prefetch)
-            .distinct()
+            .select_related("survey")
             .order_by("id")
         )
 
         placette_surveys_param = params.get("placette_surveys", "").strip()
         if placette_surveys_param:
             ids = set(parse_ids(placette_surveys_param, "placette_surveys"))
-            # On ne garde que les IDs accessibles à l'utilisateur pour éviter qu'un JOIN M2M
-            # indépendant permette de découvrir qu'une placette appartient à un protocole
-            # d'une autre organisation (fuite d'information inter-org).
+            accessible_q = Q()
+            for m in memberships:
+                if m.pole_id is None:
+                    accessible_q |= Q(organisation_id=m.organisation_id)
+                else:
+                    accessible_q |= Q(pole_id=m.pole_id) | Q(organisation_id=m.organisation_id, pole__isnull=True)
             accessible_ids = set(
                 PlacetteSurvey.objects.filter(accessible_q, is_active=True, is_published=True, id__in=ids).values_list(
                     "id", flat=True
@@ -153,6 +139,6 @@ class CombinedGeoAPIView(APIView):
             )
             if not accessible_ids:
                 return Placette.objects.none()
-            qs = qs.filter(surveys__id__in=accessible_ids)
+            qs = qs.filter(survey_id__in=accessible_ids)
 
         return qs[:GEO_PLACETTE_LIMIT]
