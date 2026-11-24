@@ -37,6 +37,8 @@ class PlacetteLevel(TimeStampable, Deactivable):
     min_instances = models.PositiveIntegerField("nombre min d'instances", null=True, blank=True)
     max_instances = models.PositiveIntegerField("nombre max d'instances", null=True, blank=True)
     order = models.PositiveIntegerField("ordre", default=0)
+    # Champs persistants d'un nœud de ce niveau, saisis à sa création (ex: type d'arbre).
+    node_schema = models.JSONField("schéma JSON nœud persistant", null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.placette_survey})"

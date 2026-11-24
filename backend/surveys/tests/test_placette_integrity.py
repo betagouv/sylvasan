@@ -10,7 +10,7 @@ from surveys.models import PlacetteNode
 class TestPlacetteNodeClean(TestCase):
     def setUp(self):
         self.survey = PlacetteSurveyFactory()
-        self.placette = PlacetteFactory(surveys=[self.survey])
+        self.placette = PlacetteFactory(survey=self.survey)
 
         self.root_level = PlacetteLevelFactory(placette_survey=self.survey, parent_level=None)
         self.child_level = PlacetteLevelFactory(placette_survey=self.survey, parent_level=self.root_level)
@@ -77,14 +77,14 @@ class TestPlacetteNodeClean(TestCase):
             node.clean()
 
     def test_noeud_niveau_protocole_non_assigne_leve_erreur(self):
-        """Un nœud dont le niveau appartient à un protocole non assigné à la placette est invalide."""
-        placette_sans_autre_protocole = PlacetteFactory(surveys=[self.survey])
-        node = PlacetteNode(placette=placette_sans_autre_protocole, level=self.other_root_level, parent=None)
+        """Un nœud dont le niveau appartient à un protocole différent de celui de la placette est invalide."""
+        placette_autre_protocole = PlacetteFactory(survey=self.survey)
+        node = PlacetteNode(placette=placette_autre_protocole, level=self.other_root_level, parent=None)
         with self.assertRaises(ValidationError):
             node.clean()
 
     def test_noeud_niveau_protocole_assigne_valide(self):
-        """Un nœud dont le niveau appartient à un protocole assigné à la placette est valide."""
-        placette_multi = PlacetteFactory(surveys=[self.survey, self.other_survey])
-        node = PlacetteNode(placette=placette_multi, level=self.other_root_level, parent=None)
+        """Un nœud dont le niveau appartient au protocole de la placette est valide."""
+        placette = PlacetteFactory(survey=self.other_survey)
+        node = PlacetteNode(placette=placette, level=self.other_root_level, parent=None)
         node.clean()

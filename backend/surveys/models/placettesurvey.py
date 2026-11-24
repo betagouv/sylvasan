@@ -59,6 +59,8 @@ class PlacetteSurvey(TimeStampable, Deactivable):
     dsf_dispositif_id = models.IntegerField("identifiant DSF dispositif", null=True, blank=True)
     # Champs saisis une fois par session, avant tout niveau hiérarchique (date, opérateur…).
     json_schema = models.JSONField("schéma JSON racine", null=True, blank=True)
+    # Champs persistants de la placette, saisis à sa création (topo, essence, etc.).
+    placette_schema = models.JSONField("schéma JSON placette", null=True, blank=True)
 
     @property
     def response_data_schema(self):
