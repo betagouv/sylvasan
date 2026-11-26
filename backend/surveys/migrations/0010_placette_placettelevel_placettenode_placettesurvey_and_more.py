@@ -86,8 +86,8 @@ class Migration(migrations.Migration):
                 ('pole', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='placette_surveys', to='organisations.pole')),
             ],
             options={
-                'verbose_name': 'protocole placette',
-                'verbose_name_plural': 'protocoles placettes',
+                'verbose_name': 'enquête placette',
+                'verbose_name_plural': 'enquêtes placettes',
             },
         ),
         migrations.AddField(

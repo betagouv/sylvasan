@@ -25,9 +25,11 @@ class Placette(TimeStampable, Deactivable):
     lat = models.FloatField("latitude")
     lon = models.FloatField("longitude")
     characteristics = models.JSONField("caractéristiques", default=dict, blank=True)
-    # Identifiants DSF (nullables : placettes créées dans Sylvasan avant import).
+    # Identifiants et métadonnées DSF (nullables : placettes créées dans Sylvasan avant import).
     dsf_id_localisation = models.IntegerField("identifiant DSF localisation", null=True, blank=True)
     code = models.CharField("code placette", max_length=50, null=True, blank=True)
+    dsf_actif = models.BooleanField("actif DSF", null=True, blank=True)
+    dsf_type = models.CharField("type DSF", max_length=20, null=True, blank=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         verbose_name="créateur",
