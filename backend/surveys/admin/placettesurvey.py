@@ -55,8 +55,8 @@ class PlacetteSurveyAdmin(admin.ModelAdmin):
 
 @admin.register(Placette)
 class PlacetteAdmin(admin.ModelAdmin):
-    list_display = ("label", "lat", "lon", "activity_icon")
-    list_filter = ("is_active", "surveys")
-    search_fields = ("label",)
-    filter_horizontal = ("surveys",)
+    list_display = ("label", "survey", "pole", "lat", "lon", "activity_icon")
+    list_filter = ("is_active", "survey")
+    search_fields = ("label", "code")
+    filter_horizontal = ("accessors",)
     inlines: ClassVar = [PlacetteNodeInline]

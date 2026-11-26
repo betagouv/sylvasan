@@ -11,15 +11,4 @@ class PlacetteFactory(factory.django.DjangoModelFactory):
     lat = factory.Faker("latitude")
     lon = factory.Faker("longitude")
     characteristics = factory.LazyFunction(dict)
-
-    @factory.post_generation
-    def surveys(self, create, extracted, **kwargs):
-        if not create:
-            return
-        if extracted:
-            for survey in extracted:
-                self.surveys.add(survey)
-        else:
-            from surveys.factories.placettesurvey import PlacetteSurveyFactory
-
-            self.surveys.add(PlacetteSurveyFactory())
+    survey = factory.SubFactory("surveys.factories.placettesurvey.PlacetteSurveyFactory")

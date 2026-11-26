@@ -9,8 +9,8 @@ class PlacetteSurveyMinimalSerializer(serializers.ModelSerializer):
 
 
 class PlacetteGeoSerializer(serializers.ModelSerializer):
-    placette_surveys = PlacetteSurveyMinimalSerializer(source="surveys", many=True, read_only=True)
+    survey = PlacetteSurveyMinimalSerializer(read_only=True)
 
     class Meta:
         model = Placette
-        fields = ("id", "lat", "lon", "label", "placette_surveys", "characteristics")
+        fields = ("id", "lat", "lon", "label", "survey", "characteristics")

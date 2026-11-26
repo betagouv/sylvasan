@@ -26,13 +26,10 @@ class PlacetteNode(TimeStampable, Deactivable):
     label = models.CharField("libellé", blank=True, default="")
     lat = models.FloatField("latitude", null=True, blank=True)
     lon = models.FloatField("longitude", null=True, blank=True)
+    characteristics = models.JSONField("caractéristiques persistantes", null=True, blank=True)
 
     def clean(self):
-        if (
-            self.level_id
-            and self.placette_id
-            and not self.placette.surveys.filter(pk=self.level.placette_survey_id).exists()
-        ):
+        if self.level_id and self.placette_id and self.placette.survey_id != self.level.placette_survey_id:
             raise ValidationError("Le niveau de ce nœud appartient à un protocole non assigné à cette placette.")
         if self.parent_id and self.level_id:
             if self.placette_id and self.parent.placette_id != self.placette_id:

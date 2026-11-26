@@ -73,7 +73,7 @@ class ResponseSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"placette_survey": "Le protocole placette est obligatoire si une placette est fournie."}
             )
-        if placette and placette_survey and not placette.surveys.filter(id=placette_survey.id).exists():
+        if placette and placette_survey and placette.survey_id != placette_survey.id:
             raise serializers.ValidationError({"placette": "La placette doit appartenir au protocole de la session."})
         return data
 
