@@ -257,13 +257,20 @@ class TestCombinedGeoPlacettes(APITestCase):
 
     @authenticate
     def test_filtre_placette_surveys_protocole_autre_org_invisible(self):
-        """Un protocole d'une autre organisation n'est pas accessible via le filtre placette_surveys=."""
+        """Le filtre placette_surveys= refuse un protocole d'une autre org, même si la zone contient des placettes accessibles."""
         org = OrganisationFactory()
         autre_org = OrganisationFactory()
+        survey_org = PlacetteSurveyFactory(organisation=org, is_published=True)
         survey_other = PlacetteSurveyFactory(organisation=autre_org, is_published=True)
-        PlacetteFactory(survey=survey_other, lat=48.85, lon=2.35)
+        _placette(survey_org)  # visible pour l'utilisateur
+        _placette(survey_other)  # appartient à autre_org, hors portée
         MembershipFactory(user=authenticate.user, organisation=org, membership_type=MembershipType.ADMIN)
 
+        # Sans filtre : seule la placette de org est visible.
+        response_all = self.client.get(GEO_URL, BBOX_PARIS)
+        self.assertEqual(len(response_all.data["placettes"]), 1)
+
+        # Avec filtre sur survey_other : le guard doit retourner vide même si l'id est valide.
         response = self.client.get(GEO_URL, {**BBOX_PARIS, "placette_surveys": str(survey_other.id)})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["placettes"], [])

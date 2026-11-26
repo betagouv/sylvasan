@@ -159,19 +159,34 @@ class Command(BaseCommand):
                 "is_active": bool(r["actif"]),
                 "characteristics": characteristics,
                 "pole": pole,
-                "created_by": created_by,
+                # created_by exclus des defaults : on ne l'écrase pas lors des ré-imports.
             }
             if survey is not None:
                 defaults["survey"] = survey
 
-            placette, created = Placette.objects.update_or_create(
-                dsf_id_localisation=r["id_localisation"],
-                defaults=defaults,
-            )
+            # La clé combine dsf_id_localisation + survey quand un protocole est fourni,
+            # pour permettre à la même localisation DSF d'exister dans plusieurs protocoles.
+            lookup = {"dsf_id_localisation": r["id_localisation"]}
+            if survey is not None:
+                lookup["survey"] = survey
+
+            try:
+                placette, created = Placette.objects.update_or_create(
+                    **lookup,
+                    defaults=defaults,
+                )
+            except Placette.MultipleObjectsReturned:
+                logger.error(
+                    "Plusieurs placettes partagent dsf_id_localisation=%s — ignorée",
+                    r["id_localisation"],
+                )
+                continue
 
             if created:
                 totals["created"] += 1
                 if created_by is not None:
+                    placette.created_by = created_by
+                    placette.save(update_fields=["created_by"])
                     placette.accessors.add(created_by)
             else:
                 totals["updated"] += 1

@@ -5,6 +5,16 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+def migrate_surveys_m2m_to_fk(apps, schema_editor):
+    """Copie la première association M2M surveys→placette dans le nouveau FK survey."""
+    Placette = apps.get_model("surveys", "Placette")
+    for placette in Placette.objects.prefetch_related("surveys").all():
+        first_survey = placette.surveys.first()
+        if first_survey is not None:
+            placette.survey = first_survey
+            placette.save(update_fields=["survey"])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -14,6 +24,13 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        # Ajout du FK survey avant de supprimer le M2M surveys, pour permettre la migration des données.
+        migrations.AddField(
+            model_name='placette',
+            name='survey',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='placettes', to='surveys.placettesurvey', verbose_name='enquête'),
+        ),
+        migrations.RunPython(migrate_surveys_m2m_to_fk, migrations.RunPython.noop),
         migrations.RemoveField(
             model_name='placette',
             name='surveys',
@@ -32,11 +49,6 @@ class Migration(migrations.Migration):
             model_name='placette',
             name='pole',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='placettes', to='organisations.pole', verbose_name='pôle'),
-        ),
-        migrations.AddField(
-            model_name='placette',
-            name='survey',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='placettes', to='surveys.placettesurvey', verbose_name='enquête'),
         ),
         migrations.AddField(
             model_name='placettelevel',

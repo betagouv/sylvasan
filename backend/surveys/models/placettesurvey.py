@@ -30,8 +30,8 @@ def _level_to_fields(level, children_by_parent, visited=None):
 
 class PlacetteSurvey(TimeStampable, Deactivable):
     class Meta:
-        verbose_name = "protocole placette"
-        verbose_name_plural = "protocoles placettes"
+        verbose_name = "enquête placette"
+        verbose_name_plural = "enquêtes placettes"
 
     objects = DeactivableQuerySet.as_manager()
 
