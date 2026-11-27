@@ -227,6 +227,9 @@ def _upsert_user_from_claims(claims: dict) -> tuple:
         "first_name": user_info.get("prenom", ""),
         "last_name": user_info.get("nom", ""),
         "dsf_last_claims": claims,
+        # Un login DSF réussi active le compte — nécessaire pour que simplejwt
+        # accepte le refresh token (UPDATE_LAST_LOGIN déclenche USER_AUTHENTICATION_RULE).
+        "is_active": True,
     }
 
     if user is not None:
